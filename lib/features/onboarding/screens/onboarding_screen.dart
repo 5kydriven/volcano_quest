@@ -47,7 +47,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         SnackBar(
           backgroundColor: AppColors.surface,
           content: const Text(
-            'Enter your callsign to proceed.',
+            'Enter your name to proceed.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
         ),
@@ -101,7 +101,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               const ScanLine(),
               const SizedBox(height: 20),
 
-              _fieldLabel('CALLSIGN (NAME)'),
+              _fieldLabel('What should we call you?'),
               const SizedBox(height: 8),
               TextField(
                 controller: _nameController,
