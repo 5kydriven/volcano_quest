@@ -1,0 +1,425 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/providers.dart';
+import '../../../shared/widgets/lab_widgets.dart';
+
+class MainMenuScreen extends ConsumerWidget {
+  const MainMenuScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final player = ref.watch(playerProvider);
+    final progress = (player.currentLevel - 1) / AppConstants.totalLevels;
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _TopBar(player: player),
+              const SizedBox(height: 20),
+              const Text(
+                'Volcano Quest',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'VOLCANO RESEARCH LAB · ACTIVE',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const ScanLine(),
+              const SizedBox(height: 16),
+              _MissionButton(player: player),
+              const SizedBox(height: 12),
+              _ProgressSection(progress: progress, player: player),
+              const SizedBox(height: 16),
+              _StatsRow(player: player),
+              const SizedBox(height: 20),
+              _Divider(),
+              _NavRow(
+                icon: Icons.emoji_events_outlined,
+                label: 'Leaderboard',
+                onTap: () {},
+              ),
+              _Divider(),
+              _NavRow(
+                icon: Icons.military_tech_outlined,
+                label: 'Badge collection',
+                badge: player.earnedBadges.isNotEmpty
+                    ? '${player.earnedBadges.length}'
+                    : null,
+                onTap: () {},
+              ),
+              _Divider(),
+              _NavRow(
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+                onTap: () {},
+              ),
+              _Divider(),
+              const SizedBox(height: 32),
+              Center(
+                child: Text(
+                  '${AppConstants.appVersion} · PHIVOLCS LEARNING LAB',
+                  style: const TextStyle(
+                    color: AppColors.textDim,
+                    fontSize: 9,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  final player;
+  const _TopBar({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _AvatarCircle(avatarIndex: player.avatarIndex),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              player.name.toUpperCase(),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                letterSpacing: 1.2,
+              ),
+            ),
+            Text(
+              'LEVEL ${player.currentLevel} SCIENTIST',
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        const Spacer(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${player.totalXP} XP',
+              style: const TextStyle(
+                color: AppColors.teal,
+                fontSize: 14,
+                letterSpacing: 1,
+              ),
+            ),
+            const Text(
+              'TOTAL',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined, color: AppColors.textMuted, size: 18),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+}
+
+class _AvatarCircle extends StatelessWidget {
+  final int avatarIndex;
+  const _AvatarCircle({required this.avatarIndex});
+
+  static const _icons = [
+    Icons.person_outline, Icons.biotech_outlined, Icons.rocket_launch_outlined,
+    Icons.hub_outlined, Icons.science_outlined, Icons.public_outlined,
+    Icons.travel_explore_outlined, Icons.psychology_outlined,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.surfaceAlt,
+        border: Border.all(color: AppColors.teal, width: 1),
+      ),
+      child: Icon(
+        _icons[avatarIndex.clamp(0, _icons.length - 1)],
+        color: AppColors.teal,
+        size: 20,
+      ),
+    );
+  }
+}
+
+class _MissionButton extends StatelessWidget {
+  final player;
+  const _MissionButton({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final levelName = AppConstants.levelNames[
+        (player.currentLevel - 1).clamp(0, AppConstants.levelNames.length - 1)];
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushNamed('/level/${player.currentLevel}');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceAlt,
+          border: Border.all(color: AppColors.teal, width: 1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CONTINUE MISSION',
+                  style: TextStyle(
+                    color: AppColors.teal,
+                    fontSize: 14,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  levelName,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.tealDark,
+                border: Border.all(color: AppColors.teal, width: 0.5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'LVL ${player.currentLevel}',
+                style: const TextStyle(
+                  color: AppColors.teal,
+                  fontSize: 9,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressSection extends StatelessWidget {
+  final double progress;
+  final player;
+  const _ProgressSection({required this.progress, required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'MISSION PROGRESS',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 9, letterSpacing: 1.5),
+            ),
+            Text(
+              '${player.currentLevel - 1}/${AppConstants.totalLevels} COMPLETE',
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 9, letterSpacing: 1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 6,
+            backgroundColor: AppColors.surface,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatsRow extends StatelessWidget {
+  final player;
+  const _StatsRow({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.military_tech_outlined,
+            label: 'BADGES EARNED',
+            value: '${player.earnedBadges.length}',
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.bar_chart_outlined,
+            label: 'MISSIONS DONE',
+            value: '${(player.currentLevel - 1).clamp(0, AppConstants.totalLevels)}/${AppConstants.totalLevels}',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatCard({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.borderAlt, width: 0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.teal, size: 18),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 9,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 22,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(color: AppColors.border, thickness: 0.5, height: 0);
+  }
+}
+
+class _NavRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? badge;
+  final VoidCallback onTap;
+
+  const _NavRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.badge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: AppColors.teal.withOpacity(0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.teal, size: 18),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                letterSpacing: 0.3,
+              ),
+            ),
+            if (badge != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  border: Border.all(color: AppColors.teal, width: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  badge!,
+                  style: const TextStyle(color: AppColors.teal, fontSize: 9),
+                ),
+              ),
+            ],
+            const Spacer(),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
