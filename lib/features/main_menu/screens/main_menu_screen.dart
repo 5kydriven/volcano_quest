@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/constants/providers.dart';
+import '../../../core/routing/app_routes.dart';
+import '../../../data/models/player_model.dart';
+import '../../player/application/player_controller.dart';
 import '../../../shared/widgets/lab_widgets.dart';
 
 class MainMenuScreen extends ConsumerWidget {
@@ -66,6 +69,12 @@ class MainMenuScreen extends ConsumerWidget {
               ),
               _Divider(),
               _NavRow(
+                icon: Icons.switch_account_outlined,
+                label: 'Switch player',
+                onTap: () => context.go(AppRoutes.players),
+              ),
+              _Divider(),
+              _NavRow(
                 icon: Icons.settings_outlined,
                 label: 'Settings',
                 onTap: () {},
@@ -92,7 +101,7 @@ class MainMenuScreen extends ConsumerWidget {
 }
 
 class _TopBar extends StatelessWidget {
-  final player;
+  final PlayerModel player;
   const _TopBar({required this.player});
 
   @override
@@ -146,7 +155,11 @@ class _TopBar extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         IconButton(
-          icon: const Icon(Icons.settings_outlined, color: AppColors.textMuted, size: 18),
+          icon: const Icon(
+            Icons.settings_outlined,
+            color: AppColors.textMuted,
+            size: 18,
+          ),
           onPressed: () {},
         ),
       ],
@@ -159,9 +172,14 @@ class _AvatarCircle extends StatelessWidget {
   const _AvatarCircle({required this.avatarIndex});
 
   static const _icons = [
-    Icons.person_outline, Icons.biotech_outlined, Icons.rocket_launch_outlined,
-    Icons.hub_outlined, Icons.science_outlined, Icons.public_outlined,
-    Icons.travel_explore_outlined, Icons.psychology_outlined,
+    Icons.person_outline,
+    Icons.biotech_outlined,
+    Icons.rocket_launch_outlined,
+    Icons.hub_outlined,
+    Icons.science_outlined,
+    Icons.public_outlined,
+    Icons.travel_explore_outlined,
+    Icons.psychology_outlined,
   ];
 
   @override
@@ -184,17 +202,20 @@ class _AvatarCircle extends StatelessWidget {
 }
 
 class _MissionButton extends StatelessWidget {
-  final player;
+  final PlayerModel player;
   const _MissionButton({required this.player});
 
   @override
   Widget build(BuildContext context) {
-    final levelName = AppConstants.levelNames[
-        (player.currentLevel - 1).clamp(0, AppConstants.levelNames.length - 1)];
+    final levelName =
+        AppConstants.levelNames[(player.currentLevel - 1).clamp(
+          0,
+          AppConstants.levelNames.length - 1,
+        )];
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed('/level/${player.currentLevel}');
+        context.push(AppRoutes.level(player.currentLevel));
       },
       child: Container(
         width: double.infinity,
@@ -254,7 +275,7 @@ class _MissionButton extends StatelessWidget {
 
 class _ProgressSection extends StatelessWidget {
   final double progress;
-  final player;
+  final PlayerModel player;
   const _ProgressSection({required this.progress, required this.player});
 
   @override
@@ -267,11 +288,19 @@ class _ProgressSection extends StatelessWidget {
           children: [
             const Text(
               'MISSION PROGRESS',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 9, letterSpacing: 1.5),
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1.5,
+              ),
             ),
             Text(
               '${player.currentLevel - 1}/${AppConstants.totalLevels} COMPLETE',
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 9, letterSpacing: 1),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1,
+              ),
             ),
           ],
         ),
@@ -291,7 +320,7 @@ class _ProgressSection extends StatelessWidget {
 }
 
 class _StatsRow extends StatelessWidget {
-  final player;
+  final PlayerModel player;
   const _StatsRow({required this.player});
 
   @override
@@ -310,7 +339,8 @@ class _StatsRow extends StatelessWidget {
           child: _StatCard(
             icon: Icons.bar_chart_outlined,
             label: 'MISSIONS DONE',
-            value: '${(player.currentLevel - 1).clamp(0, AppConstants.totalLevels)}/${AppConstants.totalLevels}',
+            value:
+                '${(player.currentLevel - 1).clamp(0, AppConstants.totalLevels)}/${AppConstants.totalLevels}',
           ),
         ),
       ],
@@ -323,7 +353,11 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
 
-  const _StatCard({required this.icon, required this.label, required this.value});
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -350,10 +384,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 22,
-            ),
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 22),
           ),
         ],
       ),
@@ -385,7 +416,7 @@ class _NavRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      splashColor: AppColors.teal.withOpacity(0.05),
+      splashColor: AppColors.teal.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
@@ -416,7 +447,11 @@ class _NavRow extends StatelessWidget {
               ),
             ],
             const Spacer(),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 16),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.textMuted,
+              size: 16,
+            ),
           ],
         ),
       ),

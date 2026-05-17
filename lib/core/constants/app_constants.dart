@@ -32,4 +32,6 @@ class AppConstants {
   static const String prefTotalXP = 'total_xp';
   static const String prefOnboardingDone = 'onboarding_done';
   static const String prefEarnedBadges = 'earned_badges';
+  static const String prefPlayers = 'players';
+  static const String prefActivePlayerId = 'active_player_id';
 }

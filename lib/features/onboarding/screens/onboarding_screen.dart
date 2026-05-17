@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/constants/providers.dart';
+import '../../../core/routing/app_routes.dart';
+import '../../player/application/player_controller.dart';
 import '../../../shared/widgets/lab_widgets.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -28,8 +30,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   ];
 
   static const _avatarLabels = [
-    'Scientist', 'Researcher', 'Explorer', 'Analyst',
-    'Chemist', 'Geologist', 'Observer', 'Strategist',
+    'Scientist',
+    'Researcher',
+    'Explorer',
+    'Analyst',
+    'Chemist',
+    'Geologist',
+    'Observer',
+    'Strategist',
   ];
 
   Future<void> _deploy() async {
@@ -48,12 +56,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
 
     setState(() => _isSaving = true);
-    await ref.read(playerProvider.notifier).setProfile(
-      name: name,
-      avatarIndex: _selectedAvatar,
-    );
+    await ref
+        .read(playerProvider.notifier)
+        .setProfile(name: name, avatarIndex: _selectedAvatar);
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/menu');
+      context.go(AppRoutes.menu);
     }
   }
 
@@ -98,11 +105,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: _nameController,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                ),
                 maxLength: 24,
                 decoration: const InputDecoration(
                   hintText: 'Enter your name...',
-                  counterStyle: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                  counterStyle: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
+                  ),
                 ),
               ),
 
@@ -129,9 +142,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
 
               const SizedBox(height: 16),
-              _SelectedAvatarBanner(
-                label: _avatarLabels[_selectedAvatar],
-              ),
+              _SelectedAvatarBanner(label: _avatarLabels[_selectedAvatar]),
 
               const SizedBox(height: 28),
               LabButton(
@@ -204,7 +215,7 @@ class _AvatarTile extends StatelessWidget {
                   letterSpacing: 0.8,
                 ),
               ),
-            ]
+            ],
           ],
         ),
       ),
@@ -227,7 +238,11 @@ class _SelectedAvatarBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle_outline, color: AppColors.teal, size: 14),
+          const Icon(
+            Icons.check_circle_outline,
+            color: AppColors.teal,
+            size: 14,
+          ),
           const SizedBox(width: 8),
           Text(
             'AVATAR: $label'.toUpperCase(),

@@ -31,7 +31,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.borderAlt, width: 0.5),
@@ -45,14 +48,20 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.teal, width: 1),
         ),
         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-        labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 10, letterSpacing: 1.2),
+        labelStyle: const TextStyle(
+          color: AppColors.textMuted,
+          fontSize: 10,
+          letterSpacing: 1.2,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.surfaceAlt,
           foregroundColor: AppColors.teal,
           side: const BorderSide(color: AppColors.teal, width: 1),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 16),
           textStyle: const TextStyle(
             fontFamily: 'monospace',

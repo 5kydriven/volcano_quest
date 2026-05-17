@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/constants/providers.dart';
+import '../../../core/routing/app_routes.dart';
 import '../../../shared/widgets/lab_widgets.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -26,9 +27,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       duration: const Duration(milliseconds: 1400),
     );
     _fadeIn = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _iconScale = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _iconScale = Tween<double>(
+      begin: 0.6,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
     _controller.forward();
   }
 
@@ -39,12 +41,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   void _onStart() {
-    final isDone = ref.read(onboardingDoneProvider);
-    if (isDone) {
-      Navigator.of(context).pushReplacementNamed('/menu');
-    } else {
-      Navigator.of(context).pushReplacementNamed('/onboarding');
-    }
+    context.go(AppRoutes.players);
   }
 
   @override
@@ -102,10 +99,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
                 const Spacer(),
-                LabButton(
-                  label: 'INITIALIZE MISSION',
-                  onTap: _onStart,
-                ),
+                LabButton(label: 'INITIALIZE MISSION', onTap: _onStart),
                 const SizedBox(height: 16),
                 Text(
                   '${AppConstants.appVersion} · PHIVOLCS LEARNING LAB',
