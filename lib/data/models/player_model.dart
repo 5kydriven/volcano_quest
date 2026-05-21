@@ -5,6 +5,7 @@ class PlayerModel {
   final int currentLevel;
   final int totalXP;
   final List<String> earnedBadges;
+  final Map<String, List<String>> completedMissionOrbs;
 
   const PlayerModel({
     required this.id,
@@ -13,6 +14,7 @@ class PlayerModel {
     this.currentLevel = 1,
     this.totalXP = 0,
     this.earnedBadges = const [],
+    this.completedMissionOrbs = const {},
   });
 
   PlayerModel copyWith({
@@ -22,6 +24,7 @@ class PlayerModel {
     int? currentLevel,
     int? totalXP,
     List<String>? earnedBadges,
+    Map<String, List<String>>? completedMissionOrbs,
   }) {
     return PlayerModel(
       id: id ?? this.id,
@@ -30,6 +33,7 @@ class PlayerModel {
       currentLevel: currentLevel ?? this.currentLevel,
       totalXP: totalXP ?? this.totalXP,
       earnedBadges: earnedBadges ?? this.earnedBadges,
+      completedMissionOrbs: completedMissionOrbs ?? this.completedMissionOrbs,
     );
   }
 
@@ -41,11 +45,13 @@ class PlayerModel {
       'currentLevel': currentLevel,
       'totalXP': totalXP,
       'earnedBadges': earnedBadges,
+      'completedMissionOrbs': completedMissionOrbs,
     };
   }
 
   factory PlayerModel.fromJson(Map<String, Object?> json) {
     final badges = json['earnedBadges'];
+    final missionOrbs = json['completedMissionOrbs'];
 
     return PlayerModel(
       id: json['id'] as String? ?? '',
@@ -56,6 +62,14 @@ class PlayerModel {
       earnedBadges: badges is List
           ? badges.whereType<String>().toList()
           : const [],
+      completedMissionOrbs: missionOrbs is Map
+          ? missionOrbs.map((key, value) {
+              return MapEntry(
+                key.toString(),
+                value is List ? value.whereType<String>().toList() : <String>[],
+              );
+            })
+          : const {},
     );
   }
 

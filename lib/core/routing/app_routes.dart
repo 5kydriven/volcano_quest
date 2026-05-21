@@ -5,6 +5,9 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const players = '/players';
   static const menu = '/menu';
+  static const leaderboard = '/leaderboard';
+  static const badges = '/badges';
+  static const levelPath = '/level/:levelId';
 
   static String level(int levelId) => '/level/$levelId';
 }

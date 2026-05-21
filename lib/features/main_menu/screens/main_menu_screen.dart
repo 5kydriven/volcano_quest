@@ -65,7 +65,7 @@ class MainMenuScreen extends ConsumerWidget {
                 badge: player.earnedBadges.isNotEmpty
                     ? '${player.earnedBadges.length}'
                     : null,
-                onTap: () {},
+                onTap: () => context.push(AppRoutes.badges),
               ),
               _Divider(),
               _NavRow(

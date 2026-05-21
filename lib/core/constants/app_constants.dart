@@ -15,6 +15,14 @@ class AppConstants {
 
   static const levelXP = [10, 15, 20, 30, 40, 50, 60, 70];
 
+  static const missionOneId = 'mission_1';
+  static const volcanoExplorerBadge = 'volcano_explorer';
+  static const missionOneOrbIds = [
+    'volcano_types',
+    'volcano_structure',
+    'eruption_types',
+  ];
+
   static const avatarKeys = [
     'scientist',
     'researcher',

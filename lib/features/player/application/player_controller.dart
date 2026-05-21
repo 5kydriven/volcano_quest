@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../../core/providers/shared_preferences_provider.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../data/models/player_model.dart';
 import '../../../data/repositories/player_repository.dart';
 
@@ -20,6 +21,9 @@ final playerProvider = StateNotifierProvider<PlayerNotifier, PlayerModel>((
 class PlayerNotifier extends StateNotifier<PlayerModel> {
   final PlayerRepository _repo;
   var _mutationCount = 0;
+
+  static const missionOneId = AppConstants.missionOneId;
+  static const volcanoExplorerBadge = AppConstants.volcanoExplorerBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -58,6 +62,42 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
       final updated = [...state.earnedBadges, badge];
       state = await _repo.savePlayer(state.copyWith(earnedBadges: updated));
     }
+  }
+
+  Future<void> completeMissionOneOrb(String orbId) async {
+    final completedOrbs =
+        state.completedMissionOrbs[AppConstants.missionOneId] ?? const [];
+    if (completedOrbs.contains(orbId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final updatedMissionOrbs = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedCompletedOrbs = [...completedOrbs, orbId];
+    updatedMissionOrbs[AppConstants.missionOneId] = updatedCompletedOrbs;
+
+    final hasCompletedMissionOne = AppConstants.missionOneOrbIds.every(
+      updatedCompletedOrbs.contains,
+    );
+    final updatedBadges =
+        hasCompletedMissionOne &&
+            !state.earnedBadges.contains(volcanoExplorerBadge)
+        ? [...state.earnedBadges, volcanoExplorerBadge]
+        : state.earnedBadges;
+    final nextLevel = hasCompletedMissionOne && state.currentLevel < 2
+        ? 2
+        : state.currentLevel;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + 10,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionOrbs,
+      ),
+    );
   }
 
   Future<void> switchPlayer(String playerId) async {
