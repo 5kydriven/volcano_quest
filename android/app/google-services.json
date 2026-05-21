@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "598416721472",
+    "project_id": "lahar-lab",
+    "storage_bucket": "lahar-lab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598416721472:android:ac002947f070d3857341a5",
+        "android_client_info": {
+          "package_name": "com.laharlab.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDium2y_Eque97SPqFDBW2lAsAfIJIneBk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,4 @@
-package com.example.volcano_quest
+package com.laharlab.app
 
 import io.flutter.embedding.android.FlutterActivity
 
