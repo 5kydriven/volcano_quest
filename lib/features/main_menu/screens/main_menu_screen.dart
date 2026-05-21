@@ -56,7 +56,7 @@ class MainMenuScreen extends ConsumerWidget {
               _NavRow(
                 icon: Icons.emoji_events_outlined,
                 label: 'Leaderboard',
-                onTap: () {},
+                onTap: () => context.push(AppRoutes.leaderboard),
               ),
               _Divider(),
               _NavRow(
