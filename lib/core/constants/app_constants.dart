@@ -18,9 +18,12 @@ class AppConstants {
   static const missionOneId = 'mission_1';
   static const missionTwoId = 'mission_2';
   static const missionTwoCorrectAnswersId = 'mission_2_correct_answers';
+  static const missionThreeId = 'mission_3';
   static const volcanoExplorerBadge = 'volcano_explorer';
   static const lavaInvestigatorBadge = 'lava_investigator';
+  static const volcanoVocabularyBadge = 'volcano_vocabulary';
   static const missionTwoXpPerCorrect = 15;
+  static const missionThreeXpPerWord = 20;
   static const missionOneOrbIds = [
     'volcano_types',
     'volcano_structure',
@@ -33,6 +36,7 @@ class AppConstants {
     'strombolian_eruption',
     'volcanic_tremors',
   ];
+  static const missionThreeWordIds = ['magma', 'lava', 'ash', 'eruption'];
 
   static const avatarKeys = [
     'scientist',

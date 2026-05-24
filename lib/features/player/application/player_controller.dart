@@ -26,6 +26,7 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
   static const missionTwoId = AppConstants.missionTwoId;
   static const volcanoExplorerBadge = AppConstants.volcanoExplorerBadge;
   static const lavaInvestigatorBadge = AppConstants.lavaInvestigatorBadge;
+  static const volcanoVocabularyBadge = AppConstants.volcanoVocabularyBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -145,6 +146,42 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
     state = await _repo.savePlayer(
       state.copyWith(
         totalXP: state.totalXP + earnedXP,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
+  Future<void> completeMissionThreeWord(String wordId) async {
+    final solvedWords =
+        state.completedMissionOrbs[AppConstants.missionThreeId] ?? const [];
+    if (solvedWords.contains(wordId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedSolvedWords = [...solvedWords, wordId];
+    updatedMissionProgress[AppConstants.missionThreeId] = updatedSolvedWords;
+
+    final hasCompletedMissionThree = AppConstants.missionThreeWordIds.every(
+      updatedSolvedWords.contains,
+    );
+    final updatedBadges =
+        hasCompletedMissionThree &&
+            !state.earnedBadges.contains(volcanoVocabularyBadge)
+        ? [...state.earnedBadges, volcanoVocabularyBadge]
+        : state.earnedBadges;
+    final nextLevel = hasCompletedMissionThree && state.currentLevel < 4
+        ? 4
+        : state.currentLevel;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + AppConstants.missionThreeXpPerWord,
         currentLevel: nextLevel,
         earnedBadges: updatedBadges,
         completedMissionOrbs: updatedMissionProgress,

@@ -31,6 +31,12 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'magma',
           exp: 75,
         ),
+      if (badge == PlayerNotifier.volcanoVocabularyBadge)
+        const BadgeCollectionItem(
+          name: 'Volcano Vocabulary',
+          avatar: 'vocabulary',
+          exp: 80,
+        ),
     ],
   ];
 });

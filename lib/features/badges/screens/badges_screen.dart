@@ -216,6 +216,7 @@ class _BadgeAvatar extends StatelessWidget {
     final icon = switch (avatar) {
       'volcano' => Icons.terrain_outlined,
       'magma' => Icons.local_fire_department_outlined,
+      'vocabulary' => Icons.abc_outlined,
       'seismic' => Icons.keyboard_voice_outlined,
       'crystal' => Icons.diamond_outlined,
       _ => Icons.military_tech_outlined,

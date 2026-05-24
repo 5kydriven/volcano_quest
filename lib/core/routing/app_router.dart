@@ -5,6 +5,7 @@ import '../../features/badges/screens/badges_screen.dart';
 import '../../features/leaderboard/screens/leaderboard_screen.dart';
 import '../../features/main_menu/screens/main_menu_screen.dart';
 import '../../features/missions/screens/mission_one_screen.dart';
+import '../../features/missions/screens/mission_three_word_builder_screen.dart';
 import '../../features/missions/screens/mission_two_quiz_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
@@ -49,6 +50,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           if (levelId == 2) {
             return MissionTwoQuizScreen(levelId: levelId);
+          }
+          if (levelId == 3) {
+            return MissionThreeWordBuilderScreen(levelId: levelId);
           }
           return MissionUnlockedScreen(levelId: levelId);
         },
