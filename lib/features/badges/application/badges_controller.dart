@@ -18,12 +18,19 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
   final player = ref.watch(playerProvider);
 
   return [
-    for (final badge in player.earnedBadges)
+    for (final badge in player.earnedBadges) ...[
       if (badge == PlayerNotifier.volcanoExplorerBadge)
         const BadgeCollectionItem(
           name: 'Volcano Explorer',
           avatar: 'volcano',
           exp: 30,
         ),
+      if (badge == PlayerNotifier.lavaInvestigatorBadge)
+        const BadgeCollectionItem(
+          name: 'Lava Investigator',
+          avatar: 'magma',
+          exp: 75,
+        ),
+    ],
   ];
 });

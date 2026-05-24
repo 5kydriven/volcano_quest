@@ -16,11 +16,22 @@ class AppConstants {
   static const levelXP = [10, 15, 20, 30, 40, 50, 60, 70];
 
   static const missionOneId = 'mission_1';
+  static const missionTwoId = 'mission_2';
+  static const missionTwoCorrectAnswersId = 'mission_2_correct_answers';
   static const volcanoExplorerBadge = 'volcano_explorer';
+  static const lavaInvestigatorBadge = 'lava_investigator';
+  static const missionTwoXpPerCorrect = 15;
   static const missionOneOrbIds = [
     'volcano_types',
     'volcano_structure',
     'eruption_types',
+  ];
+  static const missionTwoQuestionIds = [
+    'magma_chamber',
+    'shield_volcano',
+    'mayon_volcano',
+    'strombolian_eruption',
+    'volcanic_tremors',
   ];
 
   static const avatarKeys = [

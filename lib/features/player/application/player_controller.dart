@@ -23,7 +23,9 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
   var _mutationCount = 0;
 
   static const missionOneId = AppConstants.missionOneId;
+  static const missionTwoId = AppConstants.missionTwoId;
   static const volcanoExplorerBadge = AppConstants.volcanoExplorerBadge;
+  static const lavaInvestigatorBadge = AppConstants.lavaInvestigatorBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -96,6 +98,56 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
         currentLevel: nextLevel,
         earnedBadges: updatedBadges,
         completedMissionOrbs: updatedMissionOrbs,
+      ),
+    );
+  }
+
+  Future<void> submitMissionTwoAnswer({
+    required String questionId,
+    required bool isCorrect,
+  }) async {
+    final answeredQuestions =
+        state.completedMissionOrbs[AppConstants.missionTwoId] ?? const [];
+    if (answeredQuestions.contains(questionId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final correctAnswers =
+        state.completedMissionOrbs[AppConstants.missionTwoCorrectAnswersId] ??
+        const [];
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedAnsweredQuestions = [...answeredQuestions, questionId];
+    final updatedCorrectAnswers = isCorrect
+        ? [...correctAnswers, questionId]
+        : correctAnswers;
+
+    updatedMissionProgress[AppConstants.missionTwoId] =
+        updatedAnsweredQuestions;
+    updatedMissionProgress[AppConstants.missionTwoCorrectAnswersId] =
+        updatedCorrectAnswers;
+
+    final hasCompletedMissionTwo = AppConstants.missionTwoQuestionIds.every(
+      updatedAnsweredQuestions.contains,
+    );
+    final updatedBadges =
+        hasCompletedMissionTwo &&
+            !state.earnedBadges.contains(lavaInvestigatorBadge)
+        ? [...state.earnedBadges, lavaInvestigatorBadge]
+        : state.earnedBadges;
+    final nextLevel = hasCompletedMissionTwo && state.currentLevel < 3
+        ? 3
+        : state.currentLevel;
+    final earnedXP = isCorrect ? AppConstants.missionTwoXpPerCorrect : 0;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + earnedXP,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
       ),
     );
   }
