@@ -37,6 +37,18 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'vocabulary',
           exp: 80,
         ),
+      if (badge == PlayerNotifier.philippineVolcanoExplorerBadge)
+        const BadgeCollectionItem(
+          name: 'Philippine Volcano Explorer',
+          avatar: 'map',
+          exp: 150,
+        ),
+      if (badge == PlayerNotifier.volcanoExplorerChampionBadge)
+        const BadgeCollectionItem(
+          name: 'Volcano Explorer Champion',
+          avatar: 'champion',
+          exp: 150,
+        ),
     ],
   ];
 });

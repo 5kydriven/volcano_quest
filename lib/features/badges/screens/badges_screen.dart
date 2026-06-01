@@ -217,6 +217,8 @@ class _BadgeAvatar extends StatelessWidget {
       'volcano' => Icons.terrain_outlined,
       'magma' => Icons.local_fire_department_outlined,
       'vocabulary' => Icons.abc_outlined,
+      'map' => Icons.public_outlined,
+      'champion' => Icons.workspace_premium_outlined,
       'seismic' => Icons.keyboard_voice_outlined,
       'crystal' => Icons.diamond_outlined,
       _ => Icons.military_tech_outlined,

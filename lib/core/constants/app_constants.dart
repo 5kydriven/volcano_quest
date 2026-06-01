@@ -19,14 +19,19 @@ class AppConstants {
   static const missionTwoId = 'mission_2';
   static const missionTwoCorrectAnswersId = 'mission_2_correct_answers';
   static const missionThreeId = 'mission_3';
+  static const missionFourId = 'mission_4';
+  static const missionFourCorrectAnswersId = 'mission_4_correct_answers';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
   static const sideQuestVolcanoStructureCorrectAnswersId =
       'side_quest_volcano_structure_correct_answers';
   static const volcanoExplorerBadge = 'volcano_explorer';
   static const lavaInvestigatorBadge = 'lava_investigator';
   static const volcanoVocabularyBadge = 'volcano_vocabulary';
+  static const philippineVolcanoExplorerBadge = 'philippine_volcano_explorer';
+  static const volcanoExplorerChampionBadge = 'volcano_explorer_champion';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
+  static const missionFourXpPerCorrect = 30;
   static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
@@ -41,6 +46,13 @@ class AppConstants {
     'volcanic_tremors',
   ];
   static const missionThreeWordIds = ['magma', 'lava', 'ash', 'eruption'];
+  static const missionFourVolcanoIds = [
+    'mayon',
+    'apo',
+    'makiling',
+    'taal',
+    'pinatubo',
+  ];
   static const sideQuestVolcanoStructureQuestionIds = [
     'magma_chamber_storage',
     'active_volcanoes_phivolcs',
