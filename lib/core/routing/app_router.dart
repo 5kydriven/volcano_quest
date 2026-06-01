@@ -7,6 +7,7 @@ import '../../features/main_menu/screens/main_menu_screen.dart';
 import '../../features/missions/screens/mission_one_screen.dart';
 import '../../features/missions/screens/mission_three_word_builder_screen.dart';
 import '../../features/missions/screens/mission_two_quiz_screen.dart';
+import '../../features/missions/screens/volcano_structure_side_quest_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/player/screens/player_profiles_screen.dart';
@@ -39,6 +40,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.badges,
         builder: (context, state) => const BadgesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.sideQuestVolcanoStructure,
+        builder: (context, state) => const VolcanoStructureSideQuestScreen(),
       ),
       GoRoute(
         path: AppRoutes.levelPath,

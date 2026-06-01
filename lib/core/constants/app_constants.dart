@@ -19,11 +19,15 @@ class AppConstants {
   static const missionTwoId = 'mission_2';
   static const missionTwoCorrectAnswersId = 'mission_2_correct_answers';
   static const missionThreeId = 'mission_3';
+  static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
+  static const sideQuestVolcanoStructureCorrectAnswersId =
+      'side_quest_volcano_structure_correct_answers';
   static const volcanoExplorerBadge = 'volcano_explorer';
   static const lavaInvestigatorBadge = 'lava_investigator';
   static const volcanoVocabularyBadge = 'volcano_vocabulary';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
+  static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
     'volcano_structure',
@@ -37,6 +41,11 @@ class AppConstants {
     'volcanic_tremors',
   ];
   static const missionThreeWordIds = ['magma', 'lava', 'ash', 'eruption'];
+  static const sideQuestVolcanoStructureQuestionIds = [
+    'magma_chamber_storage',
+    'active_volcanoes_phivolcs',
+    'phreatic_eruption',
+  ];
 
   static const avatarKeys = [
     'scientist',

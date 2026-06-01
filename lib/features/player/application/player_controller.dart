@@ -175,15 +175,61 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
             !state.earnedBadges.contains(volcanoVocabularyBadge)
         ? [...state.earnedBadges, volcanoVocabularyBadge]
         : state.earnedBadges;
-    final nextLevel = hasCompletedMissionThree && state.currentLevel < 4
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + AppConstants.missionThreeXpPerWord,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
+  Future<void> submitSideQuestVolcanoStructureAnswer({
+    required String questionId,
+    required bool isCorrect,
+  }) async {
+    final answeredQuestions =
+        state.completedMissionOrbs[AppConstants.sideQuestVolcanoStructureId] ??
+        const [];
+    if (answeredQuestions.contains(questionId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final questionIndex = AppConstants.sideQuestVolcanoStructureQuestionIds
+        .indexOf(questionId);
+    final earnedXP = isCorrect && questionIndex != -1
+        ? AppConstants.sideQuestVolcanoStructureXp[questionIndex]
+        : 0;
+    final correctAnswers =
+        state.completedMissionOrbs[AppConstants
+            .sideQuestVolcanoStructureCorrectAnswersId] ??
+        const [];
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedAnsweredQuestions = [...answeredQuestions, questionId];
+    final updatedCorrectAnswers = isCorrect
+        ? [...correctAnswers, questionId]
+        : correctAnswers;
+
+    updatedMissionProgress[AppConstants.sideQuestVolcanoStructureId] =
+        updatedAnsweredQuestions;
+    updatedMissionProgress[AppConstants
+            .sideQuestVolcanoStructureCorrectAnswersId] =
+        updatedCorrectAnswers;
+
+    final hasCompletedSideQuest = AppConstants
+        .sideQuestVolcanoStructureQuestionIds
+        .every(updatedAnsweredQuestions.contains);
+    final nextLevel = hasCompletedSideQuest && state.currentLevel < 4
         ? 4
         : state.currentLevel;
 
     state = await _repo.savePlayer(
       state.copyWith(
-        totalXP: state.totalXP + AppConstants.missionThreeXpPerWord,
+        totalXP: state.totalXP + earnedXP,
         currentLevel: nextLevel,
-        earnedBadges: updatedBadges,
         completedMissionOrbs: updatedMissionProgress,
       ),
     );

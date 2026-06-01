@@ -61,7 +61,7 @@ void main() {
     );
   });
 
-  testWidgets('completing all words awards badge and advances to level 4', (
+  testWidgets('completing all words awards badge and unlocks side quest', (
     tester,
   ) async {
     final prefs = await _pumpMissionThree(tester);
@@ -73,11 +73,12 @@ void main() {
 
     expect(find.text('MISSION 3 COMPLETE'), findsOneWidget);
     expect(find.text('VOLCANO VOCABULARY BADGE'), findsOneWidget);
+    expect(find.text('START SIDE QUEST'), findsOneWidget);
     expect(find.text('80 XP'), findsWidgets);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 80);
-    expect(savedPlayer.currentLevel, 4);
+    expect(savedPlayer.currentLevel, 3);
     expect(
       savedPlayer.earnedBadges,
       contains(AppConstants.volcanoVocabularyBadge),

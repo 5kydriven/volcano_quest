@@ -113,7 +113,8 @@ class _MissionThreeWordBuilderScreenState
                           earnedXP:
                               solvedIds.length *
                               AppConstants.missionThreeXpPerWord,
-                          onProceed: () => context.push(AppRoutes.level(4)),
+                          onProceed: () =>
+                              context.push(AppRoutes.sideQuestVolcanoStructure),
                         )
                       : _WordBuilderContent(
                           wordIndex: activeIndex,
@@ -1171,7 +1172,7 @@ class _MissionThreeSummary extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onProceed,
-                child: const Text('PROCEED TO MISSION 4'),
+                child: const Text('START SIDE QUEST'),
               ),
             ),
           ],

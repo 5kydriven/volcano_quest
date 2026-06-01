@@ -7,6 +7,7 @@ class AppRoutes {
   static const menu = '/menu';
   static const leaderboard = '/leaderboard';
   static const badges = '/badges';
+  static const sideQuestVolcanoStructure = '/side-quest/volcano-structure';
   static const levelPath = '/level/:levelId';
 
   static String level(int levelId) => '/level/$levelId';

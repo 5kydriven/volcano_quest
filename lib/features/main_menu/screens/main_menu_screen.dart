@@ -207,15 +207,43 @@ class _MissionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final levelName =
-        AppConstants.levelNames[(player.currentLevel - 1).clamp(
-          0,
-          AppConstants.levelNames.length - 1,
-        )];
+    final missionThreeComplete = AppConstants.missionThreeWordIds.every(
+      (id) =>
+          player.completedMissionOrbs[AppConstants.missionThreeId]?.contains(
+            id,
+          ) ??
+          false,
+    );
+    final sideQuestComplete = AppConstants.sideQuestVolcanoStructureQuestionIds
+        .every(
+          (id) =>
+              player
+                  .completedMissionOrbs[AppConstants
+                      .sideQuestVolcanoStructureId]
+                  ?.contains(id) ??
+              false,
+        );
+    final shouldShowSideQuest = missionThreeComplete && !sideQuestComplete;
+    final levelName = shouldShowSideQuest
+        ? 'Structure of a Volcano'
+        : AppConstants.levelNames[(player.currentLevel - 1).clamp(
+            0,
+            AppConstants.levelNames.length - 1,
+          )];
+    final actionLabel = shouldShowSideQuest
+        ? 'START SIDE QUEST'
+        : 'CONTINUE MISSION';
+    final badgeLabel = shouldShowSideQuest
+        ? 'SIDE QUEST'
+        : 'LVL ${player.currentLevel}';
 
     return GestureDetector(
       onTap: () {
-        context.push(AppRoutes.level(player.currentLevel));
+        context.push(
+          shouldShowSideQuest
+              ? AppRoutes.sideQuestVolcanoStructure
+              : AppRoutes.level(player.currentLevel),
+        );
       },
       child: Container(
         width: double.infinity,
@@ -230,9 +258,9 @@ class _MissionButton extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'CONTINUE MISSION',
-                  style: TextStyle(
+                Text(
+                  actionLabel,
+                  style: const TextStyle(
                     color: AppColors.teal,
                     fontSize: 14,
                     letterSpacing: 1.5,
@@ -258,7 +286,7 @@ class _MissionButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                'LVL ${player.currentLevel}',
+                badgeLabel,
                 style: const TextStyle(
                   color: AppColors.teal,
                   fontSize: 9,
