@@ -31,6 +31,7 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
       AppConstants.philippineVolcanoExplorerBadge;
   static const volcanoExplorerChampionBadge =
       AppConstants.volcanoExplorerChampionBadge;
+  static const magmaAnalystBadge = AppConstants.magmaAnalystBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -290,6 +291,38 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
     state = await _repo.savePlayer(
       state.copyWith(
         totalXP: state.totalXP + earnedXP,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
+  Future<void> completeMissionFiveAnatomyLab() async {
+    final completedParts =
+        state.completedMissionOrbs[AppConstants.missionFiveId] ?? const [];
+    final hasCompletedMissionFive = AppConstants.missionFiveAnatomyPartIds
+        .every(completedParts.contains);
+    if (hasCompletedMissionFive) {
+      return;
+    }
+
+    _mutationCount++;
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    updatedMissionProgress[AppConstants.missionFiveId] = [
+      ...AppConstants.missionFiveAnatomyPartIds,
+    ];
+
+    final updatedBadges = state.earnedBadges.contains(magmaAnalystBadge)
+        ? state.earnedBadges
+        : [...state.earnedBadges, magmaAnalystBadge];
+    final nextLevel = state.currentLevel < 6 ? 6 : state.currentLevel;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + AppConstants.missionFiveXp,
         currentLevel: nextLevel,
         earnedBadges: updatedBadges,
         completedMissionOrbs: updatedMissionProgress,

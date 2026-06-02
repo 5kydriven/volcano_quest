@@ -49,6 +49,12 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'champion',
           exp: 150,
         ),
+      if (badge == PlayerNotifier.magmaAnalystBadge)
+        const BadgeCollectionItem(
+          name: 'Magma Analyst',
+          avatar: 'magma_analyst',
+          exp: 40,
+        ),
     ],
   ];
 });

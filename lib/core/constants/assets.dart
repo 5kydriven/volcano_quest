@@ -11,4 +11,5 @@ class Assets {
   static const String volcanoBg = 'assets/bg/volcano.mp4';
   static const String volcanoCutaway =
       'assets/Meshy_AI_2fa1536bd2215c18f695398ed54154e2bd2d4a85.png';
+  static const String volcano3dSection = 'assets/models/volcano-3d-section.glb';
 }

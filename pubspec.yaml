@@ -14,7 +14,7 @@ dependencies:
   flutter_riverpod: ^3.3.1
   go_router: ^17.2.3
   shared_preferences: ^2.5.5
-  model_viewer_plus: ^1.10.0
+  flutter_3d_controller: ^2.3.0
   drift: ^2.33.0
   rive: ^0.14.6
   flame: ^1.37.0
@@ -35,3 +35,4 @@ flutter:
     - assets/
     - assets/avatars/
     - assets/videos/
+    - assets/models/

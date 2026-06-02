@@ -21,6 +21,7 @@ class AppConstants {
   static const missionThreeId = 'mission_3';
   static const missionFourId = 'mission_4';
   static const missionFourCorrectAnswersId = 'mission_4_correct_answers';
+  static const missionFiveId = 'mission_5';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
   static const sideQuestVolcanoStructureCorrectAnswersId =
       'side_quest_volcano_structure_correct_answers';
@@ -29,9 +30,11 @@ class AppConstants {
   static const volcanoVocabularyBadge = 'volcano_vocabulary';
   static const philippineVolcanoExplorerBadge = 'philippine_volcano_explorer';
   static const volcanoExplorerChampionBadge = 'volcano_explorer_champion';
+  static const magmaAnalystBadge = 'magma_analyst';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
   static const missionFourXpPerCorrect = 30;
+  static const missionFiveXp = 40;
   static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
@@ -52,6 +55,14 @@ class AppConstants {
     'makiling',
     'taal',
     'pinatubo',
+  ];
+  static const missionFiveAnatomyPartIds = [
+    'magma_chamber',
+    'main_vent',
+    'secondary_vent',
+    'crater',
+    'lava_flow',
+    'ash_cloud',
   ];
   static const sideQuestVolcanoStructureQuestionIds = [
     'magma_chamber_storage',
