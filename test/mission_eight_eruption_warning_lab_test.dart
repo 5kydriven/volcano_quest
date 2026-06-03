@@ -219,8 +219,8 @@ void main() {
     expect(savedPlayer.completedMissionOrbs[AppConstants.levelEightLessonId], [
       AppConstants.levelEightLessonCompleteId,
     ]);
-    expect(find.text('MISSION 9 UNLOCKED'), findsOneWidget);
-    expect(find.text('NEW RESEARCH BRIEFING AVAILABLE SOON'), findsOneWidget);
+    expect(find.text('FINAL ASSESSMENT'), findsOneWidget);
+    expect(find.text('NEW RESEARCH BRIEFING AVAILABLE SOON'), findsNothing);
   });
 
   testWidgets('badge collection displays Eruption Warning Specialist', (

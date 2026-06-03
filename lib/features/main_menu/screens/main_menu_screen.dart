@@ -14,7 +14,8 @@ class MainMenuScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final player = ref.watch(playerProvider);
-    final progress = (player.currentLevel - 1) / AppConstants.totalLevels;
+    final missionsDone = _completedMissionCount(player);
+    final progress = missionsDone / AppConstants.totalLevels;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -48,9 +49,13 @@ class MainMenuScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               _MissionButton(player: player),
               const SizedBox(height: 12),
-              _ProgressSection(progress: progress, player: player),
+              _ProgressSection(
+                progress: progress,
+                missionsDone: missionsDone,
+                player: player,
+              ),
               const SizedBox(height: 16),
-              _StatsRow(player: player),
+              _StatsRow(player: player, missionsDone: missionsDone),
               const SizedBox(height: 20),
               _Divider(),
               _NavRow(
@@ -98,6 +103,18 @@ class MainMenuScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+int _completedMissionCount(PlayerModel player) {
+  final missionNineComplete = AppConstants.missionNineQuestionIds.every(
+    (id) =>
+        player.completedMissionOrbs[AppConstants.missionNineId]?.contains(id) ??
+        false,
+  );
+  if (missionNineComplete) {
+    return AppConstants.totalLevels;
+  }
+  return (player.currentLevel - 1).clamp(0, AppConstants.totalLevels);
 }
 
 class _TopBar extends StatelessWidget {
@@ -320,8 +337,13 @@ class _MissionButton extends StatelessWidget {
 
 class _ProgressSection extends StatelessWidget {
   final double progress;
+  final int missionsDone;
   final PlayerModel player;
-  const _ProgressSection({required this.progress, required this.player});
+  const _ProgressSection({
+    required this.progress,
+    required this.missionsDone,
+    required this.player,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +362,7 @@ class _ProgressSection extends StatelessWidget {
               ),
             ),
             Text(
-              '${player.currentLevel - 1}/${AppConstants.totalLevels} COMPLETE',
+              '$missionsDone/${AppConstants.totalLevels} COMPLETE',
               style: const TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 9,
@@ -366,7 +388,8 @@ class _ProgressSection extends StatelessWidget {
 
 class _StatsRow extends StatelessWidget {
   final PlayerModel player;
-  const _StatsRow({required this.player});
+  final int missionsDone;
+  const _StatsRow({required this.player, required this.missionsDone});
 
   @override
   Widget build(BuildContext context) {
@@ -384,8 +407,7 @@ class _StatsRow extends StatelessWidget {
           child: _StatCard(
             icon: Icons.bar_chart_outlined,
             label: 'MISSIONS DONE',
-            value:
-                '${(player.currentLevel - 1).clamp(0, AppConstants.totalLevels)}/${AppConstants.totalLevels}',
+            value: '$missionsDone/${AppConstants.totalLevels}',
           ),
         ),
       ],

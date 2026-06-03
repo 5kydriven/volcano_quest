@@ -9,6 +9,7 @@ import '../../features/missions/screens/mission_eight_eruption_warning_lab_scree
 import '../../features/missions/screens/mission_four_map_quiz_screen.dart';
 import '../../features/missions/screens/mission_five_anatomy_lab_screen.dart';
 import '../../features/missions/screens/level_eight_field_lesson_screen.dart';
+import '../../features/missions/screens/mission_nine_assessment_screen.dart';
 import '../../features/missions/screens/mission_one_screen.dart';
 import '../../features/missions/screens/mission_seven_investigation_center_screen.dart';
 import '../../features/missions/screens/mission_six_volcano_builder_screen.dart';
@@ -95,6 +96,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             if (!lessonComplete) {
               return const LevelEightFieldLessonScreen();
             }
+            return MissionNineAssessmentScreen(levelId: levelId);
           }
           return MissionUnlockedScreen(levelId: levelId);
         },

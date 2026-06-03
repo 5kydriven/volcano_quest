@@ -73,6 +73,12 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'eruption_warning',
           exp: 70,
         ),
+      if (badge == PlayerNotifier.volcanoMasterBadge)
+        const BadgeCollectionItem(
+          name: 'Volcano Master',
+          avatar: 'volcano_master',
+          exp: 100,
+        ),
     ],
   ];
 });

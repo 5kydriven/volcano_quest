@@ -11,10 +11,10 @@ class AppConstants {
     'Volcano Builder',
     'Volcano Investigation Center',
     'Eruption Warning Lab',
-    'Advanced Volcano Response',
+    'Assessment',
   ];
 
-  static const levelXP = [10, 15, 20, 30, 40, 50, 60, 70, 0];
+  static const levelXP = [10, 15, 20, 30, 40, 50, 60, 70, 100];
 
   static const missionOneId = 'mission_1';
   static const missionTwoId = 'mission_2';
@@ -28,6 +28,8 @@ class AppConstants {
   static const missionSevenCorrectAnswersId = 'mission_7_correct_answers';
   static const missionEightId = 'mission_8';
   static const missionEightCorrectAnswersId = 'mission_8_correct_answers';
+  static const missionNineId = 'mission_9';
+  static const missionNineCorrectAnswersId = 'mission_9_correct_answers';
   static const levelEightLessonId = 'level_8_field_lesson';
   static const levelEightLessonCompleteId = 'level_8_lesson_complete';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
@@ -42,6 +44,7 @@ class AppConstants {
   static const volcanoArchitectBadge = 'volcano_architect';
   static const lavaBridgeChampionBadge = 'lava_bridge_champion';
   static const eruptionWarningSpecialistBadge = 'eruption_warning_specialist';
+  static const volcanoMasterBadge = 'volcano_master';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
   static const missionFourXpPerCorrect = 30;
@@ -52,6 +55,7 @@ class AppConstants {
   static const missionEightXpDisplayPerCorrect = '12.5';
   static const missionEightXpPerCorrect = [12, 13, 12, 13];
   static const missionEightPerfectBonusXp = 20;
+  static const missionNineXp = 100;
   static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
@@ -94,6 +98,13 @@ class AppConstants {
     'crater_glow',
     'steaming',
     'ground_swelling',
+  ];
+  static const missionNineQuestionIds = [
+    'incorrect_statement',
+    'volcano_opening',
+    'sticky_lava_type',
+    'active_volcanoes',
+    'pinatubo_eruption',
   ];
   static const sideQuestVolcanoStructureQuestionIds = [
     'magma_chamber_storage',

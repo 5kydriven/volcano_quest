@@ -172,10 +172,10 @@ class _LevelEightFieldLessonScreenState
                   const SizedBox(height: 8),
                   LabButton(
                     label: isComplete
-                        ? 'RETURN TO MISSION MENU'
+                        ? 'CONTINUE TO LEVEL 9'
                         : 'COMPLETE LESSON',
                     isLoading: _isSaving,
-                    onTap: isComplete ? _returnToMenu : _completeLesson,
+                    onTap: isComplete ? _continueToLevelNine : _completeLesson,
                   ),
                 ],
               ),
@@ -204,8 +204,8 @@ class _LevelEightFieldLessonScreenState
     context.go(AppRoutes.level(9));
   }
 
-  void _returnToMenu() {
-    context.go(AppRoutes.menu);
+  void _continueToLevelNine() {
+    context.go(AppRoutes.level(9));
   }
 }
 
