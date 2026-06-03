@@ -28,6 +28,8 @@ class AppConstants {
   static const missionSevenCorrectAnswersId = 'mission_7_correct_answers';
   static const missionEightId = 'mission_8';
   static const missionEightCorrectAnswersId = 'mission_8_correct_answers';
+  static const levelEightLessonId = 'level_8_field_lesson';
+  static const levelEightLessonCompleteId = 'level_8_lesson_complete';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
   static const sideQuestVolcanoStructureCorrectAnswersId =
       'side_quest_volcano_structure_correct_answers';

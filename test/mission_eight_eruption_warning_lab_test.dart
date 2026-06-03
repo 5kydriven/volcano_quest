@@ -110,7 +110,7 @@ void main() {
     expect(find.text('ERUPTION WARNING SPECIALIST BADGE'), findsOneWidget);
     expect(find.text('4/4'), findsOneWidget);
     expect(find.text('70 XP'), findsWidgets);
-    expect(find.text('PROCEED TO MISSION 9'), findsOneWidget);
+    expect(find.text('READ FIELD LESSON'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 70);
@@ -145,7 +145,7 @@ void main() {
     expect(find.text('ERUPTION WARNING SPECIALIST BADGE'), findsNothing);
     expect(find.text('3/4'), findsOneWidget);
     expect(find.text('38 XP'), findsWidgets);
-    expect(find.text('PROCEED TO MISSION 9'), findsOneWidget);
+    expect(find.text('READ FIELD LESSON'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 38);
@@ -188,6 +188,39 @@ void main() {
       ),
       hasLength(1),
     );
+  });
+
+  testWidgets('level 9 is gated by the level 8 field lesson', (tester) async {
+    final prefs = await _pumpAppAtLevelNineWithoutLesson(tester);
+
+    await tester.tap(find.text('INITIALIZE MISSION'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('AVA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('READ FIELD LESSON'), findsOneWidget);
+    expect(find.text('Advanced Volcano Response'), findsOneWidget);
+
+    await tester.tap(find.text('READ FIELD LESSON'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('FIELD LESSON'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('COMPLETE LESSON'),
+      400,
+      scrollable: find.byType(Scrollable),
+    );
+    await tester.ensureVisible(find.text('COMPLETE LESSON'));
+    await tester.tap(find.text('COMPLETE LESSON'));
+    await tester.pumpAndSettle();
+
+    final savedPlayer = _loadSavedPlayer(prefs);
+    expect(savedPlayer.completedMissionOrbs[AppConstants.levelEightLessonId], [
+      AppConstants.levelEightLessonCompleteId,
+    ]);
+    expect(find.text('MISSION 9 UNLOCKED'), findsOneWidget);
+    expect(find.text('NEW RESEARCH BRIEFING AVAILABLE SOON'), findsOneWidget);
   });
 
   testWidgets('badge collection displays Eruption Warning Specialist', (
@@ -265,6 +298,34 @@ Future<void> _pumpAppAtLevelEight(WidgetTester tester) async {
     ),
   );
   await tester.pumpAndSettle();
+}
+
+Future<SharedPreferences> _pumpAppAtLevelNineWithoutLesson(
+  WidgetTester tester,
+) async {
+  const testPlayer = PlayerModel(
+    id: 'test-player',
+    name: 'Ava',
+    avatarIndex: 0,
+    currentLevel: 9,
+  );
+
+  SharedPreferences.setMockInitialValues({
+    AppConstants.prefPlayers: <String>[jsonEncode(testPlayer.toJson())],
+    AppConstants.prefActivePlayerId: testPlayer.id,
+    AppConstants.prefOnboardingDone: true,
+  });
+  final prefs = await SharedPreferences.getInstance();
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      child: const VolcanoQuestApp(),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  return prefs;
 }
 
 Future<void> _pumpBadges(

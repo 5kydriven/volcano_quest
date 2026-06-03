@@ -109,7 +109,8 @@ class _MissionEightEruptionWarningLabScreenState
                           earnedXP: _earnedXP(correctSigns),
                           isPerfect:
                               correctSigns.length == _warningSigns.length,
-                          onProceed: () => context.push(AppRoutes.level(9)),
+                          onProceed: () =>
+                              context.push(AppRoutes.levelEightLesson),
                         )
                       : _WarningContent(
                           sign: currentSign!,
@@ -756,7 +757,7 @@ class _MissionEightSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('PROCEED TO MISSION 9'),
+                  child: const Text('READ FIELD LESSON'),
                 ),
               ),
             ],

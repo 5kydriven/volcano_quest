@@ -224,17 +224,32 @@ class _MissionButton extends StatelessWidget {
               false,
         );
     final shouldShowSideQuest = missionThreeComplete && !sideQuestComplete;
+    final levelEightLessonComplete =
+        player.completedMissionOrbs[AppConstants.levelEightLessonId]?.contains(
+          AppConstants.levelEightLessonCompleteId,
+        ) ??
+        false;
+    final shouldShowLevelEightLesson =
+        !shouldShowSideQuest &&
+        player.currentLevel >= 9 &&
+        !levelEightLessonComplete;
     final levelName = shouldShowSideQuest
         ? 'Structure of a Volcano'
+        : shouldShowLevelEightLesson
+        ? 'Advanced Volcano Response'
         : AppConstants.levelNames[(player.currentLevel - 1).clamp(
             0,
             AppConstants.levelNames.length - 1,
           )];
     final actionLabel = shouldShowSideQuest
         ? 'START SIDE QUEST'
+        : shouldShowLevelEightLesson
+        ? 'READ FIELD LESSON'
         : 'CONTINUE MISSION';
     final badgeLabel = shouldShowSideQuest
         ? 'SIDE QUEST'
+        : shouldShowLevelEightLesson
+        ? 'BRIEFING'
         : 'LVL ${player.currentLevel}';
 
     return GestureDetector(
@@ -242,6 +257,8 @@ class _MissionButton extends StatelessWidget {
         context.push(
           shouldShowSideQuest
               ? AppRoutes.sideQuestVolcanoStructure
+              : shouldShowLevelEightLesson
+              ? AppRoutes.levelEightLesson
               : AppRoutes.level(player.currentLevel),
         );
       },

@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../features/badges/screens/badges_screen.dart';
 import '../../features/leaderboard/screens/leaderboard_screen.dart';
 import '../../features/main_menu/screens/main_menu_screen.dart';
 import '../../features/missions/screens/mission_eight_eruption_warning_lab_screen.dart';
 import '../../features/missions/screens/mission_four_map_quiz_screen.dart';
 import '../../features/missions/screens/mission_five_anatomy_lab_screen.dart';
+import '../../features/missions/screens/level_eight_field_lesson_screen.dart';
 import '../../features/missions/screens/mission_one_screen.dart';
 import '../../features/missions/screens/mission_seven_investigation_center_screen.dart';
 import '../../features/missions/screens/mission_six_volcano_builder_screen.dart';
@@ -16,6 +18,7 @@ import '../../features/missions/screens/volcano_structure_side_quest_screen.dart
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/player/screens/player_profiles_screen.dart';
+import '../../features/player/application/player_controller.dart';
 import 'app_routes.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -51,6 +54,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const VolcanoStructureSideQuestScreen(),
       ),
       GoRoute(
+        path: AppRoutes.levelEightLesson,
+        builder: (context, state) => const LevelEightFieldLessonScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.levelPath,
         builder: (context, state) {
           final levelId =
@@ -78,6 +85,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           }
           if (levelId == 8) {
             return MissionEightEruptionWarningLabScreen(levelId: levelId);
+          }
+          if (levelId == 9) {
+            final player = ref.read(playerProvider);
+            final lessonComplete =
+                player.completedMissionOrbs[AppConstants.levelEightLessonId]
+                    ?.contains(AppConstants.levelEightLessonCompleteId) ??
+                false;
+            if (!lessonComplete) {
+              return const LevelEightFieldLessonScreen();
+            }
           }
           return MissionUnlockedScreen(levelId: levelId);
         },

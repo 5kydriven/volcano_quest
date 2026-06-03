@@ -8,6 +8,7 @@ class AppRoutes {
   static const leaderboard = '/leaderboard';
   static const badges = '/badges';
   static const sideQuestVolcanoStructure = '/side-quest/volcano-structure';
+  static const levelEightLesson = '/level/8/field-lesson';
   static const levelPath = '/level/:levelId';
 
   static String level(int levelId) => '/level/$levelId';

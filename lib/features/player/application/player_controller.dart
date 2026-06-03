@@ -481,6 +481,31 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
     );
   }
 
+  Future<void> completeLevelEightLesson() async {
+    final completedLessons =
+        state.completedMissionOrbs[AppConstants.levelEightLessonId] ?? const [];
+    if (completedLessons.contains(AppConstants.levelEightLessonCompleteId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    updatedMissionProgress[AppConstants.levelEightLessonId] = [
+      ...completedLessons,
+      AppConstants.levelEightLessonCompleteId,
+    ];
+
+    final nextLevel = state.currentLevel < 9 ? 9 : state.currentLevel;
+    state = await _repo.savePlayer(
+      state.copyWith(
+        currentLevel: nextLevel,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
   Future<void> switchPlayer(String playerId) async {
     final players = _repo.loadPlayers();
     PlayerModel? selectedPlayer;
