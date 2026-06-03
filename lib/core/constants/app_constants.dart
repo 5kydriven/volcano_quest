@@ -22,6 +22,7 @@ class AppConstants {
   static const missionFourId = 'mission_4';
   static const missionFourCorrectAnswersId = 'mission_4_correct_answers';
   static const missionFiveId = 'mission_5';
+  static const missionSixId = 'mission_6';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
   static const sideQuestVolcanoStructureCorrectAnswersId =
       'side_quest_volcano_structure_correct_answers';
@@ -31,10 +32,12 @@ class AppConstants {
   static const philippineVolcanoExplorerBadge = 'philippine_volcano_explorer';
   static const volcanoExplorerChampionBadge = 'volcano_explorer_champion';
   static const magmaAnalystBadge = 'magma_analyst';
+  static const volcanoArchitectBadge = 'volcano_architect';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
   static const missionFourXpPerCorrect = 30;
   static const missionFiveXp = 40;
+  static const missionSixXp = 50;
   static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
@@ -63,6 +66,13 @@ class AppConstants {
     'crater',
     'lava_flow',
     'ash_cloud',
+  ];
+  static const missionSixBuilderPartIds = [
+    'base_left',
+    'base_right',
+    'middle_left_slope',
+    'middle_right_slope',
+    'top_crater',
   ];
   static const sideQuestVolcanoStructureQuestionIds = [
     'magma_chamber_storage',

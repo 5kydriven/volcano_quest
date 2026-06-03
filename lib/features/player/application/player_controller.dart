@@ -32,6 +32,7 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
   static const volcanoExplorerChampionBadge =
       AppConstants.volcanoExplorerChampionBadge;
   static const magmaAnalystBadge = AppConstants.magmaAnalystBadge;
+  static const volcanoArchitectBadge = AppConstants.volcanoArchitectBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -323,6 +324,43 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
     state = await _repo.savePlayer(
       state.copyWith(
         totalXP: state.totalXP + AppConstants.missionFiveXp,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
+  Future<void> completeMissionSixVolcanoBuilderPart(String partId) async {
+    final completedParts =
+        state.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
+    if (completedParts.contains(partId) ||
+        !AppConstants.missionSixBuilderPartIds.contains(partId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedCompletedParts = [...completedParts, partId];
+    updatedMissionProgress[AppConstants.missionSixId] = updatedCompletedParts;
+
+    final hasCompletedMissionSix = AppConstants.missionSixBuilderPartIds.every(
+      updatedCompletedParts.contains,
+    );
+    final updatedBadges =
+        hasCompletedMissionSix &&
+            !state.earnedBadges.contains(volcanoArchitectBadge)
+        ? [...state.earnedBadges, volcanoArchitectBadge]
+        : state.earnedBadges;
+    final nextLevel = hasCompletedMissionSix && state.currentLevel < 7
+        ? 7
+        : state.currentLevel;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + AppConstants.missionSixXp,
         currentLevel: nextLevel,
         earnedBadges: updatedBadges,
         completedMissionOrbs: updatedMissionProgress,

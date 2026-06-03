@@ -55,6 +55,12 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'magma_analyst',
           exp: 40,
         ),
+      if (badge == PlayerNotifier.volcanoArchitectBadge)
+        const BadgeCollectionItem(
+          name: 'Volcano Architect',
+          avatar: 'volcano_architect',
+          exp: 250,
+        ),
     ],
   ];
 });
