@@ -67,6 +67,12 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'lava_bridge',
           exp: 60,
         ),
+      if (badge == PlayerNotifier.eruptionWarningSpecialistBadge)
+        const BadgeCollectionItem(
+          name: 'Eruption Warning Specialist',
+          avatar: 'eruption_warning',
+          exp: 70,
+        ),
     ],
   ];
 });

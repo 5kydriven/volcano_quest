@@ -1,6 +1,6 @@
 class AppConstants {
   static const appVersion = 'v1.0.0';
-  static const totalLevels = 8;
+  static const totalLevels = 9;
 
   static const levelNames = [
     'Volcano Research Base',
@@ -11,9 +11,10 @@ class AppConstants {
     'Volcano Builder',
     'Volcano Investigation Center',
     'Eruption Warning Lab',
+    'Advanced Volcano Response',
   ];
 
-  static const levelXP = [10, 15, 20, 30, 40, 50, 60, 70];
+  static const levelXP = [10, 15, 20, 30, 40, 50, 60, 70, 0];
 
   static const missionOneId = 'mission_1';
   static const missionTwoId = 'mission_2';
@@ -25,6 +26,8 @@ class AppConstants {
   static const missionSixId = 'mission_6';
   static const missionSevenId = 'mission_7';
   static const missionSevenCorrectAnswersId = 'mission_7_correct_answers';
+  static const missionEightId = 'mission_8';
+  static const missionEightCorrectAnswersId = 'mission_8_correct_answers';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
   static const sideQuestVolcanoStructureCorrectAnswersId =
       'side_quest_volcano_structure_correct_answers';
@@ -36,6 +39,7 @@ class AppConstants {
   static const magmaAnalystBadge = 'magma_analyst';
   static const volcanoArchitectBadge = 'volcano_architect';
   static const lavaBridgeChampionBadge = 'lava_bridge_champion';
+  static const eruptionWarningSpecialistBadge = 'eruption_warning_specialist';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
   static const missionFourXpPerCorrect = 30;
@@ -43,6 +47,9 @@ class AppConstants {
   static const missionSixXp = 50;
   static const missionSevenXpPerCorrect = 10;
   static const missionSevenPerfectBonusXp = 20;
+  static const missionEightXpDisplayPerCorrect = '12.5';
+  static const missionEightXpPerCorrect = [12, 13, 12, 13];
+  static const missionEightPerfectBonusXp = 20;
   static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
@@ -80,6 +87,12 @@ class AppConstants {
     'top_crater',
   ];
   static const missionSevenVolcanoIds = ['mayon', 'taal', 'arayat', 'makiling'];
+  static const missionEightWarningSignIds = [
+    'tremors',
+    'crater_glow',
+    'steaming',
+    'ground_swelling',
+  ];
   static const sideQuestVolcanoStructureQuestionIds = [
     'magma_chamber_storage',
     'active_volcanoes_phivolcs',

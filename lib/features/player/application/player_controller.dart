@@ -34,6 +34,8 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
   static const magmaAnalystBadge = AppConstants.magmaAnalystBadge;
   static const volcanoArchitectBadge = AppConstants.volcanoArchitectBadge;
   static const lavaBridgeChampionBadge = AppConstants.lavaBridgeChampionBadge;
+  static const eruptionWarningSpecialistBadge =
+      AppConstants.eruptionWarningSpecialistBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -62,7 +64,7 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
 
   Future<void> advanceLevel() async {
     _mutationCount++;
-    final next = (state.currentLevel + 1).clamp(1, 8);
+    final next = (state.currentLevel + 1).clamp(1, AppConstants.totalLevels);
     state = await _repo.savePlayer(state.copyWith(currentLevel: next));
   }
 
@@ -411,6 +413,62 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
         : state.earnedBadges;
     final nextLevel = hasAttemptedAllVolcanoes && state.currentLevel < 8
         ? 8
+        : state.currentLevel;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + earnedXP,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
+  Future<void> submitMissionEightWarningSign({
+    required String signId,
+    required bool isCorrect,
+  }) async {
+    final attemptedSigns =
+        state.completedMissionOrbs[AppConstants.missionEightId] ?? const [];
+    if (attemptedSigns.contains(signId) ||
+        !AppConstants.missionEightWarningSignIds.contains(signId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final signIndex = AppConstants.missionEightWarningSignIds.indexOf(signId);
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedAttemptedSigns = [...attemptedSigns, signId];
+    final correctSigns =
+        state.completedMissionOrbs[AppConstants.missionEightCorrectAnswersId] ??
+        const [];
+    final updatedCorrectSigns = isCorrect
+        ? [...correctSigns, signId]
+        : correctSigns;
+
+    updatedMissionProgress[AppConstants.missionEightId] = updatedAttemptedSigns;
+    updatedMissionProgress[AppConstants.missionEightCorrectAnswersId] =
+        updatedCorrectSigns;
+
+    final hasAttemptedAllSigns = AppConstants.missionEightWarningSignIds.every(
+      updatedAttemptedSigns.contains,
+    );
+    final hasPerfectScore = AppConstants.missionEightWarningSignIds.every(
+      updatedCorrectSigns.contains,
+    );
+    final earnedXP =
+        (isCorrect ? AppConstants.missionEightXpPerCorrect[signIndex] : 0) +
+        (hasPerfectScore ? AppConstants.missionEightPerfectBonusXp : 0);
+    final updatedBadges =
+        hasPerfectScore &&
+            !state.earnedBadges.contains(eruptionWarningSpecialistBadge)
+        ? [...state.earnedBadges, eruptionWarningSpecialistBadge]
+        : state.earnedBadges;
+    final nextLevel = hasAttemptedAllSigns && state.currentLevel < 9
+        ? 9
         : state.currentLevel;
 
     state = await _repo.savePlayer(
