@@ -131,4 +131,9 @@ class AppConstants {
   static const String prefEarnedBadges = 'earned_badges';
   static const String prefPlayers = 'players';
   static const String prefActivePlayerId = 'active_player_id';
+  static const String prefSettingsMasterMuted = 'settings_master_muted';
+  static const String prefSettingsBgmMuted = 'settings_bgm_muted';
+  static const String prefSettingsSfxMuted = 'settings_sfx_muted';
+  static const String prefSettingsBgmVolume = 'settings_bgm_volume';
+  static const String prefSettingsSfxVolume = 'settings_sfx_volume';
 }

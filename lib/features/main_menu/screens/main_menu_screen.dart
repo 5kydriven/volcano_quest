@@ -82,7 +82,7 @@ class MainMenuScreen extends ConsumerWidget {
               _NavRow(
                 icon: Icons.settings_outlined,
                 label: 'Settings',
-                onTap: () {},
+                onTap: () => context.push(AppRoutes.settings),
               ),
               _Divider(),
               const SizedBox(height: 32),
@@ -169,15 +169,6 @@ class _TopBar extends StatelessWidget {
               ),
             ),
           ],
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: AppColors.textMuted,
-            size: 18,
-          ),
-          onPressed: () {},
         ),
       ],
     );

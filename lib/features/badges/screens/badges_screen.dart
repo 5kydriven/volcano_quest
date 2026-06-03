@@ -87,7 +87,7 @@ class _BadgesTopBar extends StatelessWidget {
               color: AppColors.textSecondary,
               size: 20,
             ),
-            onPressed: () {},
+            onPressed: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
