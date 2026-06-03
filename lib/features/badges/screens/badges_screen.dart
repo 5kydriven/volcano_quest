@@ -221,6 +221,7 @@ class _BadgeAvatar extends StatelessWidget {
       'champion' => Icons.workspace_premium_outlined,
       'seismic' => Icons.keyboard_voice_outlined,
       'crystal' => Icons.diamond_outlined,
+      'lava_bridge' => Icons.workspace_premium_outlined,
       _ => Icons.military_tech_outlined,
     };
 

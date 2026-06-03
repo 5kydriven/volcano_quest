@@ -61,6 +61,12 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
           avatar: 'volcano_architect',
           exp: 250,
         ),
+      if (badge == PlayerNotifier.lavaBridgeChampionBadge)
+        const BadgeCollectionItem(
+          name: 'Lava Bridge Champion',
+          avatar: 'lava_bridge',
+          exp: 60,
+        ),
     ],
   ];
 });

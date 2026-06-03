@@ -33,6 +33,7 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
       AppConstants.volcanoExplorerChampionBadge;
   static const magmaAnalystBadge = AppConstants.magmaAnalystBadge;
   static const volcanoArchitectBadge = AppConstants.volcanoArchitectBadge;
+  static const lavaBridgeChampionBadge = AppConstants.lavaBridgeChampionBadge;
 
   PlayerNotifier(this._repo) : super(PlayerModel.empty) {
     _load();
@@ -361,6 +362,60 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
     state = await _repo.savePlayer(
       state.copyWith(
         totalXP: state.totalXP + AppConstants.missionSixXp,
+        currentLevel: nextLevel,
+        earnedBadges: updatedBadges,
+        completedMissionOrbs: updatedMissionProgress,
+      ),
+    );
+  }
+
+  Future<void> submitMissionSevenVolcano({
+    required String volcanoId,
+    required bool isCorrect,
+  }) async {
+    final attemptedVolcanoes =
+        state.completedMissionOrbs[AppConstants.missionSevenId] ?? const [];
+    if (attemptedVolcanoes.contains(volcanoId) ||
+        !AppConstants.missionSevenVolcanoIds.contains(volcanoId)) {
+      return;
+    }
+
+    _mutationCount++;
+    final updatedMissionProgress = Map<String, List<String>>.from(
+      state.completedMissionOrbs,
+    );
+    final updatedAttemptedVolcanoes = [...attemptedVolcanoes, volcanoId];
+    final correctVolcanoes =
+        state.completedMissionOrbs[AppConstants.missionSevenCorrectAnswersId] ??
+        const [];
+    final updatedCorrectVolcanoes = isCorrect
+        ? [...correctVolcanoes, volcanoId]
+        : correctVolcanoes;
+    updatedMissionProgress[AppConstants.missionSevenId] =
+        updatedAttemptedVolcanoes;
+    updatedMissionProgress[AppConstants.missionSevenCorrectAnswersId] =
+        updatedCorrectVolcanoes;
+
+    final hasAttemptedAllVolcanoes = AppConstants.missionSevenVolcanoIds.every(
+      updatedAttemptedVolcanoes.contains,
+    );
+    final hasPerfectScore = AppConstants.missionSevenVolcanoIds.every(
+      updatedCorrectVolcanoes.contains,
+    );
+    final earnedXP =
+        (isCorrect ? AppConstants.missionSevenXpPerCorrect : 0) +
+        (hasPerfectScore ? AppConstants.missionSevenPerfectBonusXp : 0);
+    final updatedBadges =
+        hasPerfectScore && !state.earnedBadges.contains(lavaBridgeChampionBadge)
+        ? [...state.earnedBadges, lavaBridgeChampionBadge]
+        : state.earnedBadges;
+    final nextLevel = hasAttemptedAllVolcanoes && state.currentLevel < 8
+        ? 8
+        : state.currentLevel;
+
+    state = await _repo.savePlayer(
+      state.copyWith(
+        totalXP: state.totalXP + earnedXP,
         currentLevel: nextLevel,
         earnedBadges: updatedBadges,
         completedMissionOrbs: updatedMissionProgress,

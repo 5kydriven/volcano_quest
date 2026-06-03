@@ -23,6 +23,8 @@ class AppConstants {
   static const missionFourCorrectAnswersId = 'mission_4_correct_answers';
   static const missionFiveId = 'mission_5';
   static const missionSixId = 'mission_6';
+  static const missionSevenId = 'mission_7';
+  static const missionSevenCorrectAnswersId = 'mission_7_correct_answers';
   static const sideQuestVolcanoStructureId = 'side_quest_volcano_structure';
   static const sideQuestVolcanoStructureCorrectAnswersId =
       'side_quest_volcano_structure_correct_answers';
@@ -33,11 +35,14 @@ class AppConstants {
   static const volcanoExplorerChampionBadge = 'volcano_explorer_champion';
   static const magmaAnalystBadge = 'magma_analyst';
   static const volcanoArchitectBadge = 'volcano_architect';
+  static const lavaBridgeChampionBadge = 'lava_bridge_champion';
   static const missionTwoXpPerCorrect = 15;
   static const missionThreeXpPerWord = 20;
   static const missionFourXpPerCorrect = 30;
   static const missionFiveXp = 40;
   static const missionSixXp = 50;
+  static const missionSevenXpPerCorrect = 10;
+  static const missionSevenPerfectBonusXp = 20;
   static const sideQuestVolcanoStructureXp = [10, 10, 5];
   static const missionOneOrbIds = [
     'volcano_types',
@@ -74,6 +79,7 @@ class AppConstants {
     'middle_right_slope',
     'top_crater',
   ];
+  static const missionSevenVolcanoIds = ['mayon', 'taal', 'arayat', 'makiling'];
   static const sideQuestVolcanoStructureQuestionIds = [
     'magma_chamber_storage',
     'active_volcanoes_phivolcs',
