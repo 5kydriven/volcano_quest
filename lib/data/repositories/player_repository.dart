@@ -33,6 +33,10 @@ class PlayerRepository {
         .toList();
   }
 
+  String? loadActivePlayerId() {
+    return _prefs.getString(AppConstants.prefActivePlayerId);
+  }
+
   Future<void> migrateLegacyPlayer() async {
     if (loadPlayers().isNotEmpty) {
       return;

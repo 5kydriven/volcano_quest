@@ -1,70 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../application/leaderboard_controller.dart';
 
-class LeaderboardScreen extends StatelessWidget {
+class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});
 
-  static const _leaders = [
-    _TopScientist(
-      rank: 2,
-      name: 'Dr. Stone',
-      xp: '12,450 XP',
-      icon: Icons.biotech_outlined,
-    ),
-    _TopScientist(
-      rank: 1,
-      name: 'MagmaMax',
-      xp: '15,890 XP',
-      icon: Icons.rocket_launch,
-      isChampion: true,
-    ),
-    _TopScientist(
-      rank: 3,
-      name: 'PyroLog',
-      xp: '11,200 XP',
-      icon: Icons.science,
-    ),
-  ];
-
-  static const _rankings = [
-    _ScientistRanking(
-      rank: 4,
-      name: 'TerraNova',
-      xp: '10,850',
-      icon: Icons.link,
-    ),
-    _ScientistRanking(
-      rank: 5,
-      name: 'You (AlphaSci)',
-      xp: '9,420',
-      icon: Icons.person_search_outlined,
-      isCurrentPlayer: true,
-    ),
-    _ScientistRanking(
-      rank: 6,
-      name: 'GeoMind',
-      xp: '8,900',
-      icon: Icons.psychology_outlined,
-    ),
-    _ScientistRanking(
-      rank: 7,
-      name: 'AshWalker',
-      xp: '8,150',
-      icon: Icons.travel_explore_outlined,
-    ),
-    _ScientistRanking(
-      rank: 8,
-      name: 'CoreDiver',
-      xp: '7,600',
-      icon: Icons.public_outlined,
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leaderboard = ref.watch(leaderboardProvider);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -85,7 +33,7 @@ class LeaderboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'GLOBAL EXPEDITION STANDINGS',
+                'LOCAL EXPEDITION STANDINGS',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.teal,
@@ -95,12 +43,85 @@ class LeaderboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 34),
-              const _Podium(leaders: _leaders),
-              const SizedBox(height: 44),
-              const _RankingTable(rankings: _rankings),
+              leaderboard.when(
+                data: (entries) => _LeaderboardContent(entries: entries),
+                loading: () => const _LeaderboardStatus(
+                  icon: Icons.sync,
+                  title: 'SYNCING LAB DATA',
+                  message: 'Preparing scientist rankings...',
+                ),
+                error: (_, _) => const _LeaderboardStatus(
+                  icon: Icons.warning_amber_outlined,
+                  title: 'RANKINGS UNAVAILABLE',
+                  message: 'Leaderboard data could not be loaded.',
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LeaderboardContent extends StatelessWidget {
+  final List<LeaderboardEntry> entries;
+
+  const _LeaderboardContent({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return const _LeaderboardStatus(
+        icon: Icons.person_search_outlined,
+        title: 'NO SCIENTIST DATA FOUND',
+        message: 'Create a profile to enter the rankings.',
+      );
+    }
+
+    return Column(
+      children: [
+        _ScientistCount(totalScientists: entries.length),
+        const SizedBox(height: 24),
+        _Podium(leaders: entries.take(3).toList()),
+        const SizedBox(height: 44),
+        _RankingTable(rankings: entries),
+      ],
+    );
+  }
+}
+
+class _ScientistCount extends StatelessWidget {
+  final int totalScientists;
+
+  const _ScientistCount({required this.totalScientists});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = totalScientists == 1 ? 'SCIENTIST' : 'SCIENTISTS';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.borderAlt, width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.groups_2_outlined, color: AppColors.teal, size: 15),
+          const SizedBox(width: 8),
+          Text(
+            '$totalScientists $label TRACKED',
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -151,39 +172,60 @@ class _LeaderboardTopBar extends StatelessWidget {
 }
 
 class _Podium extends StatelessWidget {
-  final List<_TopScientist> leaders;
+  final List<LeaderboardEntry> leaders;
 
   const _Podium({required this.leaders});
 
   @override
   Widget build(BuildContext context) {
+    final leftScientist = leaders.length > 1 ? leaders[1] : null;
+    final centerScientist = leaders.first;
+    final rightScientist = leaders.length > 2 ? leaders[2] : null;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(child: _PodiumScientist(scientist: leaders[0])),
+        Expanded(child: _PodiumSlot(scientist: leftScientist)),
         const SizedBox(width: 10),
-        Expanded(child: _PodiumScientist(scientist: leaders[1])),
+        Expanded(child: _PodiumSlot(scientist: centerScientist)),
         const SizedBox(width: 10),
-        Expanded(child: _PodiumScientist(scientist: leaders[2])),
+        Expanded(child: _PodiumSlot(scientist: rightScientist)),
       ],
     );
   }
 }
 
+class _PodiumSlot extends StatelessWidget {
+  final LeaderboardEntry? scientist;
+
+  const _PodiumSlot({required this.scientist});
+
+  @override
+  Widget build(BuildContext context) {
+    final scientist = this.scientist;
+    if (scientist == null) {
+      return const SizedBox.shrink();
+    }
+
+    return _PodiumScientist(scientist: scientist);
+  }
+}
+
 class _PodiumScientist extends StatelessWidget {
-  final _TopScientist scientist;
+  final LeaderboardEntry scientist;
 
   const _PodiumScientist({required this.scientist});
 
   @override
   Widget build(BuildContext context) {
-    final badgeSize = scientist.isChampion ? 74.0 : 56.0;
+    final isChampion = scientist.rank == 1;
+    final badgeSize = isChampion ? 74.0 : 56.0;
 
     return Column(
       children: [
         SizedBox(
-          height: scientist.isChampion ? 16 : 0,
-          child: scientist.isChampion
+          height: isChampion ? 16 : 0,
+          child: isChampion
               ? const Icon(
                   Icons.workspace_premium,
                   color: AppColors.teal,
@@ -195,17 +237,15 @@ class _PodiumScientist extends StatelessWidget {
           width: badgeSize,
           height: badgeSize,
           decoration: BoxDecoration(
-            color: scientist.isChampion
+            color: isChampion
                 ? AppColors.teal.withValues(alpha: 0.14)
                 : AppColors.surface,
             border: Border.all(
-              color: scientist.isChampion
-                  ? AppColors.teal
-                  : AppColors.borderAlt,
-              width: scientist.isChampion ? 1.5 : 1,
+              color: isChampion ? AppColors.teal : AppColors.borderAlt,
+              width: isChampion ? 1.5 : 1,
             ),
             borderRadius: BorderRadius.circular(7),
-            boxShadow: scientist.isChampion
+            boxShadow: isChampion
                 ? [
                     BoxShadow(
                       color: AppColors.teal.withValues(alpha: 0.32),
@@ -216,30 +256,28 @@ class _PodiumScientist extends StatelessWidget {
                 : null,
           ),
           child: Icon(
-            scientist.icon,
+            _avatarIcon(scientist.avatarIndex),
             color: AppColors.teal,
-            size: scientist.isChampion ? 34 : 26,
+            size: isChampion ? 34 : 26,
           ),
         ),
         Transform.translate(
           offset: const Offset(0, -10),
           child: Container(
-            width: scientist.isChampion ? 30 : 22,
-            height: scientist.isChampion ? 30 : 22,
+            width: isChampion ? 30 : 22,
+            height: isChampion ? 30 : 22,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: scientist.isChampion
-                  ? AppColors.teal
-                  : AppColors.borderAlt,
+              color: isChampion ? AppColors.teal : AppColors.borderAlt,
               shape: BoxShape.circle,
             ),
             child: Text(
               '${scientist.rank}',
               style: TextStyle(
-                color: scientist.isChampion
+                color: isChampion
                     ? AppColors.background
                     : AppColors.textPrimary,
-                fontSize: scientist.isChampion ? 12 : 10,
+                fontSize: isChampion ? 12 : 10,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -265,7 +303,7 @@ class _PodiumScientist extends StatelessWidget {
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  scientist.xp,
+                  '${_formatNumber(scientist.totalXP)} XP',
                   maxLines: 1,
                   style: const TextStyle(
                     color: AppColors.teal,
@@ -283,7 +321,7 @@ class _PodiumScientist extends StatelessWidget {
 }
 
 class _RankingTable extends StatelessWidget {
-  final List<_ScientistRanking> rankings;
+  final List<LeaderboardEntry> rankings;
 
   const _RankingTable({required this.rankings});
 
@@ -332,7 +370,7 @@ class _RankingTable extends StatelessWidget {
 }
 
 class _RankingRow extends StatelessWidget {
-  final _ScientistRanking ranking;
+  final LeaderboardEntry ranking;
 
   const _RankingRow({required this.ranking});
 
@@ -375,7 +413,11 @@ class _RankingRow extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(ranking.icon, color: AppColors.textSecondary, size: 18),
+            child: Icon(
+              _avatarIcon(ranking.avatarIndex),
+              color: AppColors.textSecondary,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -396,7 +438,7 @@ class _RankingRow extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
-              ranking.xp,
+              _formatNumber(ranking.totalXP),
               style: const TextStyle(
                 color: AppColors.teal,
                 fontSize: 24,
@@ -410,34 +452,83 @@ class _RankingRow extends StatelessWidget {
   }
 }
 
-class _TopScientist {
-  final int rank;
-  final String name;
-  final String xp;
+class _LeaderboardStatus extends StatelessWidget {
   final IconData icon;
-  final bool isChampion;
+  final String title;
+  final String message;
 
-  const _TopScientist({
-    required this.rank,
-    required this.name,
-    required this.xp,
+  const _LeaderboardStatus({
     required this.icon,
-    this.isChampion = false,
+    required this.title,
+    required this.message,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.borderAlt, width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.teal, size: 28),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _ScientistRanking {
-  final int rank;
-  final String name;
-  final String xp;
-  final IconData icon;
-  final bool isCurrentPlayer;
+IconData _avatarIcon(int avatarIndex) {
+  const avatarIcons = [
+    Icons.person_outline,
+    Icons.biotech_outlined,
+    Icons.rocket_launch_outlined,
+    Icons.hub_outlined,
+    Icons.science_outlined,
+    Icons.public_outlined,
+    Icons.travel_explore_outlined,
+    Icons.psychology_outlined,
+  ];
 
-  const _ScientistRanking({
-    required this.rank,
-    required this.name,
-    required this.xp,
-    required this.icon,
-    this.isCurrentPlayer = false,
-  });
+  return avatarIcons[avatarIndex.clamp(0, avatarIcons.length - 1)];
+}
+
+String _formatNumber(int value) {
+  final digits = value.toString();
+  final buffer = StringBuffer();
+
+  for (var i = 0; i < digits.length; i++) {
+    final remaining = digits.length - i;
+    buffer.write(digits[i]);
+    if (remaining > 1 && remaining % 3 == 1) {
+      buffer.write(',');
+    }
+  }
+
+  return buffer.toString();
 }
