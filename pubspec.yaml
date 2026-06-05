@@ -1,6 +1,6 @@
 name: volcano_quest
-description: 'A new Flutter project.'
-publish_to: 'none'
+description: "A new Flutter project."
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -22,6 +22,7 @@ dependencies:
   flutter_animate: ^4.5.2
   just_audio: ^0.10.5
   confetti: ^0.8.0
+  video_player: ^2.10.1
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +34,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/images/
     - assets/avatars/Analyst_boy.png
     - assets/avatars/Analyst_girl.png
     - assets/avatars/Chemist_boy.jpeg
@@ -49,5 +51,5 @@ flutter:
     - assets/avatars/Scientist_girl.jpeg
     - assets/avatars/Strategist_boy.jpeg
     - assets/avatars/Strategist_girl.jpeg
-    - assets/videos/
+    - assets/videos/volcano.mp4
     - assets/models/
