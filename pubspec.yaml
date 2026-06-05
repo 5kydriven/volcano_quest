@@ -33,6 +33,21 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/avatars/
+    - assets/avatars/Analyst_boy.png
+    - assets/avatars/Analyst_girl.png
+    - assets/avatars/Chemist_boy.jpeg
+    - assets/avatars/Chemist_girl.jpeg
+    - assets/avatars/Explorer_boy.png
+    - assets/avatars/Explorer_girl.png
+    - assets/avatars/Geologist_boy.jpeg
+    - assets/avatars/Geologist_girl.jpeg
+    - assets/avatars/Observer_boy.jpeg
+    - assets/avatars/Observer_girl.jpeg
+    - assets/avatars/Researcher_boy.jpeg
+    - assets/avatars/Researcher_girl.png
+    - assets/avatars/Scientist_boy.jpeg
+    - assets/avatars/Scientist_girl.jpeg
+    - assets/avatars/Strategist_boy.jpeg
+    - assets/avatars/Strategist_girl.jpeg
     - assets/videos/
     - assets/models/

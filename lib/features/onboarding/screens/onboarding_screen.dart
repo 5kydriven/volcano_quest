@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../player/application/player_controller.dart';
@@ -18,26 +19,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _selectedAvatar = 0;
   bool _isSaving = false;
 
-  static const _avatarIcons = [
-    Icons.person_outline,
-    Icons.biotech_outlined,
-    Icons.rocket_launch_outlined,
-    Icons.hub_outlined,
-    Icons.science_outlined,
-    Icons.public_outlined,
-    Icons.travel_explore_outlined,
-    Icons.psychology_outlined,
-  ];
-
   static const _avatarLabels = [
-    'Scientist',
-    'Researcher',
-    'Explorer',
-    'Analyst',
-    'Chemist',
-    'Geologist',
-    'Observer',
-    'Strategist',
+    'Scientist Boy',
+    'Scientist Girl',
+    'Researcher Girl',
+    'Researcher Boy',
+    'Explorer Boy',
+    'Explorer Girl',
+    'Analyst Girl',
+    'Analyst Boy',
+    'Chemist Boy',
+    'Chemist Girl',
+    'Geologist Girl',
+    'Geologist Boy',
+    'Observer Boy',
+    'Observer Girl',
+    'Strategist Girl',
+    'Strategist Boy',
   ];
 
   Future<void> _deploy() async {
@@ -126,7 +124,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _avatarIcons.length,
+                itemCount: Assets.avatarImages.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
                   crossAxisSpacing: 10,
@@ -134,7 +132,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   childAspectRatio: 1,
                 ),
                 itemBuilder: (context, i) => _AvatarTile(
-                  icon: _avatarIcons[i],
+                  imagePath: Assets.avatarImages[i],
                   label: _avatarLabels[i],
                   isSelected: _selectedAvatar == i,
                   onTap: () => setState(() => _selectedAvatar = i),
@@ -171,13 +169,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 }
 
 class _AvatarTile extends StatelessWidget {
-  final IconData icon;
+  final String imagePath;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _AvatarTile({
-    required this.icon,
+    required this.imagePath,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -200,10 +198,13 @@ class _AvatarTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.teal : AppColors.textMuted,
-              size: 26,
+            ClipOval(
+              child: Image.asset(
+                imagePath,
+                width: isSelected ? 46 : 42,
+                height: isSelected ? 46 : 42,
+                fit: BoxFit.cover,
+              ),
             ),
             if (isSelected) ...[
               const SizedBox(height: 4),
