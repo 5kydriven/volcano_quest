@@ -2,6 +2,12 @@ class Assets {
   static const String splashBg = 'assets/images/splash_bg.png';
   static const String splashLogo = 'assets/images/splash_image.png';
   static const String initializeButton = 'assets/images/initialize_button.png';
+  static const String playerDatabaseBg = 'assets/images/splash_bg.png';
+  static const String closeButton = 'assets/images/close_button.png';
+  static const String profileContainer = 'assets/images/profile_container.png';
+  static const String checkImage = 'assets/images/check_image.png';
+  static const String createNewScientistButton =
+      'assets/images/create_new_scientist_button.png';
   static const String analystBoy = 'assets/avatars/Analyst_boy.png';
   static const String chemistGirl = 'assets/avatars/Chemist_girl.jpeg';
   static const String explorerGirl = 'assets/avatars/Explorer_girl.png';
