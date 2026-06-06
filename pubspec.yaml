@@ -23,12 +23,20 @@ dependencies:
   just_audio: ^0.10.5
   confetti: ^0.8.0
   video_player: ^2.10.1
+  cloud_firestore: ^6.5.0
+  firebase_core: ^4.10.0
+  connectivity_plus: ^7.1.1
+  sqlite3_flutter_libs: ^0.6.0+eol
+  path_provider: ^2.1.5
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   change_app_package_name: ^1.4.0
+  drift_dev: ^2.33.0
+  build_runner: ^2.15.0
 
 flutter:
   uses-material-design: true

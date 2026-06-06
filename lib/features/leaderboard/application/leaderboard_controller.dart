@@ -1,12 +1,106 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 
-import '../../../data/models/player_model.dart';
-import '../../../data/repositories/player_repository.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+
+import '../../../core/providers/app_database_provider.dart';
+import '../../../core/providers/firebase_firestore_provider.dart';
+import '../../../core/providers/shared_preferences_provider.dart';
+import '../../../data/repositories/leaderboard_repository.dart';
 import '../../player/application/player_controller.dart';
+
+export '../../../data/repositories/leaderboard_repository.dart'
+    show LeaderboardEntry, LeaderboardEntrySource, LeaderboardSyncStatus;
+
+final connectivityProvider = Provider<Connectivity>((ref) {
+  return Connectivity();
+});
+
+final leaderboardConnectionCheckerProvider =
+    Provider<LeaderboardConnectionChecker>((ref) {
+      final connectivity = ref.watch(connectivityProvider);
+      return ConnectivityLeaderboardConnectionChecker(connectivity);
+    });
+
+final leaderboardRemoteDataSourceProvider =
+    Provider<LeaderboardRemoteDataSource?>((ref) {
+      final firestore = ref.watch(firebaseFirestoreProvider);
+      if (firestore == null) {
+        return null;
+      }
+      return FirestoreLeaderboardRemoteDataSource(firestore);
+    });
 
 final leaderboardRepositoryProvider = Provider<LeaderboardRepository>((ref) {
   final playerRepository = ref.watch(playerRepositoryProvider);
-  return LocalLeaderboardRepository(playerRepository);
+  final database = ref.watch(appDatabaseProvider);
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final remoteDataSource = ref.watch(leaderboardRemoteDataSourceProvider);
+  final connectionChecker = ref.watch(leaderboardConnectionCheckerProvider);
+  return LeaderboardRepository(
+    playerRepository: playerRepository,
+    database: database,
+    prefs: prefs,
+    remoteDataSource: remoteDataSource,
+    connectionChecker: connectionChecker,
+  );
+});
+
+final leaderboardSyncStatusProvider = StateProvider<LeaderboardSyncSnapshot>((
+  ref,
+) {
+  return const LeaderboardSyncSnapshot(LeaderboardSyncStatus.unknown);
+});
+
+final leaderboardAutoSyncProvider = Provider<void>((ref) {
+  final remoteDataSource = ref.watch(leaderboardRemoteDataSourceProvider);
+  if (remoteDataSource == null) {
+    return;
+  }
+
+  ref.watch(playerProvider);
+  final repository = ref.watch(leaderboardRepositoryProvider);
+  final connectionChecker = ref.watch(leaderboardConnectionCheckerProvider);
+  var disposed = false;
+
+  Future<void> syncNow() async {
+    if (disposed) {
+      return;
+    }
+
+    ref.read(leaderboardSyncStatusProvider.notifier).state =
+        const LeaderboardSyncSnapshot(LeaderboardSyncStatus.syncing);
+    final result = await repository.syncIfOnline();
+    if (disposed) {
+      return;
+    }
+
+    ref
+        .read(leaderboardSyncStatusProvider.notifier)
+        .state = LeaderboardSyncSnapshot(
+      result.state,
+      syncedAt: result.syncedAt,
+      error: result.error,
+    );
+    ref.invalidate(leaderboardProvider);
+  }
+
+  unawaited(syncNow());
+  final subscription = connectionChecker.onConnectionChanged.listen((isOnline) {
+    if (isOnline) {
+      unawaited(syncNow());
+      return;
+    }
+
+    ref.read(leaderboardSyncStatusProvider.notifier).state =
+        const LeaderboardSyncSnapshot(LeaderboardSyncStatus.offline);
+  });
+
+  ref.onDispose(() {
+    disposed = true;
+    unawaited(subscription.cancel());
+  });
 });
 
 final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
@@ -15,112 +109,10 @@ final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
   return repository.loadEntries();
 });
 
-abstract class LeaderboardRepository {
-  Future<List<LeaderboardEntry>> loadEntries();
+class LeaderboardSyncSnapshot {
+  final LeaderboardSyncStatus state;
+  final DateTime? syncedAt;
+  final String? error;
+
+  const LeaderboardSyncSnapshot(this.state, {this.syncedAt, this.error});
 }
-
-class LocalLeaderboardRepository implements LeaderboardRepository {
-  final PlayerRepository _playerRepository;
-
-  const LocalLeaderboardRepository(this._playerRepository);
-
-  @override
-  Future<List<LeaderboardEntry>> loadEntries() async {
-    final activePlayerId = _playerRepository.loadActivePlayerId();
-    final entries = _playerRepository
-        .loadPlayers()
-        .map(
-          (player) => LeaderboardEntry.fromPlayer(
-            player,
-            isCurrentPlayer: player.id == activePlayerId,
-          ),
-        )
-        .toList();
-
-    entries.sort(_compareEntries);
-
-    return [
-      for (var i = 0; i < entries.length; i++) entries[i].copyWith(rank: i + 1),
-    ];
-  }
-
-  int _compareEntries(LeaderboardEntry a, LeaderboardEntry b) {
-    final xpComparison = b.totalXP.compareTo(a.totalXP);
-    if (xpComparison != 0) {
-      return xpComparison;
-    }
-
-    final levelComparison = b.currentLevel.compareTo(a.currentLevel);
-    if (levelComparison != 0) {
-      return levelComparison;
-    }
-
-    final badgeComparison = b.badgeCount.compareTo(a.badgeCount);
-    if (badgeComparison != 0) {
-      return badgeComparison;
-    }
-
-    return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-  }
-}
-
-class LeaderboardEntry {
-  final int rank;
-  final String playerId;
-  final String name;
-  final int avatarIndex;
-  final int totalXP;
-  final int currentLevel;
-  final int badgeCount;
-  final bool isCurrentPlayer;
-  final LeaderboardEntrySource source;
-
-  const LeaderboardEntry({
-    required this.rank,
-    required this.playerId,
-    required this.name,
-    required this.avatarIndex,
-    required this.totalXP,
-    required this.currentLevel,
-    required this.badgeCount,
-    required this.isCurrentPlayer,
-    required this.source,
-  });
-
-  factory LeaderboardEntry.fromPlayer(
-    PlayerModel player, {
-    required bool isCurrentPlayer,
-  }) {
-    return LeaderboardEntry(
-      rank: 0,
-      playerId: player.id,
-      name: player.name,
-      avatarIndex: player.avatarIndex,
-      totalXP: player.totalXP,
-      currentLevel: player.currentLevel,
-      badgeCount: player.earnedBadges.length,
-      isCurrentPlayer: isCurrentPlayer,
-      source: LeaderboardEntrySource.local,
-    );
-  }
-
-  LeaderboardEntry copyWith({
-    int? rank,
-    bool? isCurrentPlayer,
-    LeaderboardEntrySource? source,
-  }) {
-    return LeaderboardEntry(
-      rank: rank ?? this.rank,
-      playerId: playerId,
-      name: name,
-      avatarIndex: avatarIndex,
-      totalXP: totalXP,
-      currentLevel: currentLevel,
-      badgeCount: badgeCount,
-      isCurrentPlayer: isCurrentPlayer ?? this.isCurrentPlayer,
-      source: source ?? this.source,
-    );
-  }
-}
-
-enum LeaderboardEntrySource { local, remote }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -48,14 +50,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _logoFloat = Tween<double>(begin: -5, end: 5).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.easeInOutCubic),
     );
-    _videoController = VideoPlayerController.asset(Assets.volcanoBg)
-      ..setLooping(true)
-      ..setVolume(0)
-      ..initialize().then((_) {
-        if (!mounted) return;
-        setState(() {});
-        _videoController.play();
-      });
+    _videoController = VideoPlayerController.asset(Assets.volcanoBg);
+    try {
+      unawaited(_videoController.setLooping(true).catchError((_) {}));
+      unawaited(_videoController.setVolume(0).catchError((_) {}));
+      unawaited(
+        _videoController
+            .initialize()
+            .then((_) {
+              if (!mounted) return;
+              setState(() {});
+              _videoController.play();
+            })
+            .catchError((_) {}),
+      );
+    } on UnimplementedError {
+      // Widget tests and unsupported platforms can still use the static fallback.
+    }
   }
 
   @override
@@ -153,7 +164,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                         child: ConstrainedBox(
                                           constraints: BoxConstraints(
                                             maxWidth: logoWidth,
-                                            maxHeight: logoConstraints.maxHeight,
+                                            maxHeight:
+                                                logoConstraints.maxHeight,
                                           ),
                                           child: Image.asset(
                                             Assets.splashLogo,
@@ -254,10 +266,7 @@ class _InitializeMissionButton extends StatelessWidget {
   final double width;
   final VoidCallback onTap;
 
-  const _InitializeMissionButton({
-    required this.width,
-    required this.onTap,
-  });
+  const _InitializeMissionButton({required this.width, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

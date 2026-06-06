@@ -13,6 +13,7 @@ class LeaderboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final leaderboard = ref.watch(leaderboardProvider);
+    final syncStatus = ref.watch(leaderboardSyncStatusProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -43,6 +44,8 @@ class LeaderboardScreen extends ConsumerWidget {
                   letterSpacing: 1.4,
                 ),
               ),
+              const SizedBox(height: 14),
+              _SyncStatusBadge(syncStatus: syncStatus),
               const SizedBox(height: 34),
               leaderboard.when(
                 data: (entries) => _LeaderboardContent(entries: entries),
@@ -60,6 +63,73 @@ class LeaderboardScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SyncStatusBadge extends StatelessWidget {
+  final LeaderboardSyncSnapshot syncStatus;
+
+  const _SyncStatusBadge({required this.syncStatus});
+
+  @override
+  Widget build(BuildContext context) {
+    final content = switch (syncStatus.state) {
+      LeaderboardSyncStatus.syncing => (
+        Icons.sync,
+        'SYNCING ONLINE DATA',
+        AppColors.teal,
+      ),
+      LeaderboardSyncStatus.synced => (
+        Icons.cloud_done_outlined,
+        'ONLINE DATA SYNCED',
+        AppColors.teal,
+      ),
+      LeaderboardSyncStatus.offline => (
+        Icons.cloud_off_outlined,
+        'OFFLINE CACHE ACTIVE',
+        AppColors.textMuted,
+      ),
+      LeaderboardSyncStatus.error => (
+        Icons.warning_amber_outlined,
+        'SYNC FAILED - SHOWING CACHE',
+        AppColors.textMuted,
+      ),
+      LeaderboardSyncStatus.unavailable => (
+        Icons.storage_outlined,
+        'LOCAL CACHE ACTIVE',
+        AppColors.textMuted,
+      ),
+      LeaderboardSyncStatus.unknown => (
+        Icons.storage_outlined,
+        'LOCAL CACHE ACTIVE',
+        AppColors.textMuted,
+      ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.borderAlt, width: 0.5),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(content.$1, color: content.$3, size: 14),
+          const SizedBox(width: 8),
+          Text(
+            content.$2,
+            style: TextStyle(
+              color: content.$3,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ],
       ),
     );
   }
