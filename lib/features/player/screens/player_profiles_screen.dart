@@ -82,11 +82,12 @@ class PlayerProfilesScreen extends ConsumerWidget {
                         for (final player in players) ...[
                           _PlayerProfileTile(
                             player: player,
-                            avatarAsset:
-                                Assets.avatarImages[player.avatarIndex.clamp(
+                            avatarAsset: Assets
+                                .avatars[player.avatarIndex.clamp(
                                   0,
-                                  Assets.avatarImages.length - 1,
-                                )],
+                                  Assets.avatars.length - 1,
+                                )]
+                                .imagePath,
                             isActive: player.id == activePlayer.id,
                             onTap: () async {
                               await ref

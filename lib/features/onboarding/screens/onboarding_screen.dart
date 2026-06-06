@@ -19,25 +19,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _selectedAvatar = 0;
   bool _isSaving = false;
 
-  static const _avatarLabels = [
-    'Scientist Boy',
-    'Scientist Girl',
-    'Researcher Girl',
-    'Researcher Boy',
-    'Explorer Boy',
-    'Explorer Girl',
-    'Analyst Girl',
-    'Analyst Boy',
-    'Chemist Boy',
-    'Chemist Girl',
-    'Geologist Girl',
-    'Geologist Boy',
-    'Observer Boy',
-    'Observer Girl',
-    'Strategist Girl',
-    'Strategist Boy',
-  ];
-
   Future<void> _deploy() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -124,7 +105,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: Assets.avatarImages.length,
+                itemCount: Assets.avatars.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
                   crossAxisSpacing: 10,
@@ -132,15 +113,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   childAspectRatio: 1,
                 ),
                 itemBuilder: (context, i) => _AvatarTile(
-                  imagePath: Assets.avatarImages[i],
-                  label: _avatarLabels[i],
+                  imagePath: Assets.avatars[i].imagePath,
+                  label: Assets.avatars[i].label,
                   isSelected: _selectedAvatar == i,
                   onTap: () => setState(() => _selectedAvatar = i),
                 ),
               ),
 
               const SizedBox(height: 16),
-              _SelectedAvatarBanner(label: _avatarLabels[_selectedAvatar]),
+              _SelectedAvatarBanner(
+                label: Assets.avatars[_selectedAvatar].label,
+              ),
 
               const SizedBox(height: 28),
               LabButton(

@@ -9,24 +9,24 @@
 
 ### Phase 2
 
-- [] create level 1
-- [] create level 2
-- [] create level 3
-- [] create level 4
-- [] create level 5 (3D modeling)
+- [x] create level 1
+- [x] create level 2
+- [x] create level 3
+- [x] create level 4
+- [x] create level 5 (3D modeling)
 
 ### Phase 3
 
-- [] vfx effect for level 5
-- [] create level 6
-- [] create level 7
-- [] create level 8
-- [] create level 9
+- [x] vfx effect for level 5
+- [x] create level 6
+- [x] create level 7
+- [x] create level 8
+- [x] create level 9
 
 ### Phase 4
 
-- [] polish exp and progress
-- [] badge system
+- [x] polish exp and progress
+- [x] badge system
 - [] leaderboard
 - [] testing
 - [] performance optimization

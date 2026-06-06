@@ -1,3 +1,10 @@
+class AvatarAsset {
+  final String imagePath;
+  final String label;
+
+  const AvatarAsset({required this.imagePath, required this.label});
+}
+
 class Assets {
   static const String splashBg = 'assets/images/splash_bg.png';
   static const String splashLogo = 'assets/images/splash_image.png';
@@ -16,31 +23,15 @@ class Assets {
   static const String researcherGirl = 'assets/avatars/Researcher_girl.png';
   static const String scientistBoy = 'assets/avatars/Scientist_boy.jpeg';
   static const String strategistGirl = 'assets/avatars/Strategist_girl.jpeg';
-  static const String analystGirl = 'assets/avatars/Analyst_girl.png';
-  static const String chemistBoy = 'assets/avatars/Chemist_boy.jpeg';
-  static const String geologistGirl = 'assets/avatars/Geologist_girl.jpeg';
-  static const String observerGirl = 'assets/avatars/Observer_girl.jpeg';
-  static const String researcherBoy = 'assets/avatars/Researcher_boy.jpeg';
-  static const String scientistGirl = 'assets/avatars/Scientist_girl.jpeg';
-  static const String strategistBoy = 'assets/avatars/Strategist_boy.jpeg';
-  static const String explorerBoy = 'assets/avatars/Explorer_boy.png';
-  static const avatarImages = [
-    scientistBoy,
-    scientistGirl,
-    researcherGirl,
-    researcherBoy,
-    explorerBoy,
-    explorerGirl,
-    analystGirl,
-    analystBoy,
-    chemistBoy,
-    chemistGirl,
-    geologistGirl,
-    geologistBoy,
-    observerBoy,
-    observerGirl,
-    strategistGirl,
-    strategistBoy,
+  static const avatars = [
+    AvatarAsset(imagePath: scientistBoy, label: 'Scientist Boy'),
+    AvatarAsset(imagePath: researcherGirl, label: 'Researcher Boy'),
+    AvatarAsset(imagePath: explorerGirl, label: 'Explorer Boy'),
+    AvatarAsset(imagePath: analystBoy, label: 'Analyst Boy'),
+    AvatarAsset(imagePath: chemistGirl, label: 'Chemist Girl'),
+    AvatarAsset(imagePath: geologistBoy, label: 'Geologist Boy'),
+    AvatarAsset(imagePath: observerBoy, label: 'Observer Boy'),
+    AvatarAsset(imagePath: strategistGirl, label: 'Strategist Girl'),
   ];
   static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String volcanoCutaway =
