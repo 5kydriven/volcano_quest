@@ -6,6 +6,7 @@ import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../shared/widgets/hover_elevating_image.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -75,56 +76,44 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       backgroundColor: AppColors.background,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxHeight < 720;
-          final horizontalPadding = constraints.maxWidth < 420 ? 12.0 : 20.0;
+          var horizontalPadding = 20.0;
+          var topSpacing = 8.0;
+          var contentSpacing = 12.0;
+          var footerSpacing = 14.0;
+          var bottomSpacing = 24.0;
+          var maxLogoWidth = 760.0;
+
+          if (constraints.maxWidth < 420) {
+            horizontalPadding = 12.0;
+          }
+
+          if (constraints.maxHeight < 720) {
+            topSpacing = 0;
+            contentSpacing = 8.0;
+            footerSpacing = 8.0;
+            bottomSpacing = 14.0;
+            maxLogoWidth = 560.0;
+          }
+
           final logoWidth =
               (constraints.maxWidth - horizontalPadding).clamp(
                 340.0,
-                isCompact ? 560.0 : 760.0,
+                maxLogoWidth,
               ) *
               1.3;
-          final buttonWidth = (constraints.maxWidth - horizontalPadding * 2)
-              .clamp(260.0, isCompact ? 330.0 : 390.0);
-          final logoSlotHeight =
-              constraints.maxHeight * (isCompact ? 0.72 : 0.76);
+          final buttonWidth = constraints.maxWidth - horizontalPadding * 2;
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              _VideoBackground(controller: _videoController),
-              if (!_videoController.value.isInitialized)
-                Image.asset(
-                  Assets.splashBg,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.topCenter,
-                ),
-              if (_videoController.value.isInitialized)
-                ColoredBox(
-                  color: AppColors.background.withValues(alpha: 0.08),
-                ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0x330A0F1A),
-                      Color(0x8C0A0F1A),
-                      Color(0xF20A0F1A),
-                    ],
-                    stops: [0, 0.48, 1],
-                  ),
-                ),
-              ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment(0, -0.18),
-                    radius: 0.76,
-                    colors: [Color(0x00FF6A1A), Color(0x990A0F1A)],
-                    stops: [0.2, 1],
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  if (!_videoController.value.isInitialized) {
+                    return const ColoredBox(color: AppColors.background);
+                  }
+
+                  return _VideoBackground(controller: _videoController);
+                },
               ),
               SafeArea(
                 child: FadeTransition(
@@ -141,50 +130,91 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       padding: EdgeInsets.symmetric(
                         horizontal: horizontalPadding,
                       ),
-                      child: Column(
-                        children: [
-                          SizedBox(height: isCompact ? 0 : 8),
-                          SizedBox(
-                            height: logoSlotHeight,
-                            child: Center(
-                              child: AnimatedBuilder(
-                                animation: _logoController,
-                                builder: (context, child) {
-                                  return Transform.translate(
-                                    offset: Offset(0, _logoFloat.value),
-                                    child: Transform.scale(
-                                      scale: _logoPulse.value,
-                                      child: child,
-                                    ),
-                                  );
-                                },
-                                child: Image.asset(
-                                  Assets.splashLogo,
-                                  width: logoWidth,
-                                  height: logoSlotHeight,
-                                  fit: BoxFit.contain,
-                                  filterQuality: FilterQuality.high,
+                      child: Builder(
+                        builder: (context) {
+                          return Column(
+                            children: [
+                              SizedBox(height: topSpacing),
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (context, logoConstraints) {
+                                    return Center(
+                                      child: AnimatedBuilder(
+                                        animation: _logoController,
+                                        builder: (context, child) {
+                                          return Transform.translate(
+                                            offset: Offset(0, _logoFloat.value),
+                                            child: Transform.scale(
+                                              scale: _logoPulse.value,
+                                              child: child,
+                                            ),
+                                          );
+                                        },
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxWidth: logoWidth,
+                                            maxHeight: logoConstraints.maxHeight,
+                                          ),
+                                          child: Image.asset(
+                                            Assets.splashLogo,
+                                            fit: BoxFit.contain,
+                                            filterQuality: FilterQuality.high,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            ),
-                          ),
-                          const Spacer(),
-                          _InitializeMissionButton(
-                            width: buttonWidth,
-                            isCompact: isCompact,
-                            onTap: _onStart,
-                          ),
-                          SizedBox(height: isCompact ? 8 : 14),
-                          Text(
-                            '${AppConstants.appVersion} / PHIVOLCS LEARNING LAB',
-                            style: const TextStyle(
-                              color: AppColors.textDim,
-                              fontSize: 9,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                          SizedBox(height: isCompact ? 14 : 24),
-                        ],
+                              SizedBox(height: contentSpacing),
+                              Flexible(
+                                child: LayoutBuilder(
+                                  builder: (context, buttonConstraints) {
+                                    var buttonHeight =
+                                        buttonConstraints.maxHeight -
+                                        footerSpacing -
+                                        bottomSpacing -
+                                        16;
+                                    if (buttonHeight < 0) {
+                                      buttonHeight = 0;
+                                    }
+
+                                    return Column(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: buttonHeight,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.topCenter,
+                                            child: SizedBox(
+                                              width: buttonWidth,
+                                              child: _InitializeMissionButton(
+                                                width: buttonWidth,
+                                                onTap: _onStart,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: footerSpacing),
+                                        Text(
+                                          '${AppConstants.appVersion} / PHIVOLCS LEARNING LAB',
+                                          style: const TextStyle(
+                                            color: AppColors.textDim,
+                                            fontSize: 9,
+                                            letterSpacing: 1,
+                                          ),
+                                        ),
+                                        SizedBox(height: bottomSpacing),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -220,24 +250,14 @@ class _VideoBackground extends StatelessWidget {
   }
 }
 
-class _InitializeMissionButton extends StatefulWidget {
+class _InitializeMissionButton extends StatelessWidget {
   final double width;
-  final bool isCompact;
   final VoidCallback onTap;
 
   const _InitializeMissionButton({
     required this.width,
-    required this.isCompact,
     required this.onTap,
   });
-
-  @override
-  State<_InitializeMissionButton> createState() =>
-      _InitializeMissionButtonState();
-}
-
-class _InitializeMissionButtonState extends State<_InitializeMissionButton> {
-  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -246,56 +266,16 @@ class _InitializeMissionButtonState extends State<_InitializeMissionButton> {
       label: 'Initialize mission',
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedScale(
-            scale: _isHovered ? 1.04 : 1,
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            child: AnimatedOpacity(
-              opacity: _isHovered ? 0.92 : 1,
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
-              child: _CroppedSplashAsset(
-                assetPath: Assets.initializeButton,
-                width: widget.width,
-                heightFactor: widget.isCompact ? 0.18 : 0.22,
-                alignment: const Alignment(0, -0.24),
-              ),
-            ),
+          onTap: onTap,
+          child: HoverElevatingImage(
+            image: const AssetImage(Assets.initializeButton),
+            width: width,
+            heightFactor: 0.11,
+            alignment: const Alignment(0, -0.12),
+            hoverOffset: 10,
+            shadowColor: Colors.black54,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CroppedSplashAsset extends StatelessWidget {
-  final String assetPath;
-  final double width;
-  final double heightFactor;
-  final Alignment alignment;
-
-  const _CroppedSplashAsset({
-    required this.assetPath,
-    required this.width,
-    required this.heightFactor,
-    required this.alignment,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRect(
-      child: Align(
-        alignment: alignment,
-        heightFactor: heightFactor,
-        child: Image.asset(
-          assetPath,
-          width: width,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
         ),
       ),
     );
