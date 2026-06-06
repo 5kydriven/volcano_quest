@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../application/leaderboard_controller.dart';
@@ -255,10 +256,15 @@ class _PodiumScientist extends StatelessWidget {
                   ]
                 : null,
           ),
-          child: Icon(
-            _avatarIcon(scientist.avatarIndex),
-            color: AppColors.teal,
-            size: isChampion ? 34 : 26,
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: Image.asset(
+                _avatarAssetPath(scientist.avatarIndex),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
         Transform.translate(
@@ -413,10 +419,15 @@ class _RankingRow extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(
-              _avatarIcon(ranking.avatarIndex),
-              color: AppColors.textSecondary,
-              size: 18,
+            child: Padding(
+              padding: const EdgeInsets.all(1),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: Image.asset(
+                  _avatarAssetPath(ranking.avatarIndex),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -503,19 +514,10 @@ class _LeaderboardStatus extends StatelessWidget {
   }
 }
 
-IconData _avatarIcon(int avatarIndex) {
-  const avatarIcons = [
-    Icons.person_outline,
-    Icons.biotech_outlined,
-    Icons.rocket_launch_outlined,
-    Icons.hub_outlined,
-    Icons.science_outlined,
-    Icons.public_outlined,
-    Icons.travel_explore_outlined,
-    Icons.psychology_outlined,
-  ];
-
-  return avatarIcons[avatarIndex.clamp(0, avatarIcons.length - 1)];
+String _avatarAssetPath(int avatarIndex) {
+  return Assets
+      .avatars[avatarIndex.clamp(0, Assets.avatars.length - 1)]
+      .imagePath;
 }
 
 String _formatNumber(int value) {

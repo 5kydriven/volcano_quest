@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_routes.dart';
@@ -125,7 +126,7 @@ class _TopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _AvatarCircle(avatarIndex: player.avatarIndex),
+        _AvatarSquare(avatarIndex: player.avatarIndex),
         const SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,35 +176,28 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _AvatarCircle extends StatelessWidget {
+class _AvatarSquare extends StatelessWidget {
   final int avatarIndex;
-  const _AvatarCircle({required this.avatarIndex});
-
-  static const _icons = [
-    Icons.person_outline,
-    Icons.biotech_outlined,
-    Icons.rocket_launch_outlined,
-    Icons.hub_outlined,
-    Icons.science_outlined,
-    Icons.public_outlined,
-    Icons.travel_explore_outlined,
-    Icons.psychology_outlined,
-  ];
+  const _AvatarSquare({required this.avatarIndex});
 
   @override
   Widget build(BuildContext context) {
+    final avatarAsset = Assets
+        .avatars[avatarIndex.clamp(0, Assets.avatars.length - 1)]
+        .imagePath;
+
     return Container(
       width: 40,
       height: 40,
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
         color: AppColors.surfaceAlt,
         border: Border.all(color: AppColors.teal, width: 1),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Icon(
-        _icons[avatarIndex.clamp(0, _icons.length - 1)],
-        color: AppColors.teal,
-        size: 20,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(5),
+        child: Image.asset(avatarAsset, fit: BoxFit.cover),
       ),
     );
   }
