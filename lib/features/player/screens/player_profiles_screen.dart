@@ -150,7 +150,7 @@ class _Header extends StatelessWidget {
                   SizedBox(width: 10),
                   Flexible(
                     child: Text(
-                      'LOCAL PLAYER DATABASE',
+                      'LOCAL PLAYERS',
                       style: TextStyle(
                         color: Color(0xFFD59873),
                         fontSize: 11,

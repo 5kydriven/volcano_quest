@@ -19,6 +19,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _selectedAvatar = 0;
   bool _isSaving = false;
 
+  void _cancel() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.go(AppRoutes.players);
+  }
+
   Future<void> _deploy() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
@@ -59,8 +68,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              TextButton.icon(
+                onPressed: _isSaving ? null : _cancel,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: const Text(
+                  'CANCEL',
+                  style: TextStyle(fontSize: 10, letterSpacing: 1.5),
+                ),
+              ),
+              const SizedBox(height: 8),
               const Text(
-                'STEP 1 OF 1 · SCIENTIST PROFILE',
+                'SCIENTIST PROFILE',
                 style: TextStyle(
                   color: AppColors.textMuted,
                   fontSize: 10,

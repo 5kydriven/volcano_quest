@@ -24,14 +24,14 @@ class Assets {
   static const String scientistBoy = 'assets/avatars/Scientist_boy.jpeg';
   static const String strategistGirl = 'assets/avatars/Strategist_girl.jpeg';
   static const avatars = [
-    AvatarAsset(imagePath: scientistBoy, label: 'Scientist Boy'),
-    AvatarAsset(imagePath: researcherGirl, label: 'Researcher Boy'),
-    AvatarAsset(imagePath: explorerGirl, label: 'Explorer Boy'),
-    AvatarAsset(imagePath: analystBoy, label: 'Analyst Boy'),
-    AvatarAsset(imagePath: chemistGirl, label: 'Chemist Girl'),
-    AvatarAsset(imagePath: geologistBoy, label: 'Geologist Boy'),
-    AvatarAsset(imagePath: observerBoy, label: 'Observer Boy'),
-    AvatarAsset(imagePath: strategistGirl, label: 'Strategist Girl'),
+    AvatarAsset(imagePath: scientistBoy, label: 'Scientist'),
+    AvatarAsset(imagePath: researcherGirl, label: 'Researcher'),
+    AvatarAsset(imagePath: explorerGirl, label: 'Explorer'),
+    AvatarAsset(imagePath: analystBoy, label: 'Analyst'),
+    AvatarAsset(imagePath: chemistGirl, label: 'Chemist'),
+    AvatarAsset(imagePath: geologistBoy, label: 'Geologist'),
+    AvatarAsset(imagePath: observerBoy, label: 'Observer'),
+    AvatarAsset(imagePath: strategistGirl, label: 'Strategist'),
   ];
   static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String volcanoCutaway =
