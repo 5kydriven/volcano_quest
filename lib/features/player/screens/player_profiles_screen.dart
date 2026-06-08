@@ -16,7 +16,6 @@ class PlayerProfilesScreen extends ConsumerWidget {
     final activePlayer = ref.watch(playerProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080B12),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -35,15 +34,7 @@ class PlayerProfilesScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment(0.1, -0.18),
-                radius: 0.88,
-                colors: [Color(0x55FF7A1A), Color(0x00000000)],
-              ),
-            ),
-          ),
+
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
