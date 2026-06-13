@@ -13,22 +13,6 @@ class Assets {
   static const String closeButton = 'assets/images/close_button.png';
   static const String profileContainer = 'assets/images/profile_container.png';
   static const String checkImage = 'assets/images/check_image.png';
-  static const String mainMenuSwitchPlayerButton =
-      'assets/images/switch_player_button.png';
-  static const String mainMenuTotalExpContainer =
-      'assets/images/total_exp_container.png';
-  static const String mainMenuTitle = 'assets/images/volcano_quest.png';
-  static const String mainMenuAvatarBorder = 'assets/images/avatar_border.png';
-  static const String mainMenuLeaderboardButtonList =
-      'assets/images/leaderboard_button.png';
-  static const String mainMenuBadgeCollectionButton =
-      'assets/images/badge_collection_button.png';
-  static const String mainMenuBadgeEarned = 'assets/images/badge_earned.png';
-  static const String mainMenuMission = 'assets/images/mission.png';
-  static const String mainMenuMissionDone = 'assets/images/mission_done.png';
-  static const String mainMenuProgress = 'assets/images/progress.png';
-  static const String mainMenuSettingsButton =
-      'assets/images/settings_button.png';
   static const String createNewScientistButton =
       'assets/images/create_new_scientist_button.png';
   static const String analystBoy = 'assets/avatars/Analyst_boy.png';

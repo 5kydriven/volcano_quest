@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
-import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/routing/app_routes.dart';
 import '../../../data/models/player_model.dart';
 import '../../player/application/player_controller.dart';
+import '../../../shared/widgets/lab_widgets.dart';
 
 class MainMenuScreen extends ConsumerWidget {
   const MainMenuScreen({super.key});
@@ -20,257 +20,195 @@ class MainMenuScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(Assets.splashBg, fit: BoxFit.cover),
-          ),
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: Color(0x330A0F1A)),
-            ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 520),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildHeader(player),
-                      const SizedBox(height: 12),
-                      _buildTitle(),
-                      const SizedBox(height: 18),
-                      _buildMissionButton(context, player),
-                      const SizedBox(height: 14),
-                      _buildProgressSection(progress, missionsDone),
-                      const SizedBox(height: 14),
-                      _buildStatsRow(player, missionsDone),
-                      const SizedBox(height: 14),
-                      _buildNavButton(
-                        context: context,
-                        asset: Assets.mainMenuLeaderboardButtonList,
-                        onTap: () => context.push(AppRoutes.leaderboard),
-                      ),
-                      const SizedBox(height: 2),
-                      _buildNavButton(
-                        context: context,
-                        asset: Assets.mainMenuBadgeCollectionButton,
-                        badge: player.earnedBadges.isNotEmpty
-                            ? '${player.earnedBadges.length}'
-                            : null,
-                        onTap: () => context.push(AppRoutes.badges),
-                      ),
-                      const SizedBox(height: 2),
-                      _buildNavButton(
-                        context: context,
-                        asset: Assets.mainMenuSwitchPlayerButton,
-                        onTap: () => context.go(AppRoutes.players),
-                      ),
-                      const SizedBox(height: 2),
-                      _buildNavButton(
-                        context: context,
-                        asset: Assets.mainMenuSettingsButton,
-                        onTap: () => context.push(AppRoutes.settings),
-                      ),
-                      const SizedBox(height: 18),
-                      _buildFooter(),
-                    ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _TopBar(player: player),
+              const SizedBox(height: 20),
+              const Text(
+                'Volcano Quest',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'VOLCANO RESEARCH LAB · ACTIVE',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const ScanLine(),
+              const SizedBox(height: 16),
+              _MissionButton(player: player),
+              const SizedBox(height: 12),
+              _ProgressSection(
+                progress: progress,
+                missionsDone: missionsDone,
+                player: player,
+              ),
+              const SizedBox(height: 16),
+              _StatsRow(player: player, missionsDone: missionsDone),
+              const SizedBox(height: 20),
+              _Divider(),
+              _NavRow(
+                icon: Icons.emoji_events_outlined,
+                label: 'Leaderboard',
+                onTap: () => context.push(AppRoutes.leaderboard),
+              ),
+              _Divider(),
+              _NavRow(
+                icon: Icons.military_tech_outlined,
+                label: 'Badge collection',
+                badge: player.earnedBadges.isNotEmpty
+                    ? '${player.earnedBadges.length}'
+                    : null,
+                onTap: () => context.push(AppRoutes.badges),
+              ),
+              _Divider(),
+              _NavRow(
+                icon: Icons.switch_account_outlined,
+                label: 'Switch player',
+                onTap: () => context.go(AppRoutes.players),
+              ),
+              _Divider(),
+              _NavRow(
+                icon: Icons.settings_outlined,
+                label: 'Settings',
+                onTap: () => context.push(AppRoutes.settings),
+              ),
+              _Divider(),
+              const SizedBox(height: 32),
+              Center(
+                child: Text(
+                  '${AppConstants.appVersion} · PHIVOLCS LEARNING LAB',
+                  style: const TextStyle(
+                    color: AppColors.textDim,
+                    fontSize: 9,
+                    letterSpacing: 1,
                   ),
                 ),
               ),
-            ),
+              const SizedBox(height: 16),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  int _completedMissionCount(PlayerModel player) {
-    final missionNineComplete = AppConstants.missionNineQuestionIds.every(
-      (id) =>
-          player.completedMissionOrbs[AppConstants.missionNineId]?.contains(
-            id,
-          ) ??
-          false,
-    );
-    if (missionNineComplete) {
-      return AppConstants.totalLevels;
-    }
-    return (player.currentLevel - 1).clamp(0, AppConstants.totalLevels);
+int _completedMissionCount(PlayerModel player) {
+  final missionNineComplete = AppConstants.missionNineQuestionIds.every(
+    (id) =>
+        player.completedMissionOrbs[AppConstants.missionNineId]?.contains(id) ??
+        false,
+  );
+  if (missionNineComplete) {
+    return AppConstants.totalLevels;
   }
+  return (player.currentLevel - 1).clamp(0, AppConstants.totalLevels);
+}
 
-  Widget _buildHeader(PlayerModel player) {
-    final avatarAsset = Assets
-        .avatars[player.avatarIndex.clamp(0, Assets.avatars.length - 1)]
-        .imagePath;
+class _TopBar extends StatelessWidget {
+  final PlayerModel player;
+  const _TopBar({required this.player});
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 390;
-        final avatarSize = compact ? 112.0 : 136.0;
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _AvatarSquare(avatarIndex: player.avatarIndex),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: avatarSize,
-                    height: avatarSize,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: avatarSize * 0.58,
-                          height: avatarSize * 0.58,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFF20140F),
-                          ),
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(avatarSize),
-                          child: Image.asset(
-                            avatarAsset,
-                            width: avatarSize * 0.45,
-                            height: avatarSize * 0.45,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: Image.asset(
-                            Assets.mainMenuAvatarBorder,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          player.name.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: const Color(0xFFFF8A18),
-                            fontSize: compact ? 22 : 30,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0,
-                            shadows: const [
-                              Shadow(
-                                color: Color(0xFF3B170C),
-                                offset: Offset(1.5, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'LEVEL ${player.currentLevel} SCIENTIST',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: const Color.fromARGB(255, 222, 218, 217),
-                            fontSize: compact ? 13 : 16,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+            Text(
+              player.name.toUpperCase(),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                letterSpacing: 1.2,
               ),
             ),
-            SizedBox(width: compact ? 6 : 8),
-            SizedBox(
-              width: compact ? 72 : 86,
-              child: Column(
-                children: [_buildCounterPlate('${player.totalXP}', 'XP')],
+            Text(
+              'LEVEL ${player.currentLevel} SCIENTIST',
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1.2,
               ),
             ),
           ],
-        );
-      },
-    );
-  }
-
-  Widget _buildCounterPlate(String value, String label) {
-    return AspectRatio(
-      aspectRatio: 1.42,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              Assets.mainMenuTotalExpContainer,
-              fit: BoxFit.cover,
+        ),
+        const Spacer(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${player.totalXP} XP',
+              style: const TextStyle(
+                color: AppColors.teal,
+                fontSize: 14,
+                letterSpacing: 1,
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(26, 4, 10, 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      color: Color(0xFFFF9D1B),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 7,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0,
-                  ),
-                ),
-              ],
+            const Text(
+              'TOTAL',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1.5,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return Column(
-      children: [
-        Image.asset(Assets.mainMenuTitle, fit: BoxFit.contain),
-        const SizedBox(height: 1),
-        const Opacity(
-          opacity: 0.01,
-          child: Text(
-            'Volcano Quest',
-            style: TextStyle(fontSize: 1, letterSpacing: 0),
-          ),
+          ],
         ),
       ],
     );
   }
+}
 
-  Widget _buildMissionButton(BuildContext context, PlayerModel player) {
+class _AvatarSquare extends StatelessWidget {
+  final int avatarIndex;
+  const _AvatarSquare({required this.avatarIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarAsset = Assets
+        .avatars[avatarIndex.clamp(0, Assets.avatars.length - 1)]
+        .imagePath;
+
+    return Container(
+      width: 40,
+      height: 40,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        border: Border.all(color: AppColors.teal, width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(5),
+        child: Image.asset(avatarAsset, fit: BoxFit.cover),
+      ),
+    );
+  }
+}
+
+class _MissionButton extends StatelessWidget {
+  final PlayerModel player;
+  const _MissionButton({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
     final missionThreeComplete = AppConstants.missionThreeWordIds.every(
       (id) =>
           player.completedMissionOrbs[AppConstants.missionThreeId]?.contains(
@@ -326,73 +264,52 @@ class MainMenuScreen extends ConsumerWidget {
               : AppRoutes.level(player.currentLevel),
         );
       },
-      child: SizedBox(
-        height: 146,
-        child: Stack(
-          alignment: Alignment.center,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceAlt,
+          border: Border.all(color: AppColors.teal, width: 1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
           children: [
-            Positioned.fill(
-              child: Image.asset(Assets.mainMenuMission, fit: BoxFit.fill),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  actionLabel,
+                  style: const TextStyle(
+                    color: AppColors.teal,
+                    fontSize: 14,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  levelName,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
-            Positioned(
-              left: 117,
-              right: 92,
-              top: 40,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    actionLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFFFFA51F),
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                      shadows: [
-                        Shadow(
-                          color: Color(0xFF351709),
-                          offset: Offset(1.5, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    levelName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ],
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.tealDark,
+                border: Border.all(color: AppColors.teal, width: 0.5),
+                borderRadius: BorderRadius.circular(4),
               ),
-            ),
-            Positioned(
-              right: 22,
-              child: Container(
-                width: 70,
-                height: 44,
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: Text(
-                      badgeLabel,
-                      style: const TextStyle(
-                        color: Color(0xFFFF8D17),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                  ),
+              child: Text(
+                badgeLabel,
+                style: const TextStyle(
+                  color: AppColors.teal,
+                  fontSize: 9,
+                  letterSpacing: 1.2,
                 ),
               ),
             ),
@@ -401,161 +318,193 @@ class MainMenuScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildProgressSection(double progress, int missionsDone) {
+class _ProgressSection extends StatelessWidget {
+  final double progress;
+  final int missionsDone;
+  final PlayerModel player;
+  const _ProgressSection({
+    required this.progress,
+    required this.missionsDone,
+    required this.player,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: SizedBox(
-                height: 100,
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Positioned.fill(
-                      child: Image.asset(
-                        Assets.mainMenuProgress,
-                        fit: BoxFit.fill,
-                      ),
-                    ),
-                    Positioned(
-                      top: 53,
-                      left: 61,
-                      right: 23,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(7),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 18,
-                          backgroundColor: Colors.transparent,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            Color(0xFFFF6716),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            const Text(
+              'MISSION PROGRESS',
+              style: TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1.5,
+              ),
+            ),
+            Text(
+              '$missionsDone/${AppConstants.totalLevels} COMPLETE',
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 9,
+                letterSpacing: 1,
               ),
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 6,
+            backgroundColor: AppColors.surface,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
+          ),
+        ),
       ],
     );
   }
+}
 
-  Widget _buildStatsRow(PlayerModel player, int missionsDone) {
+class _StatsRow extends StatelessWidget {
+  final PlayerModel player;
+  final int missionsDone;
+  const _StatsRow({required this.player, required this.missionsDone});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
-          child: _buildStatPanel(
+          child: _StatCard(
+            icon: Icons.military_tech_outlined,
+            label: 'BADGES EARNED',
             value: '${player.earnedBadges.length}',
-            asset: Assets.mainMenuBadgeEarned,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _buildStatPanel(
+          child: _StatCard(
+            icon: Icons.bar_chart_outlined,
+            label: 'MISSIONS DONE',
             value: '$missionsDone/${AppConstants.totalLevels}',
-            asset: Assets.mainMenuMissionDone,
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildStatPanel({required String value, required String asset}) {
-    return SizedBox(
-      height: 96,
-      child: Stack(
-        alignment: Alignment.center,
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.borderAlt, width: 0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned.fill(child: Image.asset(asset, fit: BoxFit.cover)),
-          Positioned(
-            left: 101,
-            right: 10,
-            bottom: 14,
-            child: FittedBox(
-              alignment: Alignment.centerLeft,
-              fit: BoxFit.scaleDown,
-              child: Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0,
-                  shadows: [
-                    Shadow(color: Color(0xAA000000), offset: Offset(1.5, 2)),
-                  ],
-                ),
-              ),
+          Icon(icon, color: AppColors.teal, size: 18),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 9,
+              letterSpacing: 1.2,
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 22),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildNavButton({
-    required BuildContext context,
-    required String asset,
-    required VoidCallback onTap,
-    String? badge,
-  }) {
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(color: AppColors.border, thickness: 0.5, height: 0);
+  }
+}
+
+class _NavRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? badge;
+  final VoidCallback onTap;
+
+  const _NavRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.badge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      splashColor: const Color(0x33FF6716),
-      child: SizedBox(
-        height: 76,
-        child: Stack(
-          alignment: Alignment.center,
+      splashColor: AppColors.teal.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
           children: [
-            Positioned.fill(child: Image.asset(asset, fit: BoxFit.fill)),
-            if (badge != null)
-              Positioned(
-                right: 54,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A211B),
-                    border: Border.all(
-                      color: const Color(0xFFFF8D17),
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    badge,
-                    style: const TextStyle(
-                      color: Color(0xFFFFA51F),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0,
-                    ),
-                  ),
+            Icon(icon, color: AppColors.teal, size: 18),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                letterSpacing: 0.3,
+              ),
+            ),
+            if (badge != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  border: Border.all(color: AppColors.teal, width: 0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  badge!,
+                  style: const TextStyle(color: AppColors.teal, fontSize: 9),
                 ),
               ),
+            ],
+            const Spacer(),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.textMuted,
+              size: 16,
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Center(
-      child: Text(
-        '${AppConstants.appVersion} - PHIVOLCS LEARNING LAB',
-        style: const TextStyle(
-          color: AppColors.textDim,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
         ),
       ),
     );
