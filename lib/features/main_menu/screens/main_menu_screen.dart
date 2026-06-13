@@ -7,7 +7,6 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../data/models/player_model.dart';
 import '../../player/application/player_controller.dart';
-import '../../../shared/widgets/lab_widgets.dart';
 
 class MainMenuScreen extends ConsumerWidget {
   const MainMenuScreen({super.key});
@@ -20,85 +19,138 @@ class MainMenuScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      bottomNavigationBar: const _SettingsFooter(),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TopBar(player: player),
-              const SizedBox(height: 20),
-              const Text(
-                'Volcano Quest',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'VOLCANO RESEARCH LAB · ACTIVE',
-                style: TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 10,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const ScanLine(),
-              const SizedBox(height: 16),
-              _MissionButton(player: player),
-              const SizedBox(height: 12),
-              _ProgressSection(
-                progress: progress,
-                missionsDone: missionsDone,
-                player: player,
-              ),
-              const SizedBox(height: 16),
-              _StatsRow(player: player, missionsDone: missionsDone),
-              const SizedBox(height: 20),
-              _Divider(),
-              _NavRow(
-                icon: Icons.emoji_events_outlined,
-                label: 'Leaderboard',
-                onTap: () => context.push(AppRoutes.leaderboard),
-              ),
-              _Divider(),
-              _NavRow(
-                icon: Icons.military_tech_outlined,
-                label: 'Badge collection',
-                badge: player.earnedBadges.isNotEmpty
-                    ? '${player.earnedBadges.length}'
-                    : null,
-                onTap: () => context.push(AppRoutes.badges),
-              ),
-              _Divider(),
-              _NavRow(
-                icon: Icons.switch_account_outlined,
-                label: 'Switch player',
-                onTap: () => context.go(AppRoutes.players),
-              ),
-              _Divider(),
-              _NavRow(
-                icon: Icons.settings_outlined,
-                label: 'Settings',
-                onTap: () => context.push(AppRoutes.settings),
-              ),
-              _Divider(),
-              const SizedBox(height: 32),
-              Center(
-                child: Text(
-                  '${AppConstants.appVersion} · PHIVOLCS LEARNING LAB',
-                  style: const TextStyle(
-                    color: AppColors.textDim,
-                    fontSize: 9,
-                    letterSpacing: 1,
+        child: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _StickyTopBarDelegate(
+                    player: player,
+                    missionsDone: missionsDone,
+                    progress: progress,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _MissionMap(player: player),
+                        const SizedBox(height: 32),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            _FloatingMenuRail(player: player),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StickyTopBarDelegate extends SliverPersistentHeaderDelegate {
+  final PlayerModel player;
+  final int missionsDone;
+  final double progress;
+
+  const _StickyTopBarDelegate({
+    required this.player,
+    required this.missionsDone,
+    required this.progress,
+  });
+
+  @override
+  double get minExtent => 85;
+
+  @override
+  double get maxExtent => 85;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: overlapsContent
+            ? const Border(
+                bottom: BorderSide(color: AppColors.border, width: 0.5),
+              )
+            : null,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+        child: _TopBar(
+          player: player,
+          missionsDone: missionsDone,
+          progress: progress,
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTopBarDelegate oldDelegate) {
+    return oldDelegate.player != player ||
+        oldDelegate.missionsDone != missionsDone ||
+        oldDelegate.progress != progress;
+  }
+}
+
+class _FloatingMenuRail extends StatelessWidget {
+  final PlayerModel player;
+
+  const _FloatingMenuRail({required this.player});
+
+  @override
+  Widget build(BuildContext context) {
+    final earnedBadges = player.earnedBadges.length;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 8),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.background.withValues(alpha: 0.88),
+            border: Border.all(color: AppColors.border, width: 0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _FooterIconButton(
+                  icon: Icons.emoji_events_outlined,
+                  tooltip: 'Leaderboard',
+                  onTap: () => context.push(AppRoutes.leaderboard),
+                ),
+                const SizedBox(height: 4),
+                _FooterIconButton(
+                  icon: Icons.military_tech_outlined,
+                  tooltip: 'Badge collection',
+                  badge: earnedBadges > 0 ? '$earnedBadges' : null,
+                  onTap: () => context.push(AppRoutes.badges),
+                ),
+                const SizedBox(height: 4),
+                _FooterIconButton(
+                  icon: Icons.switch_account_outlined,
+                  tooltip: 'Switch player',
+                  onTap: () => context.go(AppRoutes.players),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -120,58 +172,143 @@ int _completedMissionCount(PlayerModel player) {
 
 class _TopBar extends StatelessWidget {
   final PlayerModel player;
-  const _TopBar({required this.player});
+  final int missionsDone;
+  final double progress;
+
+  const _TopBar({
+    required this.player,
+    required this.missionsDone,
+    required this.progress,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _AvatarSquare(avatarIndex: player.avatarIndex),
-        const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              player.name.toUpperCase(),
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 13,
-                letterSpacing: 1.2,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _AvatarSquare(avatarIndex: player.avatarIndex),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          player.name.toUpperCase(),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 13,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        Text(
+                          'LEVEL ${player.currentLevel} SCIENTIST',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 9,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Text(
-              'LEVEL ${player.currentLevel} SCIENTIST',
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 9,
-                letterSpacing: 1.2,
+              const SizedBox(height: 4),
+              Semantics(
+                label: 'Mission progress',
+                value: '$missionsDone of ${AppConstants.totalLevels}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: AppColors.surface,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      AppColors.teal,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        const Spacer(),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        const SizedBox(width: 10),
+        Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '${player.totalXP} XP',
-              style: const TextStyle(
-                color: AppColors.teal,
-                fontSize: 14,
-                letterSpacing: 1,
-              ),
+            _HeaderMetric(
+              icon: Icons.bolt_outlined,
+              value: '${player.totalXP}',
+              tooltip: 'Total XP',
             ),
-            const Text(
-              'TOTAL',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 9,
-                letterSpacing: 1.5,
-              ),
+            const SizedBox(width: 8),
+            _HeaderMetric(
+              icon: Icons.military_tech_outlined,
+              value: '${player.earnedBadges.length}',
+              tooltip: 'Badges earned',
+            ),
+            const SizedBox(width: 8),
+            _HeaderMetric(
+              icon: Icons.bar_chart_outlined,
+              value: '$missionsDone',
+              tooltip: 'Missions done',
             ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _HeaderMetric extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String tooltip;
+
+  const _HeaderMetric({
+    required this.icon,
+    required this.value,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        label: '$tooltip: $value',
+        child: Container(
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 7),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.borderAlt, width: 0.5),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: AppColors.teal, size: 15),
+              const SizedBox(width: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 12,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -203,19 +340,63 @@ class _AvatarSquare extends StatelessWidget {
   }
 }
 
-class _MissionButton extends StatelessWidget {
+class _MissionMap extends StatelessWidget {
   final PlayerModel player;
-  const _MissionButton({required this.player});
+
+  const _MissionMap({required this.player});
 
   @override
   Widget build(BuildContext context) {
-    final missionThreeComplete = AppConstants.missionThreeWordIds.every(
-      (id) =>
-          player.completedMissionOrbs[AppConstants.missionThreeId]?.contains(
-            id,
-          ) ??
-          false,
+    const nodeSize = 58.0;
+    const topInset = 8.0;
+    const step = 82.0;
+    final nodes = _missionNodes();
+    final height = topInset * 2 + step * (nodes.length - 1) + nodeSize;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final positions = _missionNodePositions(
+          count: nodes.length,
+          width: constraints.maxWidth,
+          nodeSize: nodeSize,
+          topInset: topInset,
+          step: step,
+        );
+
+        return SizedBox(
+          height: height,
+          width: double.infinity,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _MissionConnectorPainter(
+                    nodes: nodes,
+                    positions: positions,
+                  ),
+                ),
+              ),
+              for (var index = nodes.length - 1; index >= 0; index--)
+                Positioned(
+                  left: positions[index].dx - nodeSize / 2,
+                  top: positions[index].dy - nodeSize / 2,
+                  child: _MissionNode(
+                    node: nodes[index],
+                    size: nodeSize,
+                    onTap: nodes[index].isActive
+                        ? () => _showMissionDialog(context, nodes[index])
+                        : null,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  List<_MissionMapNode> _missionNodes() {
+    final activeLevel = player.currentLevel.clamp(1, AppConstants.totalLevels);
     final sideQuestComplete = AppConstants.sideQuestVolcanoStructureQuestionIds
         .every(
           (id) =>
@@ -225,92 +406,391 @@ class _MissionButton extends StatelessWidget {
                   ?.contains(id) ??
               false,
         );
-    final shouldShowSideQuest = missionThreeComplete && !sideQuestComplete;
+    final sideQuestAvailable =
+        _isMissionThreeComplete(player) && !sideQuestComplete;
     final levelEightLessonComplete =
         player.completedMissionOrbs[AppConstants.levelEightLessonId]?.contains(
           AppConstants.levelEightLessonCompleteId,
         ) ??
         false;
-    final shouldShowLevelEightLesson =
-        !shouldShowSideQuest &&
-        player.currentLevel >= 9 &&
-        !levelEightLessonComplete;
-    final levelName = shouldShowSideQuest
-        ? 'Structure of a Volcano'
-        : shouldShowLevelEightLesson
-        ? 'Advanced Volcano Response'
-        : AppConstants.levelNames[(player.currentLevel - 1).clamp(
-            0,
-            AppConstants.levelNames.length - 1,
-          )];
-    final actionLabel = shouldShowSideQuest
-        ? 'START SIDE QUEST'
-        : shouldShowLevelEightLesson
-        ? 'READ FIELD LESSON'
-        : 'CONTINUE MISSION';
-    final badgeLabel = shouldShowSideQuest
-        ? 'SIDE QUEST'
-        : shouldShowLevelEightLesson
-        ? 'BRIEFING'
-        : 'LVL ${player.currentLevel}';
+    final fieldLessonAvailable =
+        !sideQuestAvailable && activeLevel >= 9 && !levelEightLessonComplete;
 
-    return GestureDetector(
-      onTap: () {
-        context.push(
-          shouldShowSideQuest
-              ? AppRoutes.sideQuestVolcanoStructure
-              : shouldShowLevelEightLesson
-              ? AppRoutes.levelEightLesson
-              : AppRoutes.level(player.currentLevel),
+    final nodes = <_MissionMapNode>[];
+    for (var level = 1; level <= AppConstants.totalLevels; level++) {
+      if (level == 4) {
+        nodes.add(
+          _MissionMapNode(
+            title: 'Structure of a Volcano',
+            eyebrow: 'SIDE QUEST',
+            route: AppRoutes.sideQuestVolcanoStructure,
+            primaryIcon: Icons.school_outlined,
+            kindIcon: Icons.terrain_outlined,
+            rewardLabel:
+                '+${AppConstants.sideQuestVolcanoStructureXp.fold<int>(0, (sum, xp) => sum + xp)} XP',
+            numberLabel: 'SQ',
+            isActive: sideQuestAvailable,
+            isComplete: sideQuestComplete,
+          ),
         );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceAlt,
-          border: Border.all(color: AppColors.teal, width: 1),
-          borderRadius: BorderRadius.circular(12),
+      }
+
+      if (level == 9) {
+        nodes.add(
+          _MissionMapNode(
+            title: 'Advanced Volcano Response',
+            eyebrow: 'FIELD LESSON',
+            route: AppRoutes.levelEightLesson,
+            primaryIcon: Icons.menu_book_outlined,
+            kindIcon: Icons.science_outlined,
+            rewardLabel: 'LESSON',
+            numberLabel: 'L8',
+            isActive: fieldLessonAvailable,
+            isComplete: levelEightLessonComplete,
+          ),
+        );
+      }
+
+      nodes.add(
+        _MissionMapNode(
+          title: AppConstants.levelNames[level - 1],
+          eyebrow: 'LEVEL $level',
+          route: AppRoutes.level(level),
+          primaryIcon: Icons.volcano_outlined,
+          kindIcon: Icons.terrain_outlined,
+          rewardLabel: '${AppConstants.levelXP[level - 1]} XP',
+          numberLabel: '$level',
+          isActive:
+              !sideQuestAvailable &&
+              !fieldLessonAvailable &&
+              level == activeLevel,
+          isComplete: level < activeLevel,
         ),
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      );
+    }
+
+    return nodes;
+  }
+
+  bool _isMissionThreeComplete(PlayerModel player) {
+    return AppConstants.missionThreeWordIds.every(
+      (id) =>
+          player.completedMissionOrbs[AppConstants.missionThreeId]?.contains(
+            id,
+          ) ??
+          false,
+    );
+  }
+
+  List<Offset> _missionNodePositions({
+    required int count,
+    required double width,
+    required double nodeSize,
+    required double topInset,
+    required double step,
+  }) {
+    final safeWidth = width - nodeSize;
+    final xFactors = [
+      0.30,
+      0.66,
+      0.42,
+      0.74,
+      0.28,
+      0.60,
+      0.36,
+      0.70,
+      0.48,
+      0.76,
+      0.34,
+    ];
+    final positions = <Offset>[];
+
+    for (var index = 0; index < count; index++) {
+      final topIndex = count - index - 1;
+      final x = nodeSize / 2 + safeWidth * xFactors[topIndex];
+      final y = topInset + nodeSize / 2 + step * topIndex;
+      positions.add(Offset(x, y));
+    }
+
+    return positions;
+  }
+
+  void _showMissionDialog(BuildContext context, _MissionMapNode node) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => _MissionStartDialog(node: node),
+    );
+  }
+}
+
+class _MissionMapNode {
+  final String title;
+  final String eyebrow;
+  final String route;
+  final IconData primaryIcon;
+  final IconData kindIcon;
+  final String rewardLabel;
+  final String numberLabel;
+  final bool isActive;
+  final bool isComplete;
+
+  const _MissionMapNode({
+    required this.title,
+    required this.eyebrow,
+    required this.route,
+    required this.primaryIcon,
+    required this.kindIcon,
+    required this.rewardLabel,
+    required this.numberLabel,
+    required this.isActive,
+    required this.isComplete,
+  });
+}
+
+class _MissionNode extends StatelessWidget {
+  final _MissionMapNode node;
+  final double size;
+  final VoidCallback? onTap;
+
+  const _MissionNode({required this.node, required this.size, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final foregroundColor = node.isActive
+        ? AppColors.teal
+        : node.isComplete
+        ? AppColors.textMuted
+        : AppColors.textDim;
+    final borderColor = node.isActive ? AppColors.teal : AppColors.borderAlt;
+    final backgroundColor = node.isActive
+        ? AppColors.surfaceAlt
+        : AppColors.surface;
+
+    return Tooltip(
+      message: node.isActive
+          ? 'Open ${node.eyebrow}'
+          : node.isComplete
+          ? 'Completed ${node.eyebrow}'
+          : 'Locked ${node.eyebrow}',
+      child: Semantics(
+        button: node.isActive,
+        enabled: node.isActive,
+        label: '${node.eyebrow}, ${node.title}',
+        child: InkResponse(
+          onTap: onTap,
+          radius: size / 2,
+          splashColor: AppColors.teal.withValues(alpha: 0.08),
+          highlightColor: AppColors.teal.withValues(alpha: 0.04),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
               children: [
-                Text(
-                  actionLabel,
-                  style: const TextStyle(
-                    color: AppColors.teal,
-                    fontSize: 14,
-                    letterSpacing: 1.5,
+                Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    border: Border.all(
+                      color: borderColor,
+                      width: node.isActive ? 1 : 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    node.primaryIcon,
+                    color: foregroundColor,
+                    size: 30,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  levelName,
-                  style: const TextStyle(
+                Positioned(
+                  bottom: -4,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 22),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.tealDark,
+                      border: Border.all(color: borderColor, width: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      node.numberLabel,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontSize: 10,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+                if (!node.isActive)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Icon(
+                      node.isComplete
+                          ? Icons.check_circle_outline
+                          : Icons.lock_outline,
+                      color: foregroundColor,
+                      size: 17,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionConnectorPainter extends CustomPainter {
+  final List<_MissionMapNode> nodes;
+  final List<Offset> positions;
+
+  const _MissionConnectorPainter({
+    required this.nodes,
+    required this.positions,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var index = 0; index < positions.length - 1; index++) {
+      final start = positions[index];
+      final end = positions[index + 1];
+      final isOpenPath =
+          nodes[index].isComplete &&
+          (nodes[index + 1].isComplete || nodes[index + 1].isActive);
+      final paint = Paint()
+        ..color = isOpenPath ? AppColors.tealDim : AppColors.border
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isOpenPath ? 2 : 1.2
+        ..strokeCap = StrokeCap.round;
+      final midY = (start.dy + end.dy) / 2;
+      final controlOffset = start.dx < end.dx ? 42.0 : -42.0;
+      final path = Path()
+        ..moveTo(start.dx, start.dy)
+        ..cubicTo(
+          start.dx + controlOffset,
+          midY,
+          end.dx - controlOffset,
+          midY,
+          end.dx,
+          end.dy,
+        );
+
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionConnectorPainter oldDelegate) {
+    return oldDelegate.positions != positions || oldDelegate.nodes != nodes;
+  }
+}
+
+class _MissionStartDialog extends StatelessWidget {
+  final _MissionMapNode node;
+
+  const _MissionStartDialog({required this.node});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppColors.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.teal, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceAlt,
+                    border: Border.all(color: AppColors.teal, width: 0.5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    node.primaryIcon,
+                    color: AppColors.teal,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        node.eyebrow,
+                        style: const TextStyle(
+                          color: AppColors.teal,
+                          fontSize: 11,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      Text(
+                        node.title,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Close',
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(
+                    Icons.close,
                     color: AppColors.textMuted,
-                    fontSize: 10,
-                    letterSpacing: 0.5,
+                    size: 18,
                   ),
                 ),
               ],
             ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.tealDark,
-                border: Border.all(color: AppColors.teal, width: 0.5),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                badgeLabel,
-                style: const TextStyle(
-                  color: AppColors.teal,
-                  fontSize: 9,
-                  letterSpacing: 1.2,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _MissionDialogBadge(
+                  icon: Icons.bolt_outlined,
+                  value: node.rewardLabel,
                 ),
+                const SizedBox(width: 8),
+                _MissionDialogBadge(icon: node.kindIcon, value: 'VOLCANO'),
+                const SizedBox(width: 8),
+                const _MissionDialogBadge(
+                  icon: Icons.science_outlined,
+                  value: 'LAB',
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push(node.route);
+                },
+                icon: const Icon(Icons.play_arrow_outlined, size: 18),
+                label: const Text('START'),
               ),
             ),
           ],
@@ -320,191 +800,139 @@ class _MissionButton extends StatelessWidget {
   }
 }
 
-class _ProgressSection extends StatelessWidget {
-  final double progress;
-  final int missionsDone;
-  final PlayerModel player;
-  const _ProgressSection({
-    required this.progress,
-    required this.missionsDone,
-    required this.player,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'MISSION PROGRESS',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 9,
-                letterSpacing: 1.5,
-              ),
-            ),
-            Text(
-              '$missionsDone/${AppConstants.totalLevels} COMPLETE',
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 9,
-                letterSpacing: 1,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: AppColors.surface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  final PlayerModel player;
-  final int missionsDone;
-  const _StatsRow({required this.player, required this.missionsDone});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            icon: Icons.military_tech_outlined,
-            label: 'BADGES EARNED',
-            value: '${player.earnedBadges.length}',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.bar_chart_outlined,
-            label: 'MISSIONS DONE',
-            value: '$missionsDone/${AppConstants.totalLevels}',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
+class _MissionDialogBadge extends StatelessWidget {
   final IconData icon;
-  final String label;
   final String value;
 
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _MissionDialogBadge({required this.icon, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderAlt, width: 0.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.teal, size: 18),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 9,
-              letterSpacing: 1.2,
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.tealDark,
+          border: Border.all(color: AppColors.borderAlt, width: 0.5),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.teal, size: 17),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 9,
+                letterSpacing: 0.8,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(color: AppColors.textPrimary, fontSize: 22),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _Divider extends StatelessWidget {
+class _SettingsFooter extends StatelessWidget {
+  const _SettingsFooter();
+
   @override
   Widget build(BuildContext context) {
-    return const Divider(color: AppColors.border, thickness: 0.5, height: 0);
+    return SafeArea(
+      top: false,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(color: AppColors.background),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              _FooterIconButton(
+                icon: Icons.settings_outlined,
+                tooltip: 'Settings',
+                onTap: () => context.push(AppRoutes.settings),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
-class _NavRow extends StatelessWidget {
+class _FooterIconButton extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String tooltip;
   final String? badge;
   final VoidCallback onTap;
 
-  const _NavRow({
+  const _FooterIconButton({
     required this.icon,
-    required this.label,
+    required this.tooltip,
     required this.onTap,
     this.badge,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      splashColor: AppColors.teal.withValues(alpha: 0.05),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.teal, size: 18),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-                letterSpacing: 0.3,
-              ),
-            ),
-            if (badge != null) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  border: Border.all(color: AppColors.teal, width: 0.5),
-                  borderRadius: BorderRadius.circular(10),
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 28,
+          splashColor: AppColors.teal.withValues(alpha: 0.08),
+          highlightColor: AppColors.teal.withValues(alpha: 0.04),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border.all(color: AppColors.borderAlt, width: 0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: AppColors.teal, size: 20),
                 ),
-                child: Text(
-                  badge!,
-                  style: const TextStyle(color: AppColors.teal, fontSize: 9),
-                ),
-              ),
-            ],
-            const Spacer(),
-            const Icon(
-              Icons.chevron_right,
-              color: AppColors.textMuted,
-              size: 16,
+                if (badge != null)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.tealDark,
+                        border: Border.all(color: AppColors.teal, width: 0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        badge!,
+                        style: const TextStyle(
+                          color: AppColors.teal,
+                          fontSize: 9,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
