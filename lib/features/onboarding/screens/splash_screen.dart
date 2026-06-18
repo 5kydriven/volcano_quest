@@ -210,14 +210,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                           ),
                                         ),
                                         SizedBox(height: footerSpacing),
-                                        Text(
-                                          '${AppConstants.appVersion} / PHIVOLCS LEARNING LAB',
-                                          style: const TextStyle(
-                                            color: AppColors.textDim,
-                                            fontSize: 9,
-                                            letterSpacing: 1,
-                                          ),
-                                        ),
                                         SizedBox(height: bottomSpacing),
                                       ],
                                     );
