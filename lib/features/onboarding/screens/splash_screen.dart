@@ -1,14 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:video_player/video_player.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_routes.dart';
-import '../../../shared/widgets/hover_elevating_image.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -25,7 +20,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late Animation<double> _rise;
   late Animation<double> _logoPulse;
   late Animation<double> _logoFloat;
-  late VideoPlayerController _videoController;
 
   @override
   void initState() {
@@ -43,35 +37,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2600),
-    )..repeat(reverse: true);
+      animationBehavior: AnimationBehavior.preserve,
+    );
     _logoPulse = Tween<double>(begin: 0.98, end: 1.04).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.easeInOutCubic),
     );
     _logoFloat = Tween<double>(begin: -5, end: 5).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.easeInOutCubic),
     );
-    _videoController = VideoPlayerController.asset(Assets.volcanoBg);
-    try {
-      unawaited(_videoController.setLooping(true).catchError((_) {}));
-      unawaited(_videoController.setVolume(0).catchError((_) {}));
-      unawaited(
-        _videoController
-            .initialize()
-            .then((_) {
-              if (!mounted) return;
-              setState(() {});
-              _videoController.play();
-            })
-            .catchError((_) {}),
-      );
-    } on UnimplementedError {
-      // Widget tests and unsupported platforms can still use the static fallback.
-    }
+    _logoController.value = 0.5;
   }
 
   @override
   void dispose() {
-    _videoController.dispose();
     _logoController.dispose();
     _controller.dispose();
     super.dispose();
@@ -100,7 +78,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
           if (constraints.maxHeight < 720) {
             topSpacing = 0;
-            contentSpacing = 8.0;
+            contentSpacing = 4.0;
             footerSpacing = 8.0;
             bottomSpacing = 14.0;
             maxLogoWidth = 560.0;
@@ -113,18 +91,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               ) *
               1.3;
           final buttonWidth = constraints.maxWidth - horizontalPadding * 2;
+          final contentWidth = buttonWidth.clamp(300.0, 520.0);
+          final featureWidth = contentWidth * 0.9;
 
           return Stack(
             fit: StackFit.expand,
             children: [
-              Builder(
-                builder: (context) {
-                  if (!_videoController.value.isInitialized) {
-                    return const ColoredBox(color: AppColors.background);
-                  }
-
-                  return _VideoBackground(controller: _videoController);
-                },
+              Image.asset(
+                Assets.splashScreenBg,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
               ),
               SafeArea(
                 child: FadeTransition(
@@ -147,6 +123,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             children: [
                               SizedBox(height: topSpacing),
                               Expanded(
+                                flex: 3,
                                 child: LayoutBuilder(
                                   builder: (context, logoConstraints) {
                                     return Center(
@@ -171,6 +148,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                             Assets.splashLogo,
                                             fit: BoxFit.contain,
                                             filterQuality: FilterQuality.high,
+                                            semanticLabel: 'Lahar Lab',
                                           ),
                                         ),
                                       ),
@@ -179,7 +157,44 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                 ),
                               ),
                               SizedBox(height: contentSpacing),
-                              Flexible(
+                              Expanded(
+                                flex: 4,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.topCenter,
+                                  child: SizedBox(
+                                    width: contentWidth,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _FeaturePanel(
+                                          assetPath: Assets.explore,
+                                          width: featureWidth,
+                                          heightFactor: 0.3,
+                                          semanticLabel:
+                                              'Explore. Discover the unknown.',
+                                        ),
+                                        _FeaturePanel(
+                                          assetPath: Assets.predict,
+                                          width: featureWidth,
+                                          heightFactor: 0.3,
+                                          semanticLabel:
+                                              'Predict. Foresee the future.',
+                                        ),
+                                        _FeaturePanel(
+                                          assetPath: Assets.survive,
+                                          width: featureWidth,
+                                          heightFactor: 0.28,
+                                          semanticLabel:
+                                              'Survive. Prepare, protect, endure.',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
                                 child: LayoutBuilder(
                                   builder: (context, buttonConstraints) {
                                     var buttonHeight =
@@ -203,7 +218,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                             child: SizedBox(
                                               width: buttonWidth,
                                               child: _InitializeMissionButton(
-                                                width: buttonWidth,
+                                                width: contentWidth,
                                                 onTap: _onStart,
                                               ),
                                             ),
@@ -232,53 +247,128 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 }
 
-class _VideoBackground extends StatelessWidget {
-  final VideoPlayerController controller;
+class _FeaturePanel extends StatelessWidget {
+  final String assetPath;
+  final double width;
+  final double heightFactor;
+  final String semanticLabel;
 
-  const _VideoBackground({required this.controller});
+  const _FeaturePanel({
+    required this.assetPath,
+    required this.width,
+    required this.heightFactor,
+    required this.semanticLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (!controller.value.isInitialized) {
-      return const SizedBox.expand();
-    }
+    return _CroppedSplashImage(
+      assetPath: assetPath,
+      width: width,
+      heightFactor: heightFactor,
+      semanticLabel: semanticLabel,
+    );
+  }
+}
 
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: controller.value.size.width,
-        height: controller.value.size.height,
-        child: VideoPlayer(controller),
+class _CroppedSplashImage extends StatelessWidget {
+  final String assetPath;
+  final double width;
+  final double heightFactor;
+  final String? semanticLabel;
+
+  const _CroppedSplashImage({
+    required this.assetPath,
+    required this.width,
+    required this.heightFactor,
+    this.semanticLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: Align(
+        heightFactor: heightFactor,
+        child: Image.asset(
+          assetPath,
+          width: width,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+          semanticLabel: semanticLabel,
+          excludeFromSemantics: semanticLabel == null,
+        ),
       ),
     );
   }
 }
 
-class _InitializeMissionButton extends StatelessWidget {
+class _InitializeMissionButton extends StatefulWidget {
   final double width;
   final VoidCallback onTap;
 
   const _InitializeMissionButton({required this.width, required this.onTap});
 
   @override
+  State<_InitializeMissionButton> createState() =>
+      _InitializeMissionButtonState();
+}
+
+class _InitializeMissionButtonState extends State<_InitializeMissionButton> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
       label: 'Initialize mission',
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: onTap,
-          child: HoverElevatingImage(
-            image: const AssetImage(Assets.initializeButton),
-            width: width,
-            heightFactor: 0.11,
-            alignment: const Alignment(0, -0.12),
-            hoverOffset: 10,
-            shadowColor: Colors.black54,
+      child: SizedBox(
+        key: const ValueKey('splashInitializeMissionButton'),
+        width: widget.width,
+        height: widget.width * 0.3,
+        child: FocusableActionDetector(
+          mouseCursor: SystemMouseCursors.click,
+          actions: {
+            ActivateIntent: CallbackAction<ActivateIntent>(
+              onInvoke: (_) {
+                widget.onTap();
+                return null;
+              },
+            ),
+          },
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (_) => _setPressed(true),
+            onTapCancel: () => _setPressed(false),
+            onTapUp: (_) => _setPressed(false),
+            onTap: widget.onTap,
+            child: AnimatedSlide(
+              offset: _pressed ? const Offset(0, 0.05) : Offset.zero,
+              duration: const Duration(milliseconds: 90),
+              curve: Curves.easeOutCubic,
+              child: AnimatedScale(
+                scale: _pressed ? 0.96 : 1,
+                duration: const Duration(milliseconds: 90),
+                curve: Curves.easeOutCubic,
+                child: _CroppedSplashImage(
+                  assetPath: Assets.splashBtn,
+                  width: widget.width,
+                  heightFactor: 0.3,
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  void _setPressed(bool pressed) {
+    if (_pressed == pressed) {
+      return;
+    }
+
+    setState(() {
+      _pressed = pressed;
+    });
   }
 }

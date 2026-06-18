@@ -21,10 +21,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('VOLCANO QUEST'), findsOneWidget);
-    expect(find.text('INITIALIZE MISSION'), findsOneWidget);
+    expect(find.bySemanticsLabel('Lahar Lab'), findsOneWidget);
+    expect(find.bySemanticsLabel('Initialize mission'), findsOneWidget);
 
-    await tester.tap(find.text('INITIALIZE MISSION'));
+    await tester.tap(
+      find.byKey(const ValueKey('splashInitializeMissionButton')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Scientist profiles'), findsOneWidget);
@@ -101,7 +103,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('INITIALIZE MISSION'));
+    await tester.tap(
+      find.byKey(const ValueKey('splashInitializeMissionButton')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Scientist profiles'), findsOneWidget);
