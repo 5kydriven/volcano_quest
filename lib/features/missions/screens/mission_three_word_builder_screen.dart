@@ -11,6 +11,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
+const _lava = Color(0xFFFF7A1A);
+const _lavaDeep = Color(0xFFC74214);
+const _ember = Color(0xFFFFB45F);
+const _charcoal = Color(0xFF100F0E);
+const _charcoalSoft = Color(0xFF1A1714);
+
 class MissionThreeWordBuilderScreen extends ConsumerStatefulWidget {
   final int levelId;
   final int? randomSeed;
@@ -88,7 +94,7 @@ class _MissionThreeWordBuilderScreenState
       body: MissionScreenBackground(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
             child: Column(
               children: [
                 _WordBuilderTopBar(
@@ -353,18 +359,24 @@ class _WordBuilderPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: _lavaDeep.withValues(alpha: 0.72), width: 1),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: _lavaDeep.withValues(alpha: 0.16),
+            blurRadius: 22,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
-            backgroundColor: AppColors.surface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
+            minHeight: 4,
+            backgroundColor: Colors.black.withValues(alpha: 0.45),
+            valueColor: const AlwaysStoppedAnimation<Color>(_lava),
           ),
           Expanded(
             child: Stack(
@@ -376,10 +388,10 @@ class _WordBuilderPanel extends StatelessWidget {
                   child: Text(
                     '$percentComplete% COMPLETE',
                     style: const TextStyle(
-                      color: AppColors.textMuted,
-                      fontSize: 8,
+                      color: _ember,
+                      fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
@@ -440,13 +452,8 @@ class _WordBuilderContent extends StatelessWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: _ScannerLabel(text: 'GEOTHERMAL SCAN'),
-                ),
-                const SizedBox(height: 14),
                 _VolcanoImageCard(),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 _MissionTelemetryStrip(
                   wordIndex: wordIndex,
                   totalWords: totalWords,
@@ -454,7 +461,7 @@ class _WordBuilderContent extends StatelessWidget {
                   blankCount: word.blankCount,
                   bankCount: bankCount,
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 _PuzzleDeck(
                   child: Column(
                     children: [
@@ -473,10 +480,10 @@ class _WordBuilderContent extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 if (feedback != _WordFeedback.none) ...[
                   _WordFeedbackBanner(feedback: feedback),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                 ],
                 _PuzzleDeck(
                   child: Column(
@@ -501,55 +508,99 @@ class _WordBuilderContent extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(
-                onPressed: isSaving ? null : onClear,
-                child: const Text('CLEAR'),
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF3A3A3A), Color(0xFF1A1A1A)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF8A8A8A), width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black54,
+                      offset: Offset(0, 3),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: isSaving ? null : onClear,
+                    child: const Center(
+                      child: Text(
+                        'CLEAR',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               flex: 2,
-              child: ElevatedButton(
-                onPressed: canSubmit ? onSubmit : null,
-                child: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: AppColors.teal,
-                        ),
-                      )
-                    : const Text('SUBMIT WORD'),
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFFFFB347), Color(0xFFFF6A00)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF8F2D00), width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x66FF6A00),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: canSubmit ? onSubmit : null,
+                    child: Center(
+                      child: isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'SUBMIT WORD',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.4,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black,
+                                    offset: Offset(1, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
-        ),
-      ],
-    );
-  }
-}
-
-class _ScannerLabel extends StatelessWidget {
-  final String text;
-
-  const _ScannerLabel({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.radar_outlined, color: AppColors.teal, size: 12),
-        const SizedBox(width: 7),
-        Text(
-          text,
-          style: const TextStyle(
-            color: AppColors.teal,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
         ),
       ],
     );
@@ -573,73 +624,73 @@ class _MissionTelemetryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.84),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: _TelemetryCell(
-              label: 'WORD',
-              value: '${wordIndex + 1}/$totalWords',
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _TelemetryCell(label: 'HINTS', value: '$hintCount'),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _TelemetryCell(label: 'BLANKS', value: '$blankCount'),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _TelemetryCell(label: 'BANK', value: '$bankCount'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TelemetryCell extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _TelemetryCell({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.border, width: 0.6),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+          Image.asset(Assets.missionThreeHintContainer, fit: BoxFit.fill),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      '${wordIndex + 1}/$totalWords',
+                      style: const TextStyle(
+                        color: _lava,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      '$hintCount',
+                      style: const TextStyle(
+                        color: _lava,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      '$blankCount',
+                      style: const TextStyle(
+                        color: _lava,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      '$bankCount',
+                      style: const TextStyle(
+                        color: _lava,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -657,11 +708,18 @@ class _PuzzleDeck extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF071A2A).withValues(alpha: 0.92),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
+        color: const Color.fromARGB(255, 24, 24, 24).withValues(alpha: 0.9),
+        border: Border.all(color: _lavaDeep.withValues(alpha: 0.58), width: 4),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
+          ),
+        ],
       ),
       child: child,
     );
@@ -682,10 +740,10 @@ class _SectionHeader extends StatelessWidget {
           eyebrow,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 8,
+            color: _ember,
+            fontSize: 10,
             fontWeight: FontWeight.w700,
-            letterSpacing: 1,
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 5),
@@ -693,10 +751,10 @@ class _SectionHeader extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 11,
+            color: AppColors.textSecondary,
+            fontSize: 18,
             fontWeight: FontWeight.w800,
-            letterSpacing: 0.8,
+            letterSpacing: 1,
           ),
         ),
       ],
@@ -708,11 +766,18 @@ class _VolcanoImageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 194,
+      height: 206,
       decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(7),
+        color: _charcoal,
+        border: Border.all(color: _lavaDeep.withValues(alpha: 0.74), width: 1),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: _lavaDeep.withValues(alpha: 0.18),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -725,21 +790,17 @@ class _VolcanoImageCard extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.08),
+                  Colors.black.withValues(alpha: 0.12),
                   Colors.black.withValues(alpha: 0),
-                  Colors.black.withValues(alpha: 0.28),
+                  _lavaDeep.withValues(alpha: 0.2),
+                  Colors.black.withValues(alpha: 0.42),
                 ],
               ),
               border: Border.all(
-                color: AppColors.teal.withValues(alpha: 0.28),
+                color: _ember.withValues(alpha: 0.24),
                 width: 1,
               ),
             ),
-          ),
-          const Positioned(
-            left: 10,
-            top: 10,
-            child: _ImageReadout(label: 'ZENITH', value: 'LAVA SCAN'),
           ),
           const Positioned(
             right: 10,
@@ -764,7 +825,7 @@ class _ImageReadout extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.background.withValues(alpha: 0.62),
-        border: Border.all(color: AppColors.teal.withValues(alpha: 0.28)),
+        border: Border.all(color: _ember.withValues(alpha: 0.38)),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -773,7 +834,7 @@ class _ImageReadout extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              color: AppColors.teal,
+              color: _lava,
               fontSize: 8,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -814,8 +875,8 @@ class _WordSlots extends StatelessWidget {
   Widget build(BuildContext context) {
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 9,
-      runSpacing: 9,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (var index = 0; index < word.answer.length; index++)
           _WordSlot(
@@ -856,13 +917,11 @@ class _WordSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final isHint = hintLetter != null;
     final letter = hintLetter ?? placedLetter?.letter;
-    final borderColor = feedback == _WordFeedback.wrong && !isHint
+    final glowColor = feedback == _WordFeedback.wrong && !isHint
         ? const Color(0xFFFF7A7A)
-        : feedback == _WordFeedback.correct
-        ? AppColors.teal
-        : isHint
-        ? AppColors.tealDim
-        : AppColors.borderAlt;
+        : feedback == _WordFeedback.correct || isHint
+        ? _lava
+        : _lavaDeep;
 
     return DragTarget<_LetterTileData>(
       onWillAcceptWithDetails: (_) => !isHint,
@@ -881,44 +940,49 @@ class _WordSlot extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: 42,
-            height: 44,
+            width: 55,
+            height: 55,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: candidateData.isNotEmpty
-                  ? AppColors.teal.withValues(alpha: 0.16)
-                  : isHint
-                  ? AppColors.tealDark
-                  : const Color(0xFF0A1C2D),
-              border: Border.all(color: borderColor, width: isHint ? 1 : 0.8),
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(4),
               boxShadow: [
                 if (candidateData.isNotEmpty ||
-                    feedback == _WordFeedback.correct)
+                    feedback == _WordFeedback.correct ||
+                    isHint)
                   BoxShadow(
-                    color: AppColors.teal.withValues(alpha: 0.22),
-                    blurRadius: 16,
+                    color: glowColor.withValues(alpha: 0.42),
+                    blurRadius: 18,
                     spreadRadius: 1,
                   ),
               ],
             ),
-            foregroundDecoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: borderColor,
-                  width: isHint ? 2.2 : 1.6,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(Assets.missionThreeLetterSlot, fit: BoxFit.fill),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: candidateData.isNotEmpty
+                        ? _lava.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
-              ),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Text(
-              letter ?? '',
-              style: TextStyle(
-                color: isHint ? AppColors.teal : AppColors.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0,
-              ),
+                Center(
+                  child: Text(
+                    letter ?? '',
+                    style: TextStyle(
+                      color: isHint ? _lava : AppColors.textPrimary,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0,
+                      shadows: [
+                        Shadow(color: glowColor, blurRadius: isHint ? 8 : 3),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -937,8 +1001,8 @@ class _LetterBank extends StatelessWidget {
   Widget build(BuildContext context) {
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 9,
-      runSpacing: 9,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (final letter in letters)
           _LetterTile(
@@ -960,33 +1024,36 @@ class _LetterTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tile = Container(
-      width: 47,
-      height: 45,
+      width: 56,
+      height: 56,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF304258), Color(0xFF1E2D3C)],
-        ),
-        border: Border.all(color: AppColors.borderAlt, width: 0.9),
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.22),
+            color: Colors.black.withValues(alpha: 0.32),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: Text(
-        data.letter,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(Assets.missionThreeLetterSlot, fit: BoxFit.fill),
+          Center(
+            child: Text(
+              data.letter,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 21,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+                shadows: [Shadow(color: Colors.black, blurRadius: 5)],
+              ),
+            ),
+          ),
+        ],
       ),
     );
 
@@ -1018,9 +1085,9 @@ class _WordFeedbackBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
+        color: _charcoalSoft.withValues(alpha: 0.94),
         border: Border.all(
-          color: isCorrect ? AppColors.teal : const Color(0xFFFF7A7A),
+          color: isCorrect ? _lava : const Color(0xFFFF7A7A),
           width: 0.8,
         ),
         borderRadius: BorderRadius.circular(6),
@@ -1029,7 +1096,7 @@ class _WordFeedbackBanner extends StatelessWidget {
         isCorrect ? '+20 XP RECORDED' : 'WRONG SEQUENCE - TRY AGAIN',
         textAlign: TextAlign.center,
         style: TextStyle(
-          color: isCorrect ? AppColors.teal : const Color(0xFFFFB3B3),
+          color: isCorrect ? _lava : const Color(0xFFFFB3B3),
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.4,

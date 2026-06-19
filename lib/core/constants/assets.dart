@@ -36,6 +36,10 @@ class Assets {
   static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String missionScreenBackground =
       'assets/missions/backgrounds/mission_screen_background.jpeg';
+  static const String missionThreeHintContainer =
+      'assets/missions/misson-three/hint_container.png';
+  static const String missionThreeLetterSlot =
+      'assets/missions/misson-three/letter_slot.png';
   static const String volcanoCutaway =
       'assets/Meshy_AI_2fa1536bd2215c18f695398ed54154e2bd2d4a85.png';
   static const String volcano3dSection = 'assets/models/volcano-3d-section.glb';

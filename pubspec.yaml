@@ -49,5 +49,6 @@ flutter:
     - assets/models/
     - assets/icons/
     - assets/missions/backgrounds/
+    - assets/missions/misson-three/
     - assets/animated_avatars/
     - assets/splash_screen/
