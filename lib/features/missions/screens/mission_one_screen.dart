@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 class MissionOneScreen extends ConsumerStatefulWidget {
@@ -27,92 +28,92 @@ class MissionUnlockedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.teal,
-                      size: 18,
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    MissionBackButton(
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                          return;
+                        }
+                        context.go(AppRoutes.menu);
+                      },
                     ),
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                        return;
-                      }
-                      context.go(AppRoutes.menu);
-                    },
-                  ),
-                  const Spacer(),
-                  Text(
-                    'MISSION $levelId',
-                    style: const TextStyle(
-                      color: AppColors.teal,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.6,
+                    const Spacer(),
+                    Text(
+                      'MISSION $levelId',
+                      style: const TextStyle(
+                        color: AppColors.teal,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  const SizedBox(width: 48),
-                ],
-              ),
-              Expanded(
-                child: Center(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border.all(color: AppColors.borderAlt, width: 1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.lock_open_outlined,
-                          color: AppColors.teal,
-                          size: 34,
+                    const Spacer(),
+                    const SizedBox(width: 48),
+                  ],
+                ),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border.all(
+                          color: AppColors.borderAlt,
+                          width: 1,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'MISSION $levelId UNLOCKED',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'NEW RESEARCH BRIEFING AVAILABLE SOON',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.lock_open_outlined,
                             color: AppColors.teal,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1,
+                            size: 34,
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () => context.go(AppRoutes.menu),
-                          child: const Text('RETURN TO MENU'),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          Text(
+                            'MISSION $levelId UNLOCKED',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'NEW RESEARCH BRIEFING AVAILABLE SOON',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.teal,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () => context.go(AppRoutes.menu),
+                            child: const Text('RETURN TO MENU'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -205,39 +206,41 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-          child: Column(
-            children: [
-              _ResearchTopBar(
-                xp: player.totalXP,
-                avatarIndex: player.avatarIndex,
-                onBack: () {
-                  if (context.canPop()) {
-                    context.pop();
-                    return;
-                  }
-                  context.go(AppRoutes.menu);
-                },
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: _ResearchBasePanel(
-                  missionId: widget.levelId,
-                  progress: initializedCores.length,
-                  total: _missionOrbs.length,
-                  isComplete: isComplete,
-                  animation: _floatController,
-                  cores: _cores,
-                  missionOrbs: _missionOrbs,
-                  initializedCores: initializedCores,
-                  onCoreTap: (index) {
-                    _showMissionOrbSheet(_missionOrbs[index]);
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+            child: Column(
+              children: [
+                _ResearchTopBar(
+                  xp: player.totalXP,
+                  avatarIndex: player.avatarIndex,
+                  onBack: () {
+                    if (context.canPop()) {
+                      context.pop();
+                      return;
+                    }
+                    context.go(AppRoutes.menu);
                   },
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _ResearchBasePanel(
+                    missionId: widget.levelId,
+                    progress: initializedCores.length,
+                    total: _missionOrbs.length,
+                    isComplete: isComplete,
+                    animation: _floatController,
+                    cores: _cores,
+                    missionOrbs: _missionOrbs,
+                    initializedCores: initializedCores,
+                    onCoreTap: (index) {
+                      _showMissionOrbSheet(_missionOrbs[index]);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -286,67 +289,13 @@ class _ResearchTopBar extends StatelessWidget {
     required this.onBack,
   });
 
-  static const _avatarIcons = [
-    Icons.person_outline,
-    Icons.biotech_outlined,
-    Icons.rocket_launch_outlined,
-    Icons.hub_outlined,
-    Icons.science_outlined,
-    Icons.public_outlined,
-    Icons.travel_explore_outlined,
-    Icons.psychology_outlined,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.teal, size: 18),
-          onPressed: onBack,
-        ),
-        const Spacer(),
-        const Text(
-          'RESEARCH BASE',
-          style: TextStyle(
-            color: AppColors.teal,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
-        ),
-        const Spacer(),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$xp XP',
-              style: const TextStyle(
-                color: AppColors.teal,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.7,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderAlt, width: 1),
-                color: AppColors.surface,
-              ),
-              child: Icon(
-                _avatarIcons[avatarIndex.clamp(0, _avatarIcons.length - 1)],
-                color: AppColors.teal,
-                size: 14,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-      ],
+    return MissionResearchTopBar(
+      title: 'RESEARCH BASE',
+      xp: xp,
+      avatarIndex: avatarIndex,
+      onBack: onBack,
     );
   }
 }

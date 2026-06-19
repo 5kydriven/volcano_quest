@@ -9,6 +9,7 @@ class Assets {
   static const String splashBg = 'assets/splash_bg.png';
   static const String playerDatabaseBg = splashBg;
   static const String initializeButton = 'assets/images/initialize_button.png';
+  static const String backButton = 'assets/icons/back_button.png';
   static const String closeButton = 'assets/images/close_button.png';
   static const String profileContainer = 'assets/images/profile_container.png';
   static const String checkImage = 'assets/images/check_image.png';
@@ -33,6 +34,8 @@ class Assets {
     AvatarAsset(imagePath: strategistGirl, label: 'Strategist'),
   ];
   static const String volcanoBg = 'assets/videos/volcano.mp4';
+  static const String missionScreenBackground =
+      'assets/missions/backgrounds/mission_screen_background.jpeg';
   static const String volcanoCutaway =
       'assets/Meshy_AI_2fa1536bd2215c18f695398ed54154e2bd2d4a85.png';
   static const String volcano3dSection = 'assets/models/volcano-3d-section.glb';

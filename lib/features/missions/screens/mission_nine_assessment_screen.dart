@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 class MissionNineAssessmentScreen extends ConsumerStatefulWidget {
@@ -105,58 +106,60 @@ class _MissionNineAssessmentScreenState
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-          child: Column(
-            children: [
-              _AssessmentTopBar(
-                missionId: widget.levelId,
-                xp: player.totalXP,
-                avatarIndex: player.avatarIndex,
-                onBack: () {
-                  if (context.canPop()) {
-                    context.pop();
-                    return;
-                  }
-                  context.go(AppRoutes.menu);
-                },
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: _AssessmentPanel(
-                  progress: progress,
-                  percentComplete: (progress * 100).round(),
-                  child: shouldShowSummary
-                      ? _AssessmentSummary(
-                          playerName: player.name,
-                          correctCount: correctIds.length,
-                          totalQuestions: _questions.length,
-                          onReturn: () => context.go(AppRoutes.menu),
-                        )
-                      : _AssessmentContent(
-                          questionIndex: displayIndex,
-                          totalQuestions: _questions.length,
-                          question: _questions[displayIndex],
-                          selectedOptionIndex: _selectedOptionIndex,
-                          submitted: _submitted,
-                          isSaving: _isSaving,
-                          lastAnswerCorrect: _lastAnswerCorrect,
-                          onSelect: _submitted || _isSaving
-                              ? null
-                              : (index) {
-                                  setState(() {
-                                    _selectedOptionIndex = index;
-                                  });
-                                },
-                          onAction: () => _handleAction(
-                            _questions[displayIndex],
-                            displayIndex,
-                          ),
-                        ),
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+            child: Column(
+              children: [
+                _AssessmentTopBar(
+                  missionId: widget.levelId,
+                  xp: player.totalXP,
+                  avatarIndex: player.avatarIndex,
+                  onBack: () {
+                    if (context.canPop()) {
+                      context.pop();
+                      return;
+                    }
+                    context.go(AppRoutes.menu);
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _AssessmentPanel(
+                    progress: progress,
+                    percentComplete: (progress * 100).round(),
+                    child: shouldShowSummary
+                        ? _AssessmentSummary(
+                            playerName: player.name,
+                            correctCount: correctIds.length,
+                            totalQuestions: _questions.length,
+                            onReturn: () => context.go(AppRoutes.menu),
+                          )
+                        : _AssessmentContent(
+                            questionIndex: displayIndex,
+                            totalQuestions: _questions.length,
+                            question: _questions[displayIndex],
+                            selectedOptionIndex: _selectedOptionIndex,
+                            submitted: _submitted,
+                            isSaving: _isSaving,
+                            lastAnswerCorrect: _lastAnswerCorrect,
+                            onSelect: _submitted || _isSaving
+                                ? null
+                                : (index) {
+                                    setState(() {
+                                      _selectedOptionIndex = index;
+                                    });
+                                  },
+                            onAction: () => _handleAction(
+                              _questions[displayIndex],
+                              displayIndex,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -241,67 +244,13 @@ class _AssessmentTopBar extends StatelessWidget {
     required this.onBack,
   });
 
-  static const _avatarIcons = [
-    Icons.person_outline,
-    Icons.biotech_outlined,
-    Icons.rocket_launch_outlined,
-    Icons.hub_outlined,
-    Icons.science_outlined,
-    Icons.public_outlined,
-    Icons.travel_explore_outlined,
-    Icons.psychology_outlined,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.teal, size: 18),
-          onPressed: onBack,
-        ),
-        const Spacer(),
-        Text(
-          'MISSION $missionId',
-          style: const TextStyle(
-            color: AppColors.teal,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
-        ),
-        const Spacer(),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$xp XP',
-              style: const TextStyle(
-                color: AppColors.teal,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.7,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderAlt, width: 1),
-                color: AppColors.surface,
-              ),
-              child: Icon(
-                _avatarIcons[avatarIndex.clamp(0, _avatarIcons.length - 1)],
-                color: AppColors.teal,
-                size: 14,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-      ],
+    return MissionResearchTopBar(
+      title: 'MISSION $missionId',
+      xp: xp,
+      avatarIndex: avatarIndex,
+      onBack: onBack,
     );
   }
 }

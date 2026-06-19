@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 final missionFiveModelPreviewProvider = Provider<Widget?>((ref) => null);
@@ -97,48 +98,50 @@ class _MissionFiveAnatomyLabScreenState
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-          child: Column(
-            children: [
-              _AnatomyTopBar(
-                missionId: widget.levelId,
-                xp: player.totalXP,
-                avatarIndex: player.avatarIndex,
-                onBack: () {
-                  if (context.canPop()) {
-                    context.pop();
-                    return;
-                  }
-                  context.go(AppRoutes.menu);
-                },
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: _AnatomyPanel(
-                  progress: progress,
-                  percentComplete: (progress * 100).round(),
-                  child: shouldShowSummary
-                      ? _MissionFiveSummary(
-                          earnedXP: AppConstants.missionFiveXp,
-                          onProceed: () => context.push(AppRoutes.level(6)),
-                        )
-                      : _AnatomyLabContent(
-                          parts: _parts,
-                          placedLabels: _placedLabels,
-                          selectedLabelId: _selectedLabelId,
-                          feedback: _feedback,
-                          isSaving: _isSaving,
-                          modelPreview:
-                              modelPreview ?? const _VolcanoModelView(),
-                          onSelectLabel: _selectLabel,
-                          onTryPlaceLabel: _tryPlaceLabel,
-                          onClear: _clearPlacements,
-                        ),
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+            child: Column(
+              children: [
+                _AnatomyTopBar(
+                  missionId: widget.levelId,
+                  xp: player.totalXP,
+                  avatarIndex: player.avatarIndex,
+                  onBack: () {
+                    if (context.canPop()) {
+                      context.pop();
+                      return;
+                    }
+                    context.go(AppRoutes.menu);
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Expanded(
+                  child: _AnatomyPanel(
+                    progress: progress,
+                    percentComplete: (progress * 100).round(),
+                    child: shouldShowSummary
+                        ? _MissionFiveSummary(
+                            earnedXP: AppConstants.missionFiveXp,
+                            onProceed: () => context.push(AppRoutes.level(6)),
+                          )
+                        : _AnatomyLabContent(
+                            parts: _parts,
+                            placedLabels: _placedLabels,
+                            selectedLabelId: _selectedLabelId,
+                            feedback: _feedback,
+                            isSaving: _isSaving,
+                            modelPreview:
+                                modelPreview ?? const _VolcanoModelView(),
+                            onSelectLabel: _selectLabel,
+                            onTryPlaceLabel: _tryPlaceLabel,
+                            onClear: _clearPlacements,
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -838,67 +841,13 @@ class _AnatomyTopBar extends StatelessWidget {
     required this.onBack,
   });
 
-  static const _avatarIcons = [
-    Icons.person_outline,
-    Icons.biotech_outlined,
-    Icons.rocket_launch_outlined,
-    Icons.hub_outlined,
-    Icons.science_outlined,
-    Icons.public_outlined,
-    Icons.travel_explore_outlined,
-    Icons.psychology_outlined,
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.teal, size: 18),
-          onPressed: onBack,
-        ),
-        const Spacer(),
-        Text(
-          'MISSION $missionId',
-          style: const TextStyle(
-            color: AppColors.teal,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
-        ),
-        const Spacer(),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$xp XP',
-              style: const TextStyle(
-                color: AppColors.teal,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.7,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderAlt, width: 1),
-                color: AppColors.surface,
-              ),
-              child: Icon(
-                _avatarIcons[avatarIndex.clamp(0, _avatarIcons.length - 1)],
-                color: AppColors.teal,
-                size: 14,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 8),
-      ],
+    return MissionResearchTopBar(
+      title: 'MISSION $missionId',
+      xp: xp,
+      avatarIndex: avatarIndex,
+      onBack: onBack,
     );
   }
 }

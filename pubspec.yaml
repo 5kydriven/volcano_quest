@@ -43,8 +43,11 @@ flutter:
   assets:
     - assets/
     - assets/images/
+    - assets/icons/
     - assets/avatars/
     - assets/videos/
     - assets/models/
+    - assets/icons/
+    - assets/missions/backgrounds/
     - assets/animated_avatars/
     - assets/splash_screen/
