@@ -1,8 +1,13 @@
 class AvatarAsset {
   final String imagePath;
+  final String animatedPath;
   final String label;
 
-  const AvatarAsset({required this.imagePath, required this.label});
+  const AvatarAsset({
+    required this.imagePath,
+    required this.animatedPath,
+    required this.label,
+  });
 }
 
 class Assets {
@@ -23,19 +28,77 @@ class Assets {
   static const String researcherGirl = 'assets/avatars/Researcher_girl.png';
   static const String scientistBoy = 'assets/avatars/Scientist_boy.jpeg';
   static const String strategistGirl = 'assets/avatars/Strategist_girl.jpeg';
+  static const String analystBoyAnimated =
+      'assets/animated_avatars/analyst_boy.mp4';
+  static const String chemistGirlAnimated =
+      'assets/animated_avatars/chemist_girl.mp4';
+  static const String explorerGirlAnimated =
+      'assets/animated_avatars/explorer_girl.mp4';
+  static const String geologistBoyAnimated =
+      'assets/animated_avatars/geologist_boy.mp4';
+  static const String observerBoyAnimated =
+      'assets/animated_avatars/observer_boy.mp4';
+  static const String researcherGirlAnimated =
+      'assets/animated_avatars/research_girl.mp4';
+  static const String scientistBoyAnimated =
+      'assets/animated_avatars/scientis_boy.mp4';
+  static const String strategistGirlAnimated =
+      'assets/animated_avatars/strategist_girl.mp4';
   static const avatars = [
-    AvatarAsset(imagePath: scientistBoy, label: 'Scientist'),
-    AvatarAsset(imagePath: researcherGirl, label: 'Researcher'),
-    AvatarAsset(imagePath: explorerGirl, label: 'Explorer'),
-    AvatarAsset(imagePath: analystBoy, label: 'Analyst'),
-    AvatarAsset(imagePath: chemistGirl, label: 'Chemist'),
-    AvatarAsset(imagePath: geologistBoy, label: 'Geologist'),
-    AvatarAsset(imagePath: observerBoy, label: 'Observer'),
-    AvatarAsset(imagePath: strategistGirl, label: 'Strategist'),
+    AvatarAsset(
+      imagePath: scientistBoy,
+      animatedPath: scientistBoyAnimated,
+      label: 'Scientist',
+    ),
+    AvatarAsset(
+      imagePath: researcherGirl,
+      animatedPath: researcherGirlAnimated,
+      label: 'Researcher',
+    ),
+    AvatarAsset(
+      imagePath: explorerGirl,
+      animatedPath: explorerGirlAnimated,
+      label: 'Explorer',
+    ),
+    AvatarAsset(
+      imagePath: analystBoy,
+      animatedPath: analystBoyAnimated,
+      label: 'Analyst',
+    ),
+    AvatarAsset(
+      imagePath: chemistGirl,
+      animatedPath: chemistGirlAnimated,
+      label: 'Chemist',
+    ),
+    AvatarAsset(
+      imagePath: geologistBoy,
+      animatedPath: geologistBoyAnimated,
+      label: 'Geologist',
+    ),
+    AvatarAsset(
+      imagePath: observerBoy,
+      animatedPath: observerBoyAnimated,
+      label: 'Observer',
+    ),
+    AvatarAsset(
+      imagePath: strategistGirl,
+      animatedPath: strategistGirlAnimated,
+      label: 'Strategist',
+    ),
   ];
   static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String missionScreenBackground =
       'assets/missions/backgrounds/mission_screen_background.jpeg';
+  static const String onboardingScientistIdentity =
+      'assets/onboarding_screen/20260617_231800_0000.png';
+  static const String onboardingScientistProfileLabel =
+      'assets/onboarding_screen/scientist_profile_label.png';
+  static const String onboardingSelectAvatarLabel =
+      'assets/onboarding_screen/select_avatar_label.png';
+  static const String onboardingDeployLabButton =
+      'assets/onboarding_screen/deploy_lab_button.png';
+  static const String onboardingInputField =
+      'assets/onboarding_screen/input_field.png';
   static const String missionThreeHintContainer =
       'assets/missions/misson-three/hint_container.png';
   static const String missionThreeLetterSlot =
@@ -53,7 +116,6 @@ class Assets {
   static const String settingBgm = 'assets/setting_screen/bgm.png';
   static const String settingMute = 'assets/setting_screen/mute.png';
   static const String settingSfx = 'assets/setting_screen/sfx.png';
-  static const String settingToggleOff =
-      'assets/setting_screen/toggle_of.png';
+  static const String settingToggleOff = 'assets/setting_screen/toggle_of.png';
   static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
 }

@@ -52,4 +52,5 @@ flutter:
     - assets/missions/misson-three/
     - assets/animated_avatars/
     - assets/splash_screen/
+    - assets/onboarding_screen/
     - assets/setting_screen/
