@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/lab_widgets.dart';
+import '../../../shared/widgets/mission_screen_background.dart';
 import '../application/settings_controller.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -17,90 +18,434 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _SettingsTopBar(),
-              const SizedBox(height: 34),
-              const LabBadge(text: 'AUDIO CONTROL'),
-              const SizedBox(height: 18),
-              const Text(
-                'Settings',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'LAB SYSTEM PREFERENCES',
-                style: TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const ScanLine(),
-              const SizedBox(height: 22),
-              _SettingsPanel(
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 8, 22, 26),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SettingSwitchRow(
-                    icon: settings.masterMuted
-                        ? Icons.volume_off_outlined
-                        : Icons.volume_up_outlined,
-                    title: 'Mute all audio',
-                    subtitle: settings.masterMuted
-                        ? 'BGM and SFX output disabled'
-                        : 'BGM and SFX follow channel settings',
-                    value: settings.masterMuted,
-                    onChanged: notifier.setMasterMuted,
+                  _settingsTopBar(context),
+                  const SizedBox(height: 28),
+                  _labelText('AUDIO CONTROL', fontSize: 18),
+                  const SizedBox(height: 18),
+                  _labelText('LAB SYSTEM PREFERENCES', fontSize: 13),
+                  const SizedBox(height: 24),
+                  _lavaDivider(),
+                  const SizedBox(height: 24),
+                  _settingsPanel(
+                    children: [
+                      _settingSwitchRow(
+                        assetPath: settings.masterMuted
+                            ? Assets.settingMute
+                            : Assets.settingUnmute,
+                        title: 'Mute all audio',
+                        subtitle: settings.masterMuted
+                            ? 'BGM and SFX output disabled'
+                            : 'BGM and SFX follow channel settings',
+                        value: settings.masterMuted,
+                        onChanged: notifier.setMasterMuted,
+                      ),
+                      _panelDivider(),
+                      _audioChannelRow(
+                        assetPath: Assets.settingBgm,
+                        title: 'BGM',
+                        subtitle: settings.bgmEnabled
+                            ? 'Background music enabled'
+                            : 'Background music muted',
+                        enabled: !settings.masterMuted,
+                        switchValue: !settings.bgmMuted,
+                        volume: settings.bgmVolume,
+                        onSwitchChanged: (value) =>
+                            notifier.setBgmMuted(!value),
+                        onVolumeChanged: notifier.setBgmVolume,
+                      ),
+                      _panelDivider(),
+                      _audioChannelRow(
+                        assetPath: Assets.settingSfx,
+                        title: 'SFX',
+                        subtitle: settings.sfxEnabled
+                            ? 'Interaction sounds enabled'
+                            : 'Interaction sounds muted',
+                        enabled: !settings.masterMuted,
+                        switchValue: !settings.sfxMuted,
+                        volume: settings.sfxVolume,
+                        onSwitchChanged: (value) =>
+                            notifier.setSfxMuted(!value),
+                        onVolumeChanged: notifier.setSfxVolume,
+                      ),
+                    ],
                   ),
-                  const _PanelDivider(),
-                  _AudioChannelRow(
-                    icon: Icons.music_note_outlined,
-                    title: 'BGM',
-                    subtitle: settings.bgmEnabled
-                        ? 'Background music enabled'
-                        : 'Background music muted',
-                    enabled: !settings.masterMuted,
-                    switchValue: !settings.bgmMuted,
-                    volume: settings.bgmVolume,
-                    onSwitchChanged: (value) => notifier.setBgmMuted(!value),
-                    onVolumeChanged: notifier.setBgmVolume,
-                  ),
-                  const _PanelDivider(),
-                  _AudioChannelRow(
-                    icon: Icons.graphic_eq_outlined,
-                    title: 'SFX',
-                    subtitle: settings.sfxEnabled
-                        ? 'Interaction sounds enabled'
-                        : 'Interaction sounds muted',
-                    enabled: !settings.masterMuted,
-                    switchValue: !settings.sfxMuted,
-                    volume: settings.sfxVolume,
-                    onSwitchChanged: (value) => notifier.setSfxMuted(!value),
-                    onVolumeChanged: notifier.setSfxVolume,
+                  const SizedBox(height: 18),
+                  _settingsPanel(
+                    children: [_quitRow(onTap: () => _confirmQuit(context))],
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              _SettingsPanel(
-                children: [
-                  _QuitRow(onTap: () => _confirmQuit(context)),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _settingsTopBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 12, 4),
+      child: Row(
+        children: [
+          MissionBackButton(
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
+              context.go(AppRoutes.menu);
+            },
+          ),
+          const Spacer(),
+          _lavaHeading('SETTINGS', size: 32),
+          const Spacer(),
+          const SizedBox(width: 36),
+        ],
+      ),
+    );
+  }
+
+  Widget _labelText(String text, {required double fontSize}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: text == 'AUDIO CONTROL'
+            ? const Color(0xFFFF7A1A)
+            : const Color(0xFFC7B7A7),
+        fontSize: fontSize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 2,
+        shadows: const [Shadow(color: Colors.black, offset: Offset(2, 2))],
+      ),
+    );
+  }
+
+  Widget _lavaHeading(String text, {required double size}) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        maxLines: 1,
+        style: TextStyle(
+          fontSize: size,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 2,
+          foreground: Paint()
+            ..shader = const LinearGradient(
+              colors: [Color(0xFFFFB13A), Color(0xFFFF6416), Color(0xFFC43110)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(Rect.fromLTWH(0, 0, 420, 90)),
+          shadows: const [
+            Shadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0),
+            Shadow(color: Color(0xFF6C2500), offset: Offset(2, 2)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _lavaDivider() {
+    return Container(
+      height: 2,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.transparent,
+            Color(0xFF4D2A1B),
+            Color(0xFFFF7A14),
+            Color(0xFF4D2A1B),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _settingsPanel({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 24, 24, 24).withValues(alpha: 0.9),
+        border: Border.all(color: const Color(0xFF8E4526), width: 2),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(color: Color(0x66000000), blurRadius: 10),
+          BoxShadow(color: Color(0x33FF5C00), blurRadius: 5),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Column(children: children),
+      ),
+    );
+  }
+
+  Widget _settingSwitchRow({
+    required String assetPath,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Row(
+        children: [
+          _settingsAssetIcon(assetPath),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _settingsTitle(title),
+                const SizedBox(height: 6),
+                _settingsSubtitle(subtitle),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _settingsToggle(
+            value: value,
+            onTap: onChanged == null ? null : () => onChanged(!value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _audioChannelRow({
+    required String assetPath,
+    required String title,
+    required String subtitle,
+    required bool enabled,
+    required bool switchValue,
+    required double volume,
+    required ValueChanged<bool> onSwitchChanged,
+    required ValueChanged<double> onVolumeChanged,
+  }) {
+    final channelActive = enabled && switchValue;
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _settingsAssetIcon(assetPath),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _settingsTitle(title),
+                    const SizedBox(height: 6),
+                    _settingsSubtitle(
+                      enabled ? subtitle : 'Disabled by mute all audio',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _settingsToggle(
+                value: channelActive,
+                onTap: enabled ? () => onSwitchChanged(!switchValue) : null,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              _croppedAsset(
+                Assets.settingUnmute,
+                width: 34,
+                height: 28,
+                scale: 1.35,
+              ),
+              Expanded(
+                child: _lavaSlider(
+                  value: volume,
+                  onChanged: channelActive ? onVolumeChanged : null,
+                ),
+              ),
+              SizedBox(
+                width: 46,
+                child: Text(
+                  '${(volume * 100).round()}%',
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    color: Color(0xFFFF7A1A),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    shadows: [
+                      Shadow(color: Colors.black, offset: Offset(2, 2)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    return Opacity(opacity: enabled ? 1 : 0.48, child: content);
+  }
+
+  Widget _settingsAssetIcon(String assetPath) {
+    return _croppedAsset(assetPath, width: 66, height: 66, scale: 1.35);
+  }
+
+  Widget _settingsToggle({required bool value, required VoidCallback? onTap}) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Opacity(
+        opacity: onTap == null ? 0.55 : 1,
+        child: _croppedAsset(
+          value ? Assets.settingToggleOn : Assets.settingToggleOff,
+          width: 74,
+          height: 42,
+          scale: 1.35,
+        ),
+      ),
+    );
+  }
+
+  Widget _croppedAsset(
+    String assetPath, {
+    required double width,
+    required double height,
+    required double scale,
+  }) {
+    return ClipRect(
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: Transform.scale(
+          scale: scale,
+          child: Image.asset(assetPath, fit: BoxFit.cover),
+        ),
+      ),
+    );
+  }
+
+  Widget _settingsTitle(String text) {
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        color: Color(0xFFFF7A1A),
+        fontSize: 20,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.2,
+        shadows: [Shadow(color: Colors.black, offset: Offset(2, 2))],
+      ),
+    );
+  }
+
+  Widget _settingsSubtitle(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Color(0xFFD0C2B5),
+        fontSize: 15,
+        height: 1.35,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
+        shadows: [Shadow(color: Colors.black, offset: Offset(1, 1))],
+      ),
+    );
+  }
+
+  Widget _lavaSlider({
+    required double value,
+    required ValueChanged<double>? onChanged,
+  }) {
+    return SliderTheme(
+      data: SliderThemeData(
+        trackHeight: 8,
+        activeTrackColor: const Color(0xFFFF6A12),
+        inactiveTrackColor: const Color(0xFF32241C),
+        thumbColor: const Color(0xFFFF7A1A),
+        overlayColor: const Color(0x33FF7A1A),
+        disabledActiveTrackColor: const Color(0xFF7A3518),
+        disabledInactiveTrackColor: const Color(0xFF2A211D),
+        disabledThumbColor: const Color(0xFF6D4B36),
+      ),
+      child: Slider(
+        value: value,
+        min: 0,
+        max: 1,
+        divisions: 10,
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _quitRow({required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      splashColor: const Color(0x22FF7A1A),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            _powerPlate(),
+            const SizedBox(width: 16),
+            Expanded(child: _settingsTitle('QUIT APP')),
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFF16110E),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFF8E4526), width: 1),
+              ),
+              child: const Icon(
+                Icons.chevron_right,
+                color: Color(0xFFFF7A1A),
+                size: 28,
+                shadows: [Shadow(color: Colors.black, offset: Offset(2, 2))],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _powerPlate() {
+    return Container(
+      width: 54,
+      height: 54,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFF16110E),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFF8E4526), width: 1),
+        boxShadow: const [BoxShadow(color: Color(0x33FF5C00), blurRadius: 6)],
+      ),
+      child: const Icon(
+        Icons.power_settings_new,
+        color: Color(0xFFFF7A1A),
+        size: 30,
+        shadows: [Shadow(color: Colors.black, offset: Offset(2, 2))],
+      ),
+    );
+  }
+
+  Widget _panelDivider() {
+    return const Divider(color: Color(0xFF6C351F), thickness: 1, height: 0);
   }
 
   Future<void> _confirmQuit(BuildContext context) async {
@@ -125,300 +470,8 @@ class SettingsScreen extends ConsumerWidget {
       },
     );
 
-    if (shouldQuit == true) {
-      if (context.mounted) {
-        context.go(AppRoutes.splash);
-      }
+    if (shouldQuit == true && context.mounted) {
+      context.go(AppRoutes.splash);
     }
-  }
-}
-
-class _SettingsTopBar extends StatelessWidget {
-  const _SettingsTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-              return;
-            }
-            context.go(AppRoutes.menu);
-          },
-        ),
-        const Spacer(),
-        const Text(
-          'Settings',
-          style: TextStyle(
-            color: AppColors.teal,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const Spacer(),
-        const SizedBox(width: 48),
-      ],
-    );
-  }
-}
-
-class _SettingsPanel extends StatelessWidget {
-  final List<Widget> children;
-
-  const _SettingsPanel({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderAlt, width: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(children: children),
-    );
-  }
-}
-
-class _SettingSwitchRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool>? onChanged;
-
-  const _SettingSwitchRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: 0.1),
-              border: Border.all(color: AppColors.teal, width: 0.6),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(icon, color: AppColors.teal, size: 19),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 10,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Switch(
-            value: value,
-            activeThumbColor: AppColors.teal,
-            activeTrackColor: AppColors.teal.withValues(alpha: 0.28),
-            inactiveThumbColor: AppColors.textMuted,
-            inactiveTrackColor: AppColors.border,
-            onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AudioChannelRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool enabled;
-  final bool switchValue;
-  final double volume;
-  final ValueChanged<bool> onSwitchChanged;
-  final ValueChanged<double> onVolumeChanged;
-
-  const _AudioChannelRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.enabled,
-    required this.switchValue,
-    required this.volume,
-    required this.onSwitchChanged,
-    required this.onVolumeChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final channelActive = enabled && switchValue;
-    final content = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.1),
-                  border: Border.all(color: AppColors.teal, width: 0.6),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon, color: AppColors.teal, size: 19),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title.toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      enabled ? subtitle : 'Disabled by mute all audio',
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 10,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Switch(
-                value: switchValue,
-                activeThumbColor: AppColors.teal,
-                activeTrackColor: AppColors.teal.withValues(alpha: 0.28),
-                inactiveThumbColor: AppColors.textMuted,
-                inactiveTrackColor: AppColors.border,
-                onChanged: enabled ? onSwitchChanged : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(
-                Icons.volume_down_outlined,
-                color: AppColors.textMuted,
-                size: 17,
-              ),
-              Expanded(
-                child: Slider(
-                  value: volume,
-                  min: 0,
-                  max: 1,
-                  divisions: 10,
-                  activeColor: AppColors.teal,
-                  inactiveColor: AppColors.border,
-                  onChanged: channelActive ? onVolumeChanged : null,
-                ),
-              ),
-              SizedBox(
-                width: 38,
-                child: Text(
-                  '${(volume * 100).round()}%',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-
-    return Opacity(opacity: enabled ? 1 : 0.48, child: content);
-  }
-}
-
-class _QuitRow extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _QuitRow({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      splashColor: AppColors.teal.withValues(alpha: 0.05),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Icon(Icons.power_settings_new, color: AppColors.teal, size: 20),
-            SizedBox(width: 13),
-            Expanded(
-              child: Text(
-                'QUIT APP',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: AppColors.textMuted, size: 16),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PanelDivider extends StatelessWidget {
-  const _PanelDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Divider(color: AppColors.border, thickness: 0.5, height: 0);
   }
 }

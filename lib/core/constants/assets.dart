@@ -49,4 +49,11 @@ class Assets {
   static const String splashBtn = 'assets/splash_screen/splash_btn.png';
   static const String splashLogo = 'assets/splash_screen/splash_logo.png';
   static const String splashScreenBg = 'assets/splash_screen/splash_bg.jpg';
+  static const String settingUnmute = 'assets/setting_screen/unmute.png';
+  static const String settingBgm = 'assets/setting_screen/bgm.png';
+  static const String settingMute = 'assets/setting_screen/mute.png';
+  static const String settingSfx = 'assets/setting_screen/sfx.png';
+  static const String settingToggleOff =
+      'assets/setting_screen/toggle_of.png';
+  static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
 }
