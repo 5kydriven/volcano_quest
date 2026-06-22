@@ -103,6 +103,8 @@ class Assets {
       'assets/missions/misson-three/hint_container.png';
   static const String missionThreeLetterSlot =
       'assets/missions/misson-three/letter_slot.png';
+  static const String missionFiveSelectedContainer =
+      'assets/missions/mission-five/selected_container.png';
   static const missionTwoAnswerContainers = [
     'assets/missions/ABCD_container/A_container.png',
     'assets/missions/ABCD_container/B_container.png',

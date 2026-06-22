@@ -53,6 +53,7 @@ flutter:
     - assets/missions/ABCD_container/
     - assets/missions/buttons/
     - assets/missions/misson-three/
+    - assets/missions/mission-five/
     - assets/animated_avatars/
     - assets/splash_screen/
     - assets/onboarding_screen/

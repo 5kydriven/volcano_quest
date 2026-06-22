@@ -314,9 +314,9 @@ class _AnatomyLabContent extends StatelessWidget {
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton(
-            onPressed: placedLabels.isEmpty || isSaving ? null : onClear,
-            child: const Text('CLEAR PLACEMENTS'),
+          child: _ClearPlacementsButton(
+            isEnabled: placedLabels.isNotEmpty && !isSaving,
+            onPressed: onClear,
           ),
         ),
       ],
@@ -476,12 +476,11 @@ class _LabelBank extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 84),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+      constraints: const BoxConstraints(minHeight: 112),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF071A2A).withValues(alpha: 0.92),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
+        color: AppColors.background,
+        border: Border.all(color: AppColors.borderAlt, width: 4),
       ),
       child: Column(
         children: [
@@ -516,6 +515,57 @@ class _LabelBank extends StatelessWidget {
   }
 }
 
+class _ClearPlacementsButton extends StatelessWidget {
+  final bool isEnabled;
+  final VoidCallback onPressed;
+
+  const _ClearPlacementsButton({
+    required this.isEnabled,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = isEnabled ? AppColors.teal : AppColors.textDim;
+    final borderColor = isEnabled ? AppColors.teal : AppColors.borderAlt;
+    final iconColor = isEnabled ? AppColors.textMuted : AppColors.textDim;
+
+    return Opacity(
+      opacity: isEnabled ? 1 : 0.55,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isEnabled ? onPressed : null,
+          child: Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt.withValues(alpha: 0.72),
+              border: Border.all(color: borderColor, width: 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.restart_alt, color: iconColor, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  'CLEAR PLACEMENTS',
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LabelChip extends StatelessWidget {
   final _AnatomyPart part;
   final bool isSelected;
@@ -532,23 +582,31 @@ class _LabelChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color labelColor;
+    if (!isEnabled) {
+      labelColor = AppColors.textDim;
+    } else if (isSelected) {
+      labelColor = const Color(0xFFFFC857);
+    } else {
+      labelColor = AppColors.textPrimary;
+    }
+
     final chip = AnimatedContainer(
       duration: const Duration(milliseconds: 140),
+      constraints: const BoxConstraints(minWidth: 132),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? AppColors.teal.withValues(alpha: 0.16)
-            : const Color(0xFF1B2A36),
-        border: Border.all(
-          color: isSelected ? const Color(0xFFFFC857) : AppColors.borderAlt,
-          width: 1,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(Assets.rectangleContainer),
+          fit: BoxFit.fill,
         ),
-        borderRadius: BorderRadius.circular(5),
       ),
+
       child: Text(
         part.label,
+        textAlign: TextAlign.center,
         style: TextStyle(
-          color: isEnabled ? AppColors.textPrimary : AppColors.textDim,
+          color: labelColor,
           fontSize: 12,
           fontWeight: FontWeight.w800,
           letterSpacing: 0,
@@ -563,11 +621,7 @@ class _LabelChip extends StatelessWidget {
         child: Opacity(opacity: 0.9, child: chip),
       ),
       childWhenDragging: Opacity(opacity: 0.28, child: chip),
-      child: InkWell(
-        onTap: isEnabled ? onTap : null,
-        borderRadius: BorderRadius.circular(5),
-        child: chip,
-      ),
+      child: InkWell(onTap: isEnabled ? onTap : null, child: chip),
     );
   }
 }
@@ -586,31 +640,21 @@ class _TelemetryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.84),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(Assets.missionFiveSelectedContainer),
+          fit: BoxFit.fill,
+        ),
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _TelemetryCell(
-              label: 'LOCKED',
-              value: '$placedCount/$totalCount',
-            ),
-          ),
+          Expanded(child: _TelemetryCell(value: '$placedCount/$totalCount')),
           const SizedBox(width: 8),
-          Expanded(
-            child: _TelemetryCell(
-              label: 'SELECTED',
-              value: selectedPart?.label ?? 'none',
-            ),
-          ),
+          Expanded(child: _TelemetryCell(value: selectedPart?.label ?? 'none')),
           const SizedBox(width: 8),
-          const Expanded(
-            child: _TelemetryCell(label: 'REWARD', value: '40 XP'),
-          ),
+          const Expanded(child: _TelemetryCell(value: '40 XP')),
         ],
       ),
     );
@@ -618,44 +662,24 @@ class _TelemetryStrip extends StatelessWidget {
 }
 
 class _TelemetryCell extends StatelessWidget {
-  final String label;
   final String value;
 
-  const _TelemetryCell({required this.label, required this.value});
+  const _TelemetryCell({required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.border, width: 0.6),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
+    return Center(
+      child: Text(
+        value,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
       ),
     );
   }
@@ -829,17 +853,13 @@ class _AnatomyPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
+            minHeight: 6,
             backgroundColor: AppColors.surface,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
           ),
