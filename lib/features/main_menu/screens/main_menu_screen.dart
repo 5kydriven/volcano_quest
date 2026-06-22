@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,8 +20,6 @@ class MainMenuScreen extends ConsumerWidget {
     final progress = missionsDone / AppConstants.totalLevels;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      bottomNavigationBar: const _SettingsFooter(),
       body: SafeArea(
         child: Stack(
           children: [
@@ -33,22 +33,19 @@ class MainMenuScreen extends ConsumerWidget {
                     progress: progress,
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _MissionMap(player: player),
-                        const SizedBox(height: 32),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                ),
+                SliverToBoxAdapter(child: _MissionMap(player: player)),
               ],
             ),
             _FloatingMenuRail(player: player),
+            Positioned(
+              bottom: 32,
+              right: 20,
+              child: _FooterIconButton(
+                icon: Icons.settings_outlined,
+                tooltip: 'Settings',
+                onTap: () => context.push(AppRoutes.settings),
+              ),
+            ),
           ],
         ),
       ),
@@ -57,6 +54,8 @@ class MainMenuScreen extends ConsumerWidget {
 }
 
 class _StickyTopBarDelegate extends SliverPersistentHeaderDelegate {
+  static const extent = 85.0;
+
   final PlayerModel player;
   final int missionsDone;
   final double progress;
@@ -68,10 +67,10 @@ class _StickyTopBarDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get minExtent => 85;
+  double get minExtent => extent;
 
   @override
-  double get maxExtent => 85;
+  double get maxExtent => extent;
 
   @override
   Widget build(
@@ -169,6 +168,25 @@ int _completedMissionCount(PlayerModel player) {
   }
   return (player.currentLevel - 1).clamp(0, AppConstants.totalLevels);
 }
+
+const _menuImageSize = Size(1024, 1536);
+const _menuImageAspectRatio = 1024 / 1536;
+
+// Edit these normalized X/Y image coordinates to move level badges on the map.
+// Values are measured from the menu background image: 0.0 is left/top, 1.0 is right/bottom.
+const _missionPathAnchors = <Offset>[
+  Offset(0.20, 0.93), // Level 1
+  Offset(0.42, 0.83), // Level 2
+  Offset(0.68, 0.79), // Level 3
+  Offset(0.72, 0.68), // SQ
+  Offset(0.42, 0.64), // level 4
+  Offset(0.45, 0.53), // level 5
+  Offset(0.73, 0.49), // level 6
+  Offset(0.46, 0.43), // level 7
+  Offset(0.59, 0.34), // level 8
+  Offset(0.50, 0.26), // Level 8.1
+  Offset(0.46, 0.20), // Level 9
+];
 
 class _TopBar extends StatelessWidget {
   final PlayerModel player;
@@ -347,44 +365,54 @@ class _MissionMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const nodeSize = 58.0;
-    const topInset = 8.0;
-    const step = 82.0;
+    const nodeSize = 44.0;
     final nodes = _missionNodes();
-    final height = topInset * 2 + step * (nodes.length - 1) + nodeSize;
+    assert(
+      nodes.length == _missionPathAnchors.length,
+      'Mission nodes must match the menu background path anchors.',
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final positions = _missionNodePositions(
-          count: nodes.length,
-          width: constraints.maxWidth,
-          nodeSize: nodeSize,
-          topInset: topInset,
-          step: step,
+        final screenHeight = MediaQuery.sizeOf(context).height;
+        final canvasWidth = constraints.maxWidth;
+        final imageRatioHeight = canvasWidth / _menuImageAspectRatio;
+        final canvasHeight = math.max(
+          imageRatioHeight,
+          screenHeight - _StickyTopBarDelegate.extent,
         );
+        final canvasSize = Size(canvasWidth, canvasHeight);
+        final positions = _missionNodePositions(
+          canvasSize: canvasSize,
+          count: nodes.length,
+        );
+        final positionedNodes = nodes.take(positions.length).toList();
 
         return SizedBox(
-          height: height,
+          height: canvasHeight,
           width: double.infinity,
           child: Stack(
+            clipBehavior: Clip.none,
             children: [
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _MissionConnectorPainter(
-                    nodes: nodes,
-                    positions: positions,
-                  ),
+                child: Image.asset(
+                  Assets.menuBg,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
                 ),
               ),
-              for (var index = nodes.length - 1; index >= 0; index--)
+              for (var index = positionedNodes.length - 1; index >= 0; index--)
                 Positioned(
                   left: positions[index].dx - nodeSize / 2,
                   top: positions[index].dy - nodeSize / 2,
                   child: _MissionNode(
-                    node: nodes[index],
+                    node: positionedNodes[index],
                     size: nodeSize,
-                    onTap: nodes[index].isActive
-                        ? () => _showMissionDialog(context, nodes[index])
+                    onTap: positionedNodes[index].isActive
+                        ? () => _showMissionDialog(
+                            context,
+                            positionedNodes[index],
+                          )
                         : null,
                   ),
                 ),
@@ -483,36 +511,27 @@ class _MissionMap extends StatelessWidget {
   }
 
   List<Offset> _missionNodePositions({
+    required Size canvasSize,
     required int count,
-    required double width,
-    required double nodeSize,
-    required double topInset,
-    required double step,
   }) {
-    final safeWidth = width - nodeSize;
-    final xFactors = [
-      0.30,
-      0.66,
-      0.42,
-      0.74,
-      0.28,
-      0.60,
-      0.36,
-      0.70,
-      0.48,
-      0.76,
-      0.34,
+    final imageRect = _menuImageRect(canvasSize);
+    final anchorCount = math.min(count, _missionPathAnchors.length);
+
+    return [
+      for (final anchor in _missionPathAnchors.take(anchorCount))
+        Offset(
+          imageRect.left + imageRect.width * anchor.dx,
+          imageRect.top + imageRect.height * anchor.dy,
+        ),
     ];
-    final positions = <Offset>[];
+  }
 
-    for (var index = 0; index < count; index++) {
-      final topIndex = count - index - 1;
-      final x = nodeSize / 2 + safeWidth * xFactors[topIndex];
-      final y = topInset + nodeSize / 2 + step * topIndex;
-      positions.add(Offset(x, y));
-    }
-
-    return positions;
+  Rect _menuImageRect(Size canvasSize) {
+    final fittedSizes = applyBoxFit(BoxFit.cover, _menuImageSize, canvasSize);
+    return Alignment.center.inscribe(
+      fittedSizes.destination,
+      Offset.zero & canvasSize,
+    );
   }
 
   void _showMissionDialog(BuildContext context, _MissionMapNode node) {
@@ -563,8 +582,13 @@ class _MissionNode extends StatelessWidget {
         : AppColors.textDim;
     final borderColor = node.isActive ? AppColors.teal : AppColors.borderAlt;
     final backgroundColor = node.isActive
-        ? AppColors.surfaceAlt
-        : AppColors.surface;
+        ? AppColors.tealDark.withValues(alpha: 0.94)
+        : AppColors.background.withValues(alpha: 0.78);
+    final statusIcon = node.isComplete
+        ? Icons.check_circle
+        : node.isActive
+        ? Icons.play_circle_fill
+        : Icons.lock;
 
     return Tooltip(
       message: node.isActive
@@ -595,103 +619,52 @@ class _MissionNode extends StatelessWidget {
                     color: backgroundColor,
                     border: Border.all(
                       color: borderColor,
-                      width: node.isActive ? 1 : 0.5,
+                      width: node.isActive ? 2 : 1,
                     ),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(13),
+                    boxShadow: node.isActive
+                        ? [
+                            BoxShadow(
+                              color: AppColors.teal.withValues(alpha: 0.28),
+                              blurRadius: 12,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
                   ),
-                  child: Icon(
-                    node.primaryIcon,
-                    color: foregroundColor,
-                    size: 30,
+                  alignment: Alignment.center,
+                  child: Text(
+                    node.numberLabel,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontSize: node.numberLabel.length > 1 ? 12 : 16,
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
                   ),
                 ),
                 Positioned(
-                  bottom: -4,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 22),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 2,
-                    ),
+                  right: -4,
+                  top: -4,
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppColors.tealDark,
+                      color: AppColors.background.withValues(alpha: 0.9),
                       border: Border.all(color: borderColor, width: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      node.numberLabel,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: foregroundColor,
-                        fontSize: 10,
-                        height: 1,
-                      ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.5),
+                      child: Icon(statusIcon, color: foregroundColor, size: 13),
                     ),
                   ),
                 ),
-                if (!node.isActive)
-                  Positioned(
-                    right: -2,
-                    top: -2,
-                    child: Icon(
-                      node.isComplete
-                          ? Icons.check_circle_outline
-                          : Icons.lock_outline,
-                      color: foregroundColor,
-                      size: 17,
-                    ),
-                  ),
               ],
             ),
           ),
         ),
       ),
     );
-  }
-}
-
-class _MissionConnectorPainter extends CustomPainter {
-  final List<_MissionMapNode> nodes;
-  final List<Offset> positions;
-
-  const _MissionConnectorPainter({
-    required this.nodes,
-    required this.positions,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var index = 0; index < positions.length - 1; index++) {
-      final start = positions[index];
-      final end = positions[index + 1];
-      final isOpenPath =
-          nodes[index].isComplete &&
-          (nodes[index + 1].isComplete || nodes[index + 1].isActive);
-      final paint = Paint()
-        ..color = isOpenPath ? AppColors.tealDim : AppColors.border
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isOpenPath ? 2 : 1.2
-        ..strokeCap = StrokeCap.round;
-      final midY = (start.dy + end.dy) / 2;
-      final controlOffset = start.dx < end.dx ? 42.0 : -42.0;
-      final path = Path()
-        ..moveTo(start.dx, start.dy)
-        ..cubicTo(
-          start.dx + controlOffset,
-          midY,
-          end.dx - controlOffset,
-          midY,
-          end.dx,
-          end.dy,
-        );
-
-      canvas.drawPath(path, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _MissionConnectorPainter oldDelegate) {
-    return oldDelegate.positions != positions || oldDelegate.nodes != nodes;
   }
 }
 
@@ -829,33 +802,6 @@ class _MissionDialogBadge extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingsFooter extends StatelessWidget {
-  const _SettingsFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: DecoratedBox(
-        decoration: const BoxDecoration(color: AppColors.background),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _FooterIconButton(
-                icon: Icons.settings_outlined,
-                tooltip: 'Settings',
-                onTap: () => context.push(AppRoutes.settings),
-              ),
-            ],
-          ),
         ),
       ),
     );
