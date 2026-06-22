@@ -23,7 +23,6 @@ class _MissionSixVolcanoBuilderScreenState
     with SingleTickerProviderStateMixin {
   late final AnimationController _dropController;
   int? _selectedOptionIndex;
-  String? _feedback;
   var _builtTileCount = 0;
   int? _droppingTileIndex;
   var _isSaving = false;
@@ -133,7 +132,6 @@ class _MissionSixVolcanoBuilderScreenState
                             totalQuestions: _questions.length,
                             question: _questions[questionIndex],
                             selectedOptionIndex: _selectedOptionIndex,
-                            feedback: _feedback,
                             isSaving: _isSaving,
                             builtTileCount: builtTileCount,
                             droppingTileIndex: _droppingTileIndex,
@@ -144,7 +142,6 @@ class _MissionSixVolcanoBuilderScreenState
                                 : (index) {
                                     setState(() {
                                       _selectedOptionIndex = index;
-                                      _feedback = null;
                                     });
                                   },
                             onSubmit: _submitAnswer,
@@ -178,8 +175,8 @@ class _MissionSixVolcanoBuilderScreenState
     if (selectedType != question.correctAnswer) {
       setState(() {
         _selectedOptionIndex = null;
-        _feedback = 'TYPE MISMATCH - TRY AGAIN';
       });
+      showMissionSnackBar(context, 'Type mismatch - try again', isError: true);
       return;
     }
 
@@ -189,10 +186,13 @@ class _MissionSixVolcanoBuilderScreenState
       _builtTileCount = tileIndex + 1;
       _droppingTileIndex = tileIndex;
       _selectedOptionIndex = null;
-      _feedback = tileIndex == _questions.length - 1
-          ? 'FINAL TILE LOCKED'
-          : '+${AppConstants.missionSixXp} XP - VOLCANO PART LOCKED';
     });
+    showMissionSnackBar(
+      context,
+      tileIndex == _questions.length - 1
+          ? 'Final tile locked'
+          : '+${AppConstants.missionSixXp} XP - volcano part locked',
+    );
 
     await ref
         .read(playerProvider.notifier)
@@ -230,7 +230,6 @@ class _BuilderContent extends StatelessWidget {
   final int totalQuestions;
   final _BuilderQuestion question;
   final int? selectedOptionIndex;
-  final String? feedback;
   final bool isSaving;
   final int builtTileCount;
   final int? droppingTileIndex;
@@ -244,7 +243,6 @@ class _BuilderContent extends StatelessWidget {
     required this.totalQuestions,
     required this.question,
     required this.selectedOptionIndex,
-    required this.feedback,
     required this.isSaving,
     required this.builtTileCount,
     required this.droppingTileIndex,
@@ -308,10 +306,6 @@ class _BuilderContent extends StatelessWidget {
             ],
           ),
         ),
-        if (feedback != null) ...[
-          const SizedBox(height: 8),
-          _BuilderFeedback(text: feedback!),
-        ],
         const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
@@ -661,39 +655,6 @@ class _BuilderAnswerTile extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BuilderFeedback extends StatelessWidget {
-  final String text;
-
-  const _BuilderFeedback({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final isError = text.contains('MISMATCH');
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        border: Border.all(
-          color: isError ? const Color(0xFFFF7A7A) : AppColors.teal,
-          width: 0.8,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: isError ? const Color(0xFFFFB3B3) : AppColors.teal,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
         ),
       ),
     );

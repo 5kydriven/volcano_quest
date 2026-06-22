@@ -40,6 +40,38 @@ class MissionBackButton extends StatelessWidget {
   }
 }
 
+void showMissionSnackBar(
+  BuildContext context,
+  String message, {
+  bool isError = false,
+}) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        message.toUpperCase(),
+        style: const TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
+      backgroundColor: isError ? const Color(0xFF4A1F24) : AppColors.surface,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(milliseconds: 1800),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(
+          color: isError ? const Color(0xFFFF7A7A) : AppColors.teal,
+          width: 0.8,
+        ),
+        borderRadius: BorderRadius.circular(6),
+      ),
+    ),
+  );
+}
+
 class MissionResearchTopBar extends StatelessWidget {
   final String title;
   final int xp;

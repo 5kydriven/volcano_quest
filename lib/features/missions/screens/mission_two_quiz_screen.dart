@@ -24,7 +24,6 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
   var _submitted = false;
   var _isSaving = false;
   var _showSummary = false;
-  var _lastAnswerCorrect = false;
 
   static final _questions = [
     _MissionTwoQuestion(
@@ -144,7 +143,6 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
                             selectedOptionIndex: _selectedOptionIndex,
                             submitted: _submitted,
                             isSaving: _isSaving,
-                            lastAnswerCorrect: _lastAnswerCorrect,
                             onSelect: _submitted || _isSaving
                                 ? null
                                 : (index) {
@@ -199,7 +197,6 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
           _questionIndex = displayIndex + 1;
           _selectedOptionIndex = null;
           _submitted = false;
-          _lastAnswerCorrect = false;
         }
       });
       return;
@@ -226,9 +223,15 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
     setState(() {
       _questionIndex = displayIndex;
       _submitted = true;
-      _lastAnswerCorrect = isCorrect;
       _isSaving = false;
     });
+    showMissionSnackBar(
+      context,
+      isCorrect
+          ? '+15 XP recorded'
+          : 'Correct answer: ${question.options[question.correctOptionIndex]}',
+      isError: !isCorrect,
+    );
   }
 }
 
@@ -324,7 +327,6 @@ class _QuizContent extends StatelessWidget {
   final int? selectedOptionIndex;
   final bool submitted;
   final bool isSaving;
-  final bool lastAnswerCorrect;
   final ValueChanged<int>? onSelect;
   final VoidCallback onAction;
 
@@ -335,7 +337,6 @@ class _QuizContent extends StatelessWidget {
     required this.selectedOptionIndex,
     required this.submitted,
     required this.isSaving,
-    required this.lastAnswerCorrect,
     required this.onSelect,
     required this.onAction,
   });
@@ -389,13 +390,6 @@ class _QuizContent extends StatelessWidget {
             ],
           ),
         ),
-        if (submitted) ...[
-          const SizedBox(height: 10),
-          _AnswerFeedback(
-            isCorrect: lastAnswerCorrect,
-            correctAnswer: question.options[question.correctOptionIndex],
-          ),
-        ],
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
@@ -536,38 +530,6 @@ class _AnswerOptionTile extends StatelessWidget {
             else if (showWrong)
               const Icon(Icons.close, color: Color(0xFFFF7A7A), size: 18),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AnswerFeedback extends StatelessWidget {
-  final bool isCorrect;
-  final String correctAnswer;
-
-  const _AnswerFeedback({required this.isCorrect, required this.correctAnswer});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        border: Border.all(
-          color: isCorrect ? AppColors.teal : const Color(0xFFFF7A7A),
-          width: 0.8,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        isCorrect ? '+15 XP RECORDED' : 'Correct answer: $correctAnswer',
-        style: TextStyle(
-          color: isCorrect ? AppColors.teal : const Color(0xFFFFB3B3),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
         ),
       ),
     );

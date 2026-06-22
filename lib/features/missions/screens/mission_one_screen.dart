@@ -260,7 +260,7 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
       backgroundColor: AppColors.background,
       barrierColor: Colors.black.withValues(alpha: 0.72),
       isScrollControlled: true,
-      builder: (context) {
+      builder: (sheetContext) {
         return _MissionOrbSheet(
           orb: orb,
           isCompleted: isCompleted,
@@ -268,8 +268,11 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
             await ref
                 .read(playerProvider.notifier)
                 .completeMissionOneOrb(orb.id);
-            if (context.mounted) {
-              context.pop();
+            if (sheetContext.mounted) {
+              sheetContext.pop();
+            }
+            if (mounted) {
+              showMissionSnackBar(context, '+10 XP recorded');
             }
           },
         );

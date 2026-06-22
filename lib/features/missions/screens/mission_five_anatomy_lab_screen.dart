@@ -31,7 +31,6 @@ class _MissionFiveAnatomyLabScreenState
     extends ConsumerState<MissionFiveAnatomyLabScreen> {
   final _placedLabels = <String, String>{};
   String? _selectedLabelId;
-  String? _feedback;
   var _isSaving = false;
   var _showSummary = false;
 
@@ -130,7 +129,6 @@ class _MissionFiveAnatomyLabScreenState
                             parts: _parts,
                             placedLabels: _placedLabels,
                             selectedLabelId: _selectedLabelId,
-                            feedback: _feedback,
                             isSaving: _isSaving,
                             modelPreview:
                                 modelPreview ?? const _VolcanoModelView(),
@@ -155,7 +153,6 @@ class _MissionFiveAnatomyLabScreenState
 
     setState(() {
       _selectedLabelId = _selectedLabelId == labelId ? null : labelId;
-      _feedback = null;
     });
   }
 
@@ -167,7 +164,6 @@ class _MissionFiveAnatomyLabScreenState
     setState(() {
       _placedLabels.clear();
       _selectedLabelId = null;
-      _feedback = null;
     });
   }
 
@@ -187,8 +183,12 @@ class _MissionFiveAnatomyLabScreenState
     if (target.id != label.id) {
       setState(() {
         _selectedLabelId = null;
-        _feedback = '${label.label} does not match ${target.label}';
       });
+      showMissionSnackBar(
+        context,
+        '${label.label} does not match ${target.label}',
+        isError: true,
+      );
       return;
     }
 
@@ -196,10 +196,11 @@ class _MissionFiveAnatomyLabScreenState
     setState(() {
       _placedLabels[targetId] = activeLabelId;
       _selectedLabelId = null;
-      _feedback = completed
-          ? 'Anatomy scan complete'
-          : '${target.label} locked';
     });
+    showMissionSnackBar(
+      context,
+      completed ? 'Anatomy scan complete' : '${target.label} locked',
+    );
 
     if (completed) {
       _completeMission();
@@ -258,7 +259,6 @@ class _AnatomyLabContent extends StatelessWidget {
   final List<_AnatomyPart> parts;
   final Map<String, String> placedLabels;
   final String? selectedLabelId;
-  final String? feedback;
   final bool isSaving;
   final Widget modelPreview;
   final ValueChanged<String> onSelectLabel;
@@ -270,7 +270,6 @@ class _AnatomyLabContent extends StatelessWidget {
     required this.parts,
     required this.placedLabels,
     required this.selectedLabelId,
-    required this.feedback,
     required this.isSaving,
     required this.modelPreview,
     required this.onSelectLabel,
@@ -306,10 +305,6 @@ class _AnatomyLabContent extends StatelessWidget {
               : parts.firstWhere((part) => part.id == selectedLabelId),
         ),
         const SizedBox(height: 12),
-        if (feedback != null) ...[
-          _FeedbackBanner(text: feedback!, isComplete: false),
-          const SizedBox(height: 12),
-        ],
         _LabelBank(
           labels: remainingParts,
           selectedLabelId: selectedLabelId,
@@ -661,39 +656,6 @@ class _TelemetryCell extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FeedbackBanner extends StatelessWidget {
-  final String text;
-  final bool isComplete;
-
-  const _FeedbackBanner({required this.text, required this.isComplete});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        border: Border.all(
-          color: isComplete ? AppColors.teal : const Color(0xFFFFC857),
-          width: 0.8,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: isComplete ? AppColors.teal : const Color(0xFFFFD98A),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

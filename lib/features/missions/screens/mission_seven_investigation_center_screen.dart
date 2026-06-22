@@ -24,7 +24,6 @@ class MissionSevenInvestigationCenterScreen extends ConsumerStatefulWidget {
 class _MissionSevenInvestigationCenterScreenState
     extends ConsumerState<MissionSevenInvestigationCenterScreen> {
   _VolcanoClassification? _selectedClassification;
-  String? _feedback;
   var _isSaving = false;
 
   static final _volcanoes = [
@@ -128,7 +127,6 @@ class _MissionSevenInvestigationCenterScreenState
                             completedCount: completedCount,
                             totalCount: _volcanoes.length,
                             selectedClassification: _selectedClassification,
-                            feedback: _feedback,
                             isSaving: _isSaving,
                             onSelect: _selectClassification,
                             onSubmit: _selectedClassification == null
@@ -152,7 +150,6 @@ class _MissionSevenInvestigationCenterScreenState
 
     setState(() {
       _selectedClassification = classification;
-      _feedback = null;
     });
   }
 
@@ -167,9 +164,6 @@ class _MissionSevenInvestigationCenterScreenState
 
     setState(() {
       _isSaving = true;
-      _feedback = isCorrect
-          ? '+${AppConstants.missionSevenXpPerCorrect} XP RECORDED'
-          : 'INCORRECT CLASSIFICATION - CORRECT ANSWER: $correctAnswer';
     });
 
     await ref
@@ -184,6 +178,13 @@ class _MissionSevenInvestigationCenterScreenState
       _selectedClassification = null;
       _isSaving = false;
     });
+    showMissionSnackBar(
+      context,
+      isCorrect
+          ? '+${AppConstants.missionSevenXpPerCorrect} XP recorded'
+          : 'Incorrect classification - correct answer: $correctAnswer',
+      isError: !isCorrect,
+    );
   }
 
   static int _earnedXP(int correctCount) {
@@ -199,7 +200,6 @@ class _InvestigationContent extends StatelessWidget {
   final int completedCount;
   final int totalCount;
   final _VolcanoClassification? selectedClassification;
-  final String? feedback;
   final bool isSaving;
   final ValueChanged<_VolcanoClassification> onSelect;
   final VoidCallback? onSubmit;
@@ -209,7 +209,6 @@ class _InvestigationContent extends StatelessWidget {
     required this.completedCount,
     required this.totalCount,
     required this.selectedClassification,
-    required this.feedback,
     required this.isSaving,
     required this.onSelect,
     required this.onSubmit,
@@ -223,10 +222,6 @@ class _InvestigationContent extends StatelessWidget {
         const _ScannerLabel(text: 'VOLCANO INVESTIGATION CENTER'),
         const SizedBox(height: 10),
         _SignalStrip(completedCount: completedCount, totalCount: totalCount),
-        if (feedback != null) ...[
-          const SizedBox(height: 6),
-          _FeedbackBanner(text: feedback!),
-        ],
         const SizedBox(height: 12),
         Expanded(
           child: ListView(
@@ -689,39 +684,6 @@ class _ClassificationButton extends StatelessWidget {
             fontWeight: FontWeight.w800,
             letterSpacing: 1,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeedbackBanner extends StatelessWidget {
-  final String text;
-
-  const _FeedbackBanner({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final isError = text.contains('INCORRECT');
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        border: Border.all(
-          color: isError ? const Color(0xFFFF7A7A) : AppColors.teal,
-          width: 0.8,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: isError ? const Color(0xFFFFB3B3) : AppColors.teal,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.4,
         ),
       ),
     );

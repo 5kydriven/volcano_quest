@@ -208,6 +208,7 @@ class _LevelEightFieldLessonScreenState
       return;
     }
 
+    showMissionSnackBar(context, 'Field lesson complete');
     context.go(AppRoutes.level(9));
   }
 

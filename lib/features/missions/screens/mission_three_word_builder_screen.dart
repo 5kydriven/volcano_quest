@@ -15,7 +15,6 @@ const _lava = Color(0xFFFF7A1A);
 const _lavaDeep = Color(0xFFC74214);
 const _ember = Color(0xFFFFB45F);
 const _charcoal = Color(0xFF100F0E);
-const _charcoalSoft = Color(0xFF1A1714);
 
 class MissionThreeWordBuilderScreen extends ConsumerStatefulWidget {
   final int levelId;
@@ -282,6 +281,7 @@ class _MissionThreeWordBuilderScreenState
       setState(() {
         _feedback = _WordFeedback.wrong;
       });
+      showMissionSnackBar(context, 'Wrong sequence - try again', isError: true);
       return;
     }
 
@@ -316,6 +316,7 @@ class _MissionThreeWordBuilderScreenState
       }
       _feedback = _WordFeedback.correct;
     });
+    showMissionSnackBar(context, '+20 XP recorded');
   }
 }
 
@@ -481,10 +482,6 @@ class _WordBuilderContent extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                if (feedback != _WordFeedback.none) ...[
-                  _WordFeedbackBanner(feedback: feedback),
-                  const SizedBox(height: 12),
-                ],
                 _PuzzleDeck(
                   child: Column(
                     children: [
@@ -1068,39 +1065,6 @@ class _LetterTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(5),
         child: tile,
-      ),
-    );
-  }
-}
-
-class _WordFeedbackBanner extends StatelessWidget {
-  final _WordFeedback feedback;
-
-  const _WordFeedbackBanner({required this.feedback});
-
-  @override
-  Widget build(BuildContext context) {
-    final isCorrect = feedback == _WordFeedback.correct;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: _charcoalSoft.withValues(alpha: 0.94),
-        border: Border.all(
-          color: isCorrect ? _lava : const Color(0xFFFF7A7A),
-          width: 0.8,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        isCorrect ? '+20 XP RECORDED' : 'WRONG SEQUENCE - TRY AGAIN',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: isCorrect ? _lava : const Color(0xFFFFB3B3),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
-        ),
       ),
     );
   }

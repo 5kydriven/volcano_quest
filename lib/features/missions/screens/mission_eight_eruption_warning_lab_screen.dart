@@ -23,7 +23,6 @@ class MissionEightEruptionWarningLabScreen extends ConsumerStatefulWidget {
 
 class _MissionEightEruptionWarningLabScreenState
     extends ConsumerState<MissionEightEruptionWarningLabScreen> {
-  String? _feedback;
   var _isSaving = false;
 
   static final _warningSigns = [
@@ -118,7 +117,6 @@ class _MissionEightEruptionWarningLabScreenState
                             sign: currentSign!,
                             completedCount: completedCount,
                             totalCount: _warningSigns.length,
-                            feedback: _feedback,
                             isSaving: _isSaving,
                             onAnswer: (answer) => _submitAnswer(
                               sign: currentSign,
@@ -146,9 +144,6 @@ class _MissionEightEruptionWarningLabScreenState
     final isCorrect = answer == sign.correctAnswer;
     setState(() {
       _isSaving = true;
-      _feedback = isCorrect
-          ? '+${AppConstants.missionEightXpDisplayPerCorrect} XP RECORDED'
-          : 'CORRECT WARNING SIGN: ${sign.correctAnswer.label}';
     });
 
     await ref
@@ -162,6 +157,13 @@ class _MissionEightEruptionWarningLabScreenState
     setState(() {
       _isSaving = false;
     });
+    showMissionSnackBar(
+      context,
+      isCorrect
+          ? '+${AppConstants.missionEightXpDisplayPerCorrect} XP recorded'
+          : 'Correct warning sign: ${sign.correctAnswer.label}',
+      isError: !isCorrect,
+    );
   }
 
   static int _earnedXP(List<String> correctSigns) {
@@ -183,7 +185,6 @@ class _WarningContent extends StatelessWidget {
   final _WarningSign sign;
   final int completedCount;
   final int totalCount;
-  final String? feedback;
   final bool isSaving;
   final ValueChanged<_WarningAnswer> onAnswer;
 
@@ -191,7 +192,6 @@ class _WarningContent extends StatelessWidget {
     required this.sign,
     required this.completedCount,
     required this.totalCount,
-    required this.feedback,
     required this.isSaving,
     required this.onAnswer,
   });
@@ -204,10 +204,6 @@ class _WarningContent extends StatelessWidget {
         const _ScannerLabel(text: 'ERUPTION WARNING LAB'),
         const SizedBox(height: 10),
         _SignalStrip(completedCount: completedCount, totalCount: totalCount),
-        if (feedback != null) ...[
-          const SizedBox(height: 6),
-          _FeedbackBanner(text: feedback!),
-        ],
         const SizedBox(height: 12),
         Expanded(
           child: ListView(
@@ -630,39 +626,6 @@ class _AnswerButton extends StatelessWidget {
             fontWeight: FontWeight.w800,
             letterSpacing: 0.8,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _FeedbackBanner extends StatelessWidget {
-  final String text;
-
-  const _FeedbackBanner({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final isCorrect = text.startsWith('+');
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.92),
-        border: Border.all(
-          color: isCorrect ? AppColors.teal : const Color(0xFFFF7A7A),
-          width: 0.8,
-        ),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: isCorrect ? AppColors.teal : const Color(0xFFFFB3B3),
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.4,
         ),
       ),
     );
