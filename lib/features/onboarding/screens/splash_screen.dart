@@ -68,8 +68,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           var horizontalPadding = 20.0;
           var topSpacing = 8.0;
           var contentSpacing = 12.0;
-          var footerSpacing = 14.0;
-          var bottomSpacing = 24.0;
           var maxLogoWidth = 760.0;
 
           if (constraints.maxWidth < 420) {
@@ -79,8 +77,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           if (constraints.maxHeight < 720) {
             topSpacing = 0;
             contentSpacing = 4.0;
-            footerSpacing = 8.0;
-            bottomSpacing = 14.0;
             maxLogoWidth = 560.0;
           }
 
@@ -195,40 +191,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               ),
                               Expanded(
                                 flex: 2,
-                                child: LayoutBuilder(
-                                  builder: (context, buttonConstraints) {
-                                    var buttonHeight =
-                                        buttonConstraints.maxHeight -
-                                        footerSpacing -
-                                        bottomSpacing -
-                                        16;
-                                    if (buttonHeight < 0) {
-                                      buttonHeight = 0;
-                                    }
-
-                                    return Column(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: buttonHeight,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            alignment: Alignment.topCenter,
-                                            child: SizedBox(
-                                              width: buttonWidth,
-                                              child: _InitializeMissionButton(
-                                                width: contentWidth,
-                                                onTap: _onStart,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        SizedBox(height: footerSpacing),
-                                        SizedBox(height: bottomSpacing),
-                                      ],
-                                    );
-                                  },
+                                child: _InitializeMissionButton(
+                                  onTap: _onStart,
                                 ),
                               ),
                             ],
@@ -303,10 +267,9 @@ class _CroppedSplashImage extends StatelessWidget {
 }
 
 class _InitializeMissionButton extends StatefulWidget {
-  final double width;
   final VoidCallback onTap;
 
-  const _InitializeMissionButton({required this.width, required this.onTap});
+  const _InitializeMissionButton({required this.onTap});
 
   @override
   State<_InitializeMissionButton> createState() =>
@@ -322,9 +285,8 @@ class _InitializeMissionButtonState extends State<_InitializeMissionButton> {
       button: true,
       label: 'Initialize mission',
       child: SizedBox(
+        width: double.infinity,
         key: const ValueKey('splashInitializeMissionButton'),
-        width: widget.width,
-        height: widget.width * 0.3,
         child: FocusableActionDetector(
           mouseCursor: SystemMouseCursors.click,
           actions: {
@@ -349,11 +311,7 @@ class _InitializeMissionButtonState extends State<_InitializeMissionButton> {
                 scale: _pressed ? 0.96 : 1,
                 duration: const Duration(milliseconds: 90),
                 curve: Curves.easeOutCubic,
-                child: _CroppedSplashImage(
-                  assetPath: Assets.splashBtn,
-                  width: widget.width,
-                  heightFactor: 0.3,
-                ),
+                child: Image.asset(Assets.splashBtn, fit: BoxFit.cover),
               ),
             ),
           ),
