@@ -27,7 +27,7 @@
 
 - [x] polish exp and progress
 - [x] badge system
-- [] leaderboard
+- [x] leaderboard
 - [] testing
 - [] performance optimization
 

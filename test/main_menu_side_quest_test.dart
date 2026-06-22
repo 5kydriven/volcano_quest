@@ -28,9 +28,17 @@ void main() {
       ),
     );
 
-    expect(find.text('START SIDE QUEST'), findsOneWidget);
-    expect(find.text('Structure of a Volcano'), findsOneWidget);
+    final sideQuestFinder = find.text('SQ');
+
+    expect(sideQuestFinder, findsOneWidget);
+
+    await tester.ensureVisible(sideQuestFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(sideQuestFinder);
+    await tester.pumpAndSettle();
+
     expect(find.text('SIDE QUEST'), findsOneWidget);
+    expect(find.text('Structure of a Volcano'), findsOneWidget);
   });
 
   testWidgets('mission button returns to level 4 after side quest completion', (
@@ -51,9 +59,17 @@ void main() {
       ),
     );
 
-    expect(find.text('CONTINUE MISSION'), findsOneWidget);
+    final levelFourFinder = find.text('4');
+
+    expect(levelFourFinder, findsOneWidget);
+
+    await tester.ensureVisible(levelFourFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(levelFourFinder);
+    await tester.pumpAndSettle();
+
+    expect(find.text('LEVEL 4'), findsOneWidget);
     expect(find.text('Philippine Volcano Explorer'), findsOneWidget);
-    expect(find.text('LVL 4'), findsOneWidget);
   });
 }
 
