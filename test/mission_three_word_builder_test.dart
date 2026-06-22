@@ -73,7 +73,7 @@ void main() {
 
     expect(find.text('MISSION 3 COMPLETE'), findsOneWidget);
     expect(find.text('VOLCANO VOCABULARY BADGE'), findsOneWidget);
-    expect(find.text('START SIDE QUEST'), findsOneWidget);
+    expect(find.text('RETURN TO MENU'), findsOneWidget);
     expect(find.text('80 XP'), findsWidgets);
 
     final savedPlayer = _loadSavedPlayer(prefs);
@@ -253,9 +253,13 @@ List<String> _visibleBankLetters(WidgetTester tester) {
 }
 
 Future<void> _submitCurrentWord(WidgetTester tester) async {
-  final submitButton = find.widgetWithText(ElevatedButton, 'SUBMIT WORD');
+  final submitButton = find.ancestor(
+    of: find.text('SUBMIT WORD'),
+    matching: find.byType(InkWell),
+  );
   await tester.ensureVisible(submitButton);
-  await tester.tap(submitButton);
+  await tester.pumpAndSettle();
+  tester.widget<InkWell>(submitButton).onTap!();
   await tester.pumpAndSettle();
 }
 

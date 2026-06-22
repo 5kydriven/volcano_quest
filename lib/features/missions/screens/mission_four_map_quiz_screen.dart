@@ -10,8 +10,13 @@ import '../../player/application/player_controller.dart';
 
 class MissionFourMapQuizScreen extends ConsumerStatefulWidget {
   final int levelId;
+  final bool isReplay;
 
-  const MissionFourMapQuizScreen({super.key, required this.levelId});
+  const MissionFourMapQuizScreen({
+    super.key,
+    required this.levelId,
+    this.isReplay = false,
+  });
 
   @override
   ConsumerState<MissionFourMapQuizScreen> createState() =>
@@ -25,6 +30,8 @@ class _MissionFourMapQuizScreenState
   int? _selectedOptionIndex;
   var _submitted = false;
   var _isSaving = false;
+  final _replayAnsweredIds = <String>[];
+  final _replayCorrectIds = <String>[];
 
   static final _volcanoes = [
     _MissionFourVolcano(
@@ -107,11 +114,14 @@ class _MissionFourMapQuizScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final answeredIds =
-        player.completedMissionOrbs[AppConstants.missionFourId] ?? const [];
-    final correctIds =
-        player.completedMissionOrbs[AppConstants.missionFourCorrectAnswersId] ??
-        const [];
+    final answeredIds = widget.isReplay
+        ? _replayAnsweredIds
+        : player.completedMissionOrbs[AppConstants.missionFourId] ?? const [];
+    final correctIds = widget.isReplay
+        ? _replayCorrectIds
+        : player.completedMissionOrbs[AppConstants
+                  .missionFourCorrectAnswersId] ??
+              const [];
     final allAnswered = AppConstants.missionFourVolcanoIds.every(
       answeredIds.contains,
     );
@@ -143,11 +153,12 @@ class _MissionFourMapQuizScreenState
                         ? _MissionFourSummary(
                             correctCount: correctIds.length,
                             totalVolcanoes: _volcanoes.length,
-                            earnedXP:
-                                correctIds.length *
-                                AppConstants.missionFourXpPerCorrect,
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : correctIds.length *
+                                      AppConstants.missionFourXpPerCorrect,
                             isPerfect: correctIds.length == _volcanoes.length,
-                            onProceed: () => context.push(AppRoutes.level(5)),
+                            onProceed: () => context.go(AppRoutes.menu),
                           )
                         : _selectedVolcano == null
                         ? _VolcanoMapContent(
@@ -235,9 +246,18 @@ class _MissionFourMapQuizScreenState
       _isSaving = true;
     });
 
-    await ref
-        .read(playerProvider.notifier)
-        .submitMissionFourAnswer(volcanoId: volcano.id, isCorrect: isCorrect);
+    if (widget.isReplay) {
+      if (!_replayAnsweredIds.contains(volcano.id)) {
+        _replayAnsweredIds.add(volcano.id);
+      }
+      if (isCorrect && !_replayCorrectIds.contains(volcano.id)) {
+        _replayCorrectIds.add(volcano.id);
+      }
+    } else {
+      await ref
+          .read(playerProvider.notifier)
+          .submitMissionFourAnswer(volcanoId: volcano.id, isCorrect: isCorrect);
+    }
 
     if (!mounted) {
       return;
@@ -249,7 +269,11 @@ class _MissionFourMapQuizScreenState
     });
     showMissionSnackBar(
       context,
-      isCorrect
+      widget.isReplay
+          ? isCorrect
+                ? 'Practice answer recorded'
+                : 'Correct answer: ${volcano.options[volcano.correctOptionIndex]}'
+          : isCorrect
           ? '+${AppConstants.missionFourXpPerCorrect} XP recorded'
           : 'Correct answer: ${volcano.options[volcano.correctOptionIndex]}',
       isError: !isCorrect,
@@ -896,7 +920,7 @@ class _MissionFourSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('PROCEED TO MISSION 5'),
+                  child: const Text('RETURN TO MENU'),
                 ),
               ),
             ],

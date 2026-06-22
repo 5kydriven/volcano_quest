@@ -10,8 +10,13 @@ import '../../player/application/player_controller.dart';
 
 class MissionTwoQuizScreen extends ConsumerStatefulWidget {
   final int levelId;
+  final bool isReplay;
 
-  const MissionTwoQuizScreen({super.key, required this.levelId});
+  const MissionTwoQuizScreen({
+    super.key,
+    required this.levelId,
+    this.isReplay = false,
+  });
 
   @override
   ConsumerState<MissionTwoQuizScreen> createState() =>
@@ -24,6 +29,8 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
   var _submitted = false;
   var _isSaving = false;
   var _showSummary = false;
+  final _replayAnsweredIds = <String>[];
+  final _replayCorrectIds = <String>[];
 
   static final _questions = [
     _MissionTwoQuestion(
@@ -85,11 +92,14 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final answeredIds =
-        player.completedMissionOrbs[AppConstants.missionTwoId] ?? const [];
-    final correctIds =
-        player.completedMissionOrbs[AppConstants.missionTwoCorrectAnswersId] ??
-        const [];
+    final answeredIds = widget.isReplay
+        ? _replayAnsweredIds
+        : player.completedMissionOrbs[AppConstants.missionTwoId] ?? const [];
+    final correctIds = widget.isReplay
+        ? _replayCorrectIds
+        : player.completedMissionOrbs[AppConstants
+                  .missionTwoCorrectAnswersId] ??
+              const [];
     final allAnswered = AppConstants.missionTwoQuestionIds.every(
       answeredIds.contains,
     );
@@ -131,10 +141,11 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
                         ? _QuizSummary(
                             correctCount: correctIds.length,
                             totalQuestions: _questions.length,
-                            earnedXP:
-                                correctIds.length *
-                                AppConstants.missionTwoXpPerCorrect,
-                            onProceed: () => context.push(AppRoutes.level(3)),
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : correctIds.length *
+                                      AppConstants.missionTwoXpPerCorrect,
+                            onProceed: () => context.go(AppRoutes.menu),
                           )
                         : _QuizContent(
                             questionIndex: displayIndex,
@@ -212,9 +223,21 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
       _isSaving = true;
     });
 
-    await ref
-        .read(playerProvider.notifier)
-        .submitMissionTwoAnswer(questionId: question.id, isCorrect: isCorrect);
+    if (widget.isReplay) {
+      if (!_replayAnsweredIds.contains(question.id)) {
+        _replayAnsweredIds.add(question.id);
+      }
+      if (isCorrect && !_replayCorrectIds.contains(question.id)) {
+        _replayCorrectIds.add(question.id);
+      }
+    } else {
+      await ref
+          .read(playerProvider.notifier)
+          .submitMissionTwoAnswer(
+            questionId: question.id,
+            isCorrect: isCorrect,
+          );
+    }
 
     if (!mounted) {
       return;
@@ -227,7 +250,11 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
     });
     showMissionSnackBar(
       context,
-      isCorrect
+      widget.isReplay
+          ? isCorrect
+                ? 'Practice answer recorded'
+                : 'Correct answer: ${question.options[question.correctOptionIndex]}'
+          : isCorrect
           ? '+15 XP recorded'
           : 'Correct answer: ${question.options[question.correctOptionIndex]}',
       isError: !isCorrect,
@@ -619,7 +646,7 @@ class _QuizSummary extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onProceed,
-                child: const Text('PROCEED TO MISSION 3'),
+                child: const Text('RETURN TO MENU'),
               ),
             ),
           ],

@@ -29,12 +29,18 @@ void main() {
     (tester) async {
       await _pumpAppAtLevelFive(tester);
 
-      await tester.tap(find.text('INITIALIZE MISSION'));
+      await tester.tap(
+        find.byKey(const ValueKey('splashInitializeMissionButton')),
+      );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('AVA'));
+      await tester.tap(find.text('AVA').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('CONTINUE MISSION'));
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -450));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('START'));
       await tester.pumpAndSettle();
 
       expect(find.text('VOLCANO ANATOMY SCAN'), findsOneWidget);
@@ -49,7 +55,7 @@ void main() {
 
     await _placeLabel(tester, 'magma_chamber', 'crater');
 
-    expect(find.text('magma chamber does not match crater'), findsOneWidget);
+    expect(find.text('MAGMA CHAMBER DOES NOT MATCH CRATER'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('mission5-label-magma_chamber')),
       findsOneWidget,
@@ -70,7 +76,7 @@ void main() {
 
     await _placeLabel(tester, 'magma_chamber', 'magma_chamber');
 
-    expect(find.text('magma chamber locked'), findsOneWidget);
+    expect(find.text('MAGMA CHAMBER LOCKED'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('mission5-label-magma_chamber')),
       findsNothing,
@@ -138,11 +144,55 @@ void main() {
       hasLength(1),
     );
   });
+
+  testWidgets('replay lets completed anatomy lab run without saving rewards', (
+    tester,
+  ) async {
+    final completedPlayer = PlayerModel(
+      id: 'test-player',
+      name: 'Ava',
+      avatarIndex: 0,
+      currentLevel: 6,
+      totalXP: 40,
+      earnedBadges: const [AppConstants.magmaAnalystBadge],
+      completedMissionOrbs: const {
+        AppConstants.missionFiveId: AppConstants.missionFiveAnatomyPartIds,
+      },
+    );
+    final prefs = await _pumpMissionFive(
+      tester,
+      player: completedPlayer,
+      isReplay: true,
+    );
+
+    expect(find.text('MISSION 5 COMPLETE'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('mission5-label-magma_chamber')),
+      findsOneWidget,
+    );
+
+    for (final partId in AppConstants.missionFiveAnatomyPartIds) {
+      await _placeLabel(tester, partId, partId);
+    }
+
+    expect(find.text('MISSION 5 COMPLETE'), findsOneWidget);
+    expect(find.text('0 XP'), findsWidgets);
+
+    final savedPlayer = _loadSavedPlayer(prefs);
+    expect(savedPlayer.totalXP, completedPlayer.totalXP);
+    expect(savedPlayer.currentLevel, completedPlayer.currentLevel);
+    expect(
+      savedPlayer.completedMissionOrbs,
+      completedPlayer.completedMissionOrbs,
+    );
+    expect(savedPlayer.earnedBadges, completedPlayer.earnedBadges);
+  });
 }
 
 Future<SharedPreferences> _pumpMissionFive(
   WidgetTester tester, {
   PlayerModel? player,
+  bool isReplay = false,
 }) async {
   final testPlayer =
       player ??
@@ -163,10 +213,11 @@ Future<SharedPreferences> _pumpMissionFive(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: MissionFiveAnatomyLabScreen(
           levelId: 5,
-          modelPreview: ColoredBox(color: Colors.black),
+          modelPreview: const ColoredBox(color: Colors.black),
+          isReplay: isReplay,
         ),
       ),
     ),

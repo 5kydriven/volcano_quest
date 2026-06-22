@@ -19,11 +19,13 @@ const _charcoal = Color(0xFF100F0E);
 class MissionThreeWordBuilderScreen extends ConsumerStatefulWidget {
   final int levelId;
   final int? randomSeed;
+  final bool isReplay;
 
   const MissionThreeWordBuilderScreen({
     super.key,
     required this.levelId,
     this.randomSeed,
+    this.isReplay = false,
   });
 
   @override
@@ -41,6 +43,7 @@ class _MissionThreeWordBuilderScreenState
   var _isSaving = false;
   var _showSummary = false;
   var _feedback = _WordFeedback.none;
+  final _replaySolvedIds = <String>[];
 
   static const _distractorPool = 'BCDFHJKLNOPQRSTUVXYZ';
 
@@ -62,8 +65,9 @@ class _MissionThreeWordBuilderScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final solvedIds =
-        player.completedMissionOrbs[AppConstants.missionThreeId] ?? const [];
+    final solvedIds = widget.isReplay
+        ? _replaySolvedIds
+        : player.completedMissionOrbs[AppConstants.missionThreeId] ?? const [];
     final allSolved = AppConstants.missionThreeWordIds.every(
       solvedIds.contains,
     );
@@ -117,12 +121,11 @@ class _MissionThreeWordBuilderScreenState
                         ? _MissionThreeSummary(
                             solvedCount: solvedIds.length,
                             totalWords: _words.length,
-                            earnedXP:
-                                solvedIds.length *
-                                AppConstants.missionThreeXpPerWord,
-                            onProceed: () => context.push(
-                              AppRoutes.sideQuestVolcanoStructure,
-                            ),
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : solvedIds.length *
+                                      AppConstants.missionThreeXpPerWord,
+                            onProceed: () => context.go(AppRoutes.menu),
                           )
                         : _WordBuilderContent(
                             wordIndex: activeIndex,
@@ -289,17 +292,24 @@ class _MissionThreeWordBuilderScreenState
       _isSaving = true;
     });
 
-    await ref.read(playerProvider.notifier).completeMissionThreeWord(word.id);
+    if (widget.isReplay) {
+      if (!_replaySolvedIds.contains(word.id)) {
+        _replaySolvedIds.add(word.id);
+      }
+    } else {
+      await ref.read(playerProvider.notifier).completeMissionThreeWord(word.id);
+    }
 
     if (!mounted) {
       return;
     }
 
-    final solvedIds =
-        ref
-            .read(playerProvider)
-            .completedMissionOrbs[AppConstants.missionThreeId] ??
-        const [];
+    final solvedIds = widget.isReplay
+        ? _replaySolvedIds
+        : ref
+                  .read(playerProvider)
+                  .completedMissionOrbs[AppConstants.missionThreeId] ??
+              const [];
     final allSolved = AppConstants.missionThreeWordIds.every(
       solvedIds.contains,
     );
@@ -316,7 +326,10 @@ class _MissionThreeWordBuilderScreenState
       }
       _feedback = _WordFeedback.correct;
     });
-    showMissionSnackBar(context, '+20 XP recorded');
+    showMissionSnackBar(
+      context,
+      widget.isReplay ? 'Practice word solved' : '+20 XP recorded',
+    );
   }
 }
 
@@ -1153,7 +1166,7 @@ class _MissionThreeSummary extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onProceed,
-                child: const Text('START SIDE QUEST'),
+                child: const Text('RETURN TO MENU'),
               ),
             ),
           ],
