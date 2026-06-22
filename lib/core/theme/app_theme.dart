@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const background = Color(0xFF0A0F1A);
-  static const surface = Color(0xFF0D1A24);
-  static const surfaceAlt = Color(0xFF0D3D3A);
-  static const border = Color(0xFF1E3A4A);
-  static const borderAlt = Color(0xFF1E4A5A);
+  static const background = Color(0xFF100F0E);
+  static const surface = Color(0xFF1A1714);
+  static const surfaceAlt = Color(0xFF3A1A10);
+  static const border = Color(0xFF3B3028);
+  static const borderAlt = Color(0xFF6E3A1F);
 
-  static const teal = Color(0xFF2DD4BF);
-  static const tealDim = Color(0xFF4A9E96);
-  static const tealDark = Color(0xFF051A18);
+  static const teal = Color(0xFFFF7A1A);
+  static const tealDim = Color(0xFFC74214);
+  static const tealDark = Color(0xFF24100A);
 
-  static const textPrimary = Color(0xFFE2F8F4);
-  static const textSecondary = Color(0xFFB0CDD6);
-  static const textMuted = Color(0xFF4A9E96);
-  static const textDim = Color(0xFF1E4A5A);
+  static const textPrimary = Color(0xFFFFF1E3);
+  static const textSecondary = Color(0xFFD5B59D);
+  static const textMuted = Color(0xFFFFB45F);
+  static const textDim = Color(0xFF6E3A1F);
 }
 
 class AppTheme {

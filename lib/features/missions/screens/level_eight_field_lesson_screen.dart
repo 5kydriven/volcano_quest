@@ -48,7 +48,7 @@ class _LevelEightFieldLessonScreenState
               ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
                   children: [
                     const LabBadge(text: 'FIELD LESSON'),
                     const SizedBox(height: 14),

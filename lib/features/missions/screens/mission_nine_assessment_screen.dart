@@ -108,7 +108,7 @@ class _MissionNineAssessmentScreenState
       body: MissionScreenBackground(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
             child: Column(
               children: [
                 _AssessmentTopBar(
