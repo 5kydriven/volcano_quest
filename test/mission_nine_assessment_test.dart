@@ -39,8 +39,7 @@ void main() {
     final prefs = await _pumpMissionNine(tester);
 
     await _answerCurrentQuestion(tester, 'incorrect_statement', 3);
-    final nextButton = find.widgetWithText(ElevatedButton, 'NEXT QUESTION');
-    tester.widget<ElevatedButton>(nextButton).onPressed!();
+    await tester.tap(find.text('NEXT QUESTION'));
     await tester.pumpAndSettle();
 
     expect(
@@ -72,7 +71,7 @@ void main() {
 
     expect(
       find.text(
-        'CORRECT ANSWER: VOLCANOES THAT DO NOT PRODUCE LAVA IS NOT DANGEROUS.',
+        'Correct answer: Volcanoes that do not produce lava is not dangerous.',
       ),
       findsOneWidget,
     );
@@ -105,11 +104,7 @@ void main() {
     expect(find.text('VIEW RESULTS'), findsOneWidget);
     expect(find.text('MISSION 9 COMPLETE'), findsNothing);
 
-    final viewResultsButton = find.widgetWithText(
-      ElevatedButton,
-      'VIEW RESULTS',
-    );
-    tester.widget<ElevatedButton>(viewResultsButton).onPressed!();
+    await tester.tap(find.text('VIEW RESULTS'));
     await tester.pumpAndSettle();
 
     expect(find.text('MISSION 9 COMPLETE'), findsOneWidget);
@@ -178,23 +173,14 @@ void main() {
   ) async {
     await _pumpAppAtLevelNineWithLesson(tester);
 
-    await tester.tap(
-      find.byKey(const ValueKey('splashInitializeMissionButton')),
-    );
+    await tester.tap(find.text('INITIALIZE MISSION'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('AVA').last);
-    await tester.pumpAndSettle();
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('9'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('9'));
+    await tester.tap(find.text('AVA'));
     await tester.pumpAndSettle();
 
     expect(find.text('Assessment'), findsOneWidget);
 
-    await tester.tap(find.text('START'));
+    await tester.tap(find.text('CONTINUE MISSION'));
     await tester.pumpAndSettle();
 
     expect(find.text('FINAL ASSESSMENT'), findsOneWidget);
@@ -318,8 +304,7 @@ Future<void> _answerAndContinue(
   int answerIndex,
 ) async {
   await _answerCurrentQuestion(tester, questionId, answerIndex);
-  final nextButton = find.widgetWithText(ElevatedButton, 'NEXT QUESTION');
-  tester.widget<ElevatedButton>(nextButton).onPressed!();
+  await tester.tap(find.text('NEXT QUESTION'));
   await tester.pumpAndSettle();
 }
 
@@ -334,8 +319,7 @@ Future<void> _answerCurrentQuestion(
   await tester.pumpAndSettle();
   await tester.tap(button);
   await tester.pumpAndSettle();
-  final submitButton = find.widgetWithText(ElevatedButton, 'SUBMIT ANSWER');
-  tester.widget<ElevatedButton>(submitButton).onPressed!();
+  await tester.tap(find.text('SUBMIT ANSWER'));
   await tester.pumpAndSettle();
 }
 

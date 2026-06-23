@@ -9,9 +9,7 @@ import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 class VolcanoStructureSideQuestScreen extends ConsumerStatefulWidget {
-  final bool isReplay;
-
-  const VolcanoStructureSideQuestScreen({super.key, this.isReplay = false});
+  const VolcanoStructureSideQuestScreen({super.key});
 
   @override
   ConsumerState<VolcanoStructureSideQuestScreen> createState() =>
@@ -25,8 +23,6 @@ class _VolcanoStructureSideQuestScreenState
   int? _selectedOptionIndex;
   var _submitted = false;
   var _isSaving = false;
-  final _replayAnsweredIds = <String>[];
-  final _replayCorrectIds = <String>[];
 
   static final _lessonPages = [
     _LessonPage(
@@ -149,16 +145,13 @@ class _VolcanoStructureSideQuestScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final answeredIds = widget.isReplay
-        ? _replayAnsweredIds
-        : player.completedMissionOrbs[AppConstants
-                  .sideQuestVolcanoStructureId] ??
-              const [];
-    final correctIds = widget.isReplay
-        ? _replayCorrectIds
-        : player.completedMissionOrbs[AppConstants
-                  .sideQuestVolcanoStructureCorrectAnswersId] ??
-              const [];
+    final answeredIds =
+        player.completedMissionOrbs[AppConstants.sideQuestVolcanoStructureId] ??
+        const [];
+    final correctIds =
+        player.completedMissionOrbs[AppConstants
+            .sideQuestVolcanoStructureCorrectAnswersId] ??
+        const [];
     final allAnswered = AppConstants.sideQuestVolcanoStructureQuestionIds.every(
       answeredIds.contains,
     );
@@ -196,10 +189,8 @@ class _VolcanoStructureSideQuestScreenState
                         ? _SideQuestSummary(
                             correctCount: correctIds.length,
                             totalQuestions: _questions.length,
-                            earnedXP: widget.isReplay
-                                ? 0
-                                : _earnedSideQuestXP(correctIds),
-                            onProceed: () => context.go(AppRoutes.menu),
+                            earnedXP: _earnedSideQuestXP(correctIds),
+                            onProceed: () => context.push(AppRoutes.level(4)),
                           )
                         : showingLesson
                         ? _LessonContent(
@@ -338,21 +329,12 @@ class _VolcanoStructureSideQuestScreenState
       _isSaving = true;
     });
 
-    if (widget.isReplay) {
-      if (!_replayAnsweredIds.contains(question.id)) {
-        _replayAnsweredIds.add(question.id);
-      }
-      if (isCorrect && !_replayCorrectIds.contains(question.id)) {
-        _replayCorrectIds.add(question.id);
-      }
-    } else {
-      await ref
-          .read(playerProvider.notifier)
-          .submitSideQuestVolcanoStructureAnswer(
-            questionId: question.id,
-            isCorrect: isCorrect,
-          );
-    }
+    await ref
+        .read(playerProvider.notifier)
+        .submitSideQuestVolcanoStructureAnswer(
+          questionId: question.id,
+          isCorrect: isCorrect,
+        );
 
     if (!mounted) {
       return;
@@ -365,11 +347,7 @@ class _VolcanoStructureSideQuestScreenState
     });
     showMissionSnackBar(
       context,
-      widget.isReplay
-          ? isCorrect
-                ? 'Practice answer recorded'
-                : 'Correct answer: ${question.options[question.correctOptionIndex]}'
-          : isCorrect
+      isCorrect
           ? '+${question.xp} XP recorded'
           : 'Correct answer: ${question.options[question.correctOptionIndex]}',
       isError: !isCorrect,
@@ -726,7 +704,7 @@ class _SideQuestSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
+                  child: const Text('PROCEED TO MISSION 4'),
                 ),
               ),
             ],

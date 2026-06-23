@@ -157,32 +157,22 @@ class _OnboardingTopBar extends StatelessWidget {
       children: [
         MissionBackButton(onPressed: onBack),
         const Spacer(),
-        Expanded(
-          flex: 8,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              'SCIENTIST PROFILE',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-                foreground: Paint()
-                  ..shader = const LinearGradient(
-                    colors: [_ember, _lava],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
-                shadows: const [
-                  Shadow(
-                    color: Colors.black,
-                    offset: Offset(3, 3),
-                    blurRadius: 0,
-                  ),
-                  Shadow(color: _lavaDeep, offset: Offset(2, 2), blurRadius: 0),
-                ],
-              ),
-            ),
+        Text(
+          'SCIENTIST PROFILE',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            foreground: Paint()
+              ..shader = const LinearGradient(
+                colors: [_ember, _lava],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
+            shadows: const [
+              Shadow(color: Colors.black, offset: Offset(3, 3), blurRadius: 0),
+              Shadow(color: _lavaDeep, offset: Offset(2, 2), blurRadius: 0),
+            ],
           ),
         ),
         const Spacer(),
@@ -318,37 +308,33 @@ class _OnboardingDeployButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Deploy to lab base',
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: isLoading ? null : onTap,
-        child: AnimatedScale(
-          duration: const Duration(milliseconds: 120),
-          scale: isLoading ? 0.99 : 1,
-          child: Opacity(
-            opacity: isLoading ? 0.72 : 1,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                const _AlignedOnboardingAsset(
-                  assetPath: Assets.onboardingDeployLabButton,
-                  slotHeight: 58,
-                  imageHeight: 186,
-                ),
-                if (isLoading)
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: _ember,
-                    ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: isLoading ? null : onTap,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 120),
+        scale: isLoading ? 0.99 : 1,
+        child: Opacity(
+          opacity: isLoading ? 0.72 : 1,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              const _AlignedOnboardingAsset(
+                assetPath: Assets.onboardingDeployLabButton,
+                slotHeight: 58,
+                imageHeight: 186,
+              ),
+              if (isLoading)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _ember,
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
@@ -490,20 +476,12 @@ class _LoopingAvatarVideoState extends State<_LoopingAvatarVideo> {
   }
 
   Future<void> _initialize() async {
-    try {
-      await _controller.initialize();
-    } catch (_) {
-      return;
-    }
+    await _controller.initialize();
     if (!mounted) {
       return;
     }
     setState(() => _isReady = true);
-    try {
-      await _controller.play();
-    } catch (_) {
-      // Keep the static fallback if playback is unavailable.
-    }
+    await _controller.play();
   }
 
   @override

@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
@@ -10,13 +13,8 @@ import '../../player/application/player_controller.dart';
 
 class MissionSixVolcanoBuilderScreen extends ConsumerStatefulWidget {
   final int levelId;
-  final bool isReplay;
 
-  const MissionSixVolcanoBuilderScreen({
-    super.key,
-    required this.levelId,
-    this.isReplay = false,
-  });
+  const MissionSixVolcanoBuilderScreen({super.key, required this.levelId});
 
   @override
   ConsumerState<MissionSixVolcanoBuilderScreen> createState() =>
@@ -85,12 +83,11 @@ class _MissionSixVolcanoBuilderScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final completedParts = widget.isReplay
-        ? const <String>[]
-        : player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
-    final alreadyCompleted =
-        !widget.isReplay &&
-        AppConstants.missionSixBuilderPartIds.every(completedParts.contains);
+    final completedParts =
+        player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
+    final alreadyCompleted = AppConstants.missionSixBuilderPartIds.every(
+      completedParts.contains,
+    );
     final shouldShowSummary = _showSummary || alreadyCompleted;
     final savedTileCount = completedParts.length.clamp(0, _questions.length);
     final builtTileCount = alreadyCompleted
@@ -129,10 +126,9 @@ class _MissionSixVolcanoBuilderScreenState
                     percentComplete: (progress * 100).round(),
                     child: shouldShowSummary
                         ? _BuilderSummary(
-                            earnedXP: widget.isReplay
-                                ? 0
-                                : AppConstants.missionSixXp * _questions.length,
-                            onProceed: () => context.go(AppRoutes.menu),
+                            earnedXP:
+                                AppConstants.missionSixXp * _questions.length,
+                            onProceed: () => context.push(AppRoutes.level(7)),
                           )
                         : _BuilderContent(
                             questionIndex: questionIndex,
@@ -170,9 +166,8 @@ class _MissionSixVolcanoBuilderScreenState
     }
 
     final player = ref.read(playerProvider);
-    final completedParts = widget.isReplay
-        ? const <String>[]
-        : player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
+    final completedParts =
+        player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
     final builtTileCount = _builtTileCount.clamp(
       completedParts.length.clamp(0, _questions.length),
       _questions.length,
@@ -197,18 +192,14 @@ class _MissionSixVolcanoBuilderScreenState
     });
     showMissionSnackBar(
       context,
-      widget.isReplay
-          ? 'Practice tile locked'
-          : tileIndex == _questions.length - 1
+      tileIndex == _questions.length - 1
           ? 'Final tile locked'
           : '+${AppConstants.missionSixXp} XP - volcano part locked',
     );
 
-    if (!widget.isReplay) {
-      await ref
-          .read(playerProvider.notifier)
-          .completeMissionSixVolcanoBuilderPart(question.id);
-    }
+    await ref
+        .read(playerProvider.notifier)
+        .completeMissionSixVolcanoBuilderPart(question.id);
 
     if (!mounted) {
       return;
@@ -266,6 +257,8 @@ class _BuilderContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canSubmit = selectedOptionIndex != null && !isSaving;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -308,7 +301,11 @@ class _BuilderContent extends StatelessWidget {
               const SizedBox(height: 14),
               for (var index = 0; index < answerOptions.length; index++) ...[
                 _BuilderAnswerTile(
-                  letter: String.fromCharCode(65 + index),
+                  assetPath: Assets.missionTwoAnswerContainers[index],
+                  imageOffsetY: switch (index) {
+                    0 => -9.5,
+                    _ => 0.0,
+                  },
                   text: answerOptions[index],
                   isSelected: selectedOptionIndex == index,
                   onTap: onSelect == null ? null : () => onSelect!(index),
@@ -319,22 +316,59 @@ class _BuilderContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: selectedOptionIndex == null || isSaving
-                ? null
-                : onSubmit,
-            child: isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: AppColors.teal,
-                    ),
-                  )
-                : const Text('LOCK VOLCANO TYPE'),
+        Opacity(
+          opacity: canSubmit || isSaving ? 1 : 0.48,
+          child: Container(
+            width: double.infinity,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFB347), Color(0xFFFF6A00)],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF8F2D00), width: 2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x66FF6A00),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: canSubmit ? onSubmit : null,
+                child: Center(
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'LOCK VOLCANO TYPE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.4,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -601,13 +635,15 @@ class _CrackedTilePainter extends CustomPainter {
 }
 
 class _BuilderAnswerTile extends StatelessWidget {
-  final String letter;
+  final String assetPath;
+  final double imageOffsetY;
   final String text;
   final bool isSelected;
   final VoidCallback? onTap;
 
   const _BuilderAnswerTile({
-    required this.letter,
+    required this.assetPath,
+    required this.imageOffsetY,
     required this.text,
     required this.isSelected,
     required this.onTap,
@@ -615,54 +651,77 @@ class _BuilderAnswerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isSelected ? AppColors.teal : AppColors.borderAlt;
-    final backgroundColor = isSelected
-        ? AppColors.surfaceAlt.withValues(alpha: 0.88)
-        : const Color(0xFF1B2A36);
-
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.circular(0),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 52),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: borderColor, width: 1),
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Row(
+        height: 50,
+        decoration: const BoxDecoration(),
+        clipBehavior: Clip.none,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                border: Border.all(color: borderColor, width: 0.8),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                letter,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
+            if (isSelected)
+              Transform.translate(
+                offset: Offset(0, imageOffsetY),
+                child: Transform.scale(
+                  scaleY: 6,
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        const Color(0xFFFF5A00).withValues(alpha: 0.38),
+                        BlendMode.srcATop,
+                      ),
+                      child: Image.asset(assetPath, fit: BoxFit.fill),
+                    ),
+                  ),
                 ),
               ),
+            Transform.translate(
+              offset: Offset(0, imageOffsetY),
+              child: Transform.scale(
+                scaleY: 6,
+                child: Image.asset(assetPath, fit: BoxFit.fill),
+              ),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
+            Positioned(
+              left: 92,
+              right: 22,
+              top: 0,
+              bottom: 0,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF351305),
+                    fontSize: 17,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                    shadows: [
+                      Shadow(
+                        color: Color(0x99FFF0C9),
+                        offset: Offset(0, 1),
+                        blurRadius: 0,
+                      ),
+                      Shadow(
+                        color: Color(0x33000000),
+                        offset: Offset(1, 1),
+                        blurRadius: 1,
+                      ),
+                    ],
+                  ),
+                  strutStyle: const StrutStyle(
+                    fontSize: 17,
+                    height: 1,
+                    forceStrutHeight: true,
+                  ),
                 ),
               ),
             ),
@@ -750,7 +809,7 @@ class _BuilderSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
+                  child: const Text('PROCEED TO MISSION 7'),
                 ),
               ),
             ],
@@ -800,17 +859,13 @@ class _BuilderPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
+            minHeight: 6,
             backgroundColor: AppColors.surface,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
           ),
