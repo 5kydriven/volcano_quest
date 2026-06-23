@@ -15,11 +15,13 @@ final missionFiveModelPreviewProvider = Provider<Widget?>((ref) => null);
 class MissionFiveAnatomyLabScreen extends ConsumerStatefulWidget {
   final int levelId;
   final Widget? modelPreview;
+  final bool isReplay;
 
   const MissionFiveAnatomyLabScreen({
     super.key,
     required this.levelId,
     this.modelPreview,
+    this.isReplay = false,
   });
 
   @override
@@ -33,6 +35,7 @@ class _MissionFiveAnatomyLabScreenState
   String? _selectedLabelId;
   var _isSaving = false;
   var _showSummary = false;
+  final _replayCompletedParts = <String>[];
 
   static const _parts = [
     _AnatomyPart(
@@ -82,8 +85,9 @@ class _MissionFiveAnatomyLabScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final completedParts =
-        player.completedMissionOrbs[AppConstants.missionFiveId] ?? const [];
+    final completedParts = widget.isReplay
+        ? _replayCompletedParts
+        : player.completedMissionOrbs[AppConstants.missionFiveId] ?? const [];
     final alreadyCompleted = AppConstants.missionFiveAnatomyPartIds.every(
       completedParts.contains,
     );
@@ -122,8 +126,10 @@ class _MissionFiveAnatomyLabScreenState
                     percentComplete: (progress * 100).round(),
                     child: shouldShowSummary
                         ? _MissionFiveSummary(
-                            earnedXP: AppConstants.missionFiveXp,
-                            onProceed: () => context.push(AppRoutes.level(6)),
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : AppConstants.missionFiveXp,
+                            onProceed: () => context.go(AppRoutes.menu),
                           )
                         : _AnatomyLabContent(
                             parts: _parts,
@@ -216,7 +222,13 @@ class _MissionFiveAnatomyLabScreenState
       _isSaving = true;
     });
 
-    await ref.read(playerProvider.notifier).completeMissionFiveAnatomyLab();
+    if (widget.isReplay) {
+      _replayCompletedParts
+        ..clear()
+        ..addAll(AppConstants.missionFiveAnatomyPartIds);
+    } else {
+      await ref.read(playerProvider.notifier).completeMissionFiveAnatomyLab();
+    }
 
     if (!mounted) {
       return;
@@ -762,7 +774,7 @@ class _MissionFiveSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('PROCEED TO MISSION 6'),
+                  child: const Text('RETURN TO MENU'),
                 ),
               ),
             ],

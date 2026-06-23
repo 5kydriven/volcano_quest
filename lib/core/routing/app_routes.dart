@@ -13,4 +13,12 @@ class AppRoutes {
   static const levelPath = '/level/:levelId';
 
   static String level(int levelId) => '/level/$levelId';
+
+  static String replayLevel(int levelId) => _withReplay(level(levelId));
+
+  static String replay(String route) => _withReplay(route);
+
+  static String _withReplay(String route) {
+    return Uri(path: route, queryParameters: {'replay': 'true'}).toString();
+  }
 }

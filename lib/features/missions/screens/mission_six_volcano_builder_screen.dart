@@ -13,8 +13,13 @@ import '../../player/application/player_controller.dart';
 
 class MissionSixVolcanoBuilderScreen extends ConsumerStatefulWidget {
   final int levelId;
+  final bool isReplay;
 
-  const MissionSixVolcanoBuilderScreen({super.key, required this.levelId});
+  const MissionSixVolcanoBuilderScreen({
+    super.key,
+    required this.levelId,
+    this.isReplay = false,
+  });
 
   @override
   ConsumerState<MissionSixVolcanoBuilderScreen> createState() =>
@@ -30,6 +35,7 @@ class _MissionSixVolcanoBuilderScreenState
   int? _droppingTileIndex;
   var _isSaving = false;
   var _showSummary = false;
+  final _replayCompletedParts = <String>[];
 
   static const _answerOptions = [
     'CINDER CONE',
@@ -83,8 +89,9 @@ class _MissionSixVolcanoBuilderScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final completedParts =
-        player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
+    final completedParts = widget.isReplay
+        ? _replayCompletedParts
+        : player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
     final alreadyCompleted = AppConstants.missionSixBuilderPartIds.every(
       completedParts.contains,
     );
@@ -126,9 +133,10 @@ class _MissionSixVolcanoBuilderScreenState
                     percentComplete: (progress * 100).round(),
                     child: shouldShowSummary
                         ? _BuilderSummary(
-                            earnedXP:
-                                AppConstants.missionSixXp * _questions.length,
-                            onProceed: () => context.push(AppRoutes.level(7)),
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : AppConstants.missionSixXp * _questions.length,
+                            onProceed: () => context.go(AppRoutes.menu),
                           )
                         : _BuilderContent(
                             questionIndex: questionIndex,
@@ -166,8 +174,9 @@ class _MissionSixVolcanoBuilderScreenState
     }
 
     final player = ref.read(playerProvider);
-    final completedParts =
-        player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
+    final completedParts = widget.isReplay
+        ? _replayCompletedParts
+        : player.completedMissionOrbs[AppConstants.missionSixId] ?? const [];
     final builtTileCount = _builtTileCount.clamp(
       completedParts.length.clamp(0, _questions.length),
       _questions.length,
@@ -192,14 +201,24 @@ class _MissionSixVolcanoBuilderScreenState
     });
     showMissionSnackBar(
       context,
-      tileIndex == _questions.length - 1
+      widget.isReplay
+          ? tileIndex == _questions.length - 1
+                ? 'Practice volcano complete'
+                : 'Practice tile locked'
+          : tileIndex == _questions.length - 1
           ? 'Final tile locked'
           : '+${AppConstants.missionSixXp} XP - volcano part locked',
     );
 
-    await ref
-        .read(playerProvider.notifier)
-        .completeMissionSixVolcanoBuilderPart(question.id);
+    if (widget.isReplay) {
+      if (!_replayCompletedParts.contains(question.id)) {
+        _replayCompletedParts.add(question.id);
+      }
+    } else {
+      await ref
+          .read(playerProvider.notifier)
+          .completeMissionSixVolcanoBuilderPart(question.id);
+    }
 
     if (!mounted) {
       return;
@@ -359,10 +378,7 @@ class _BuilderContent extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.4,
                             shadows: [
-                              Shadow(
-                                color: Colors.black,
-                                offset: Offset(1, 1),
-                              ),
+                              Shadow(color: Colors.black, offset: Offset(1, 1)),
                             ],
                           ),
                         ),
@@ -809,7 +825,7 @@ class _BuilderSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('PROCEED TO MISSION 7'),
+                  child: const Text('RETURN TO MENU'),
                 ),
               ),
             ],
