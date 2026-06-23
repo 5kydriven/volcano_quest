@@ -10,8 +10,13 @@ import '../../player/application/player_controller.dart';
 
 class MissionNineAssessmentScreen extends ConsumerStatefulWidget {
   final int levelId;
+  final bool isReplay;
 
-  const MissionNineAssessmentScreen({super.key, required this.levelId});
+  const MissionNineAssessmentScreen({
+    super.key,
+    required this.levelId,
+    this.isReplay = false,
+  });
 
   @override
   ConsumerState<MissionNineAssessmentScreen> createState() =>
@@ -25,6 +30,8 @@ class _MissionNineAssessmentScreenState
   var _submitted = false;
   var _isSaving = false;
   var _showSummary = false;
+  final _replayAnsweredIds = <String>[];
+  final _replayCorrectIds = <String>[];
 
   static final _questions = [
     _AssessmentQuestion(
@@ -86,11 +93,14 @@ class _MissionNineAssessmentScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final answeredIds =
-        player.completedMissionOrbs[AppConstants.missionNineId] ?? const [];
-    final correctIds =
-        player.completedMissionOrbs[AppConstants.missionNineCorrectAnswersId] ??
-        const [];
+    final answeredIds = widget.isReplay
+        ? _replayAnsweredIds
+        : player.completedMissionOrbs[AppConstants.missionNineId] ?? const [];
+    final correctIds = widget.isReplay
+        ? _replayCorrectIds
+        : player.completedMissionOrbs[AppConstants
+                  .missionNineCorrectAnswersId] ??
+              const [];
     final allAnswered = AppConstants.missionNineQuestionIds.every(
       answeredIds.contains,
     );
@@ -211,9 +221,21 @@ class _MissionNineAssessmentScreenState
       _isSaving = true;
     });
 
-    await ref
-        .read(playerProvider.notifier)
-        .submitMissionNineAnswer(questionId: question.id, isCorrect: isCorrect);
+    if (widget.isReplay) {
+      if (!_replayAnsweredIds.contains(question.id)) {
+        _replayAnsweredIds.add(question.id);
+      }
+      if (isCorrect && !_replayCorrectIds.contains(question.id)) {
+        _replayCorrectIds.add(question.id);
+      }
+    } else {
+      await ref
+          .read(playerProvider.notifier)
+          .submitMissionNineAnswer(
+            questionId: question.id,
+            isCorrect: isCorrect,
+          );
+    }
 
     if (!mounted) {
       return;
@@ -226,7 +248,11 @@ class _MissionNineAssessmentScreenState
     });
     showMissionSnackBar(
       context,
-      isCorrect
+      widget.isReplay
+          ? isCorrect
+                ? 'Practice answer recorded'
+                : 'Correct answer: ${question.options[question.correctOptionIndex]}'
+          : isCorrect
           ? 'Answer recorded'
           : 'Correct answer: ${question.options[question.correctOptionIndex]}',
       isError: !isCorrect,

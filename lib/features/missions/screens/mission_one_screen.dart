@@ -12,8 +12,13 @@ import '../../player/application/player_controller.dart';
 
 class MissionOneScreen extends ConsumerStatefulWidget {
   final int levelId;
+  final bool isReplay;
 
-  const MissionOneScreen({super.key, required this.levelId});
+  const MissionOneScreen({
+    super.key,
+    required this.levelId,
+    this.isReplay = false,
+  });
 
   @override
   ConsumerState<MissionOneScreen> createState() => _MissionOneScreenState();
@@ -125,6 +130,7 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _floatController;
   late final List<_MagmaCoreData> _cores;
+  final _replayCompletedOrbs = <String>{};
 
   static final _missionOrbs = [
     _MissionOrbContent(
@@ -197,9 +203,10 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final completedOrbs =
-        player.completedMissionOrbs[AppConstants.missionOneId] ?? const [];
-    final initializedCores = completedOrbs.toSet();
+    final initializedCores = widget.isReplay
+        ? _replayCompletedOrbs
+        : (player.completedMissionOrbs[AppConstants.missionOneId] ?? const [])
+              .toSet();
     final isComplete = _missionOrbs.every(
       (orb) => initializedCores.contains(orb.id),
     );
@@ -248,11 +255,13 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
   }
 
   Future<void> _showMissionOrbSheet(_MissionOrbContent orb) async {
-    final completedOrbs =
-        ref
-            .read(playerProvider)
-            .completedMissionOrbs[AppConstants.missionOneId] ??
-        const [];
+    final completedOrbs = widget.isReplay
+        ? _replayCompletedOrbs
+        : (ref
+                      .read(playerProvider)
+                      .completedMissionOrbs[AppConstants.missionOneId] ??
+                  const [])
+              .toSet();
     final isCompleted = completedOrbs.contains(orb.id);
 
     await showModalBottomSheet<void>(
@@ -264,15 +273,27 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
         return _MissionOrbSheet(
           orb: orb,
           isCompleted: isCompleted,
+          isReplay: widget.isReplay,
           onComplete: () async {
-            await ref
-                .read(playerProvider.notifier)
-                .completeMissionOneOrb(orb.id);
+            if (widget.isReplay) {
+              setState(() {
+                _replayCompletedOrbs.add(orb.id);
+              });
+            } else {
+              await ref
+                  .read(playerProvider.notifier)
+                  .completeMissionOneOrb(orb.id);
+            }
             if (sheetContext.mounted) {
               sheetContext.pop();
             }
             if (mounted) {
-              showMissionSnackBar(context, '+10 XP recorded');
+              showMissionSnackBar(
+                context,
+                widget.isReplay
+                    ? 'Practice core synchronized'
+                    : '+10 XP recorded',
+              );
             }
           },
         );
@@ -555,11 +576,13 @@ class _MagmaCore extends StatelessWidget {
 class _MissionOrbSheet extends StatelessWidget {
   final _MissionOrbContent orb;
   final bool isCompleted;
+  final bool isReplay;
   final Future<void> Function() onComplete;
 
   const _MissionOrbSheet({
     required this.orb,
     required this.isCompleted,
+    required this.isReplay,
     required this.onComplete,
   });
 
@@ -630,6 +653,7 @@ class _MissionOrbSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 _CompleteOrbButton(
                   isCompleted: isCompleted,
+                  isReplay: isReplay,
                   onComplete: onComplete,
                 ),
               ],
@@ -681,10 +705,12 @@ class _FactRow extends StatelessWidget {
 
 class _CompleteOrbButton extends StatefulWidget {
   final bool isCompleted;
+  final bool isReplay;
   final Future<void> Function() onComplete;
 
   const _CompleteOrbButton({
     required this.isCompleted,
+    required this.isReplay,
     required this.onComplete,
   });
 
@@ -722,7 +748,13 @@ class _CompleteOrbButtonState extends State<_CompleteOrbButton> {
                   color: AppColors.teal,
                 ),
               )
-            : Text(widget.isCompleted ? 'COMPLETED' : 'COMPLETE +10 XP'),
+            : Text(
+                widget.isCompleted
+                    ? 'COMPLETED'
+                    : widget.isReplay
+                    ? 'COMPLETE PRACTICE'
+                    : 'COMPLETE +10 XP',
+              ),
       ),
     );
   }
@@ -732,8 +764,8 @@ class _ProceedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: () => context.push(AppRoutes.level(2)),
-      child: const Text('PROCEED TO MISSION 2'),
+      onPressed: () => context.go(AppRoutes.menu),
+      child: const Text('RETURN TO MENU'),
     );
   }
 }

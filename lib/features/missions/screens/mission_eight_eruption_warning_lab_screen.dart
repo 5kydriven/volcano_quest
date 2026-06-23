@@ -10,10 +10,12 @@ import '../../player/application/player_controller.dart';
 
 class MissionEightEruptionWarningLabScreen extends ConsumerStatefulWidget {
   final int levelId;
+  final bool isReplay;
 
   const MissionEightEruptionWarningLabScreen({
     super.key,
     required this.levelId,
+    this.isReplay = false,
   });
 
   @override
@@ -24,6 +26,8 @@ class MissionEightEruptionWarningLabScreen extends ConsumerStatefulWidget {
 class _MissionEightEruptionWarningLabScreenState
     extends ConsumerState<MissionEightEruptionWarningLabScreen> {
   var _isSaving = false;
+  final _replayAttemptedSigns = <String>[];
+  final _replayCorrectSigns = <String>[];
 
   static final _warningSigns = [
     _WarningSign(
@@ -63,12 +67,14 @@ class _MissionEightEruptionWarningLabScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final attemptedSigns =
-        player.completedMissionOrbs[AppConstants.missionEightId] ?? const [];
-    final correctSigns =
-        player.completedMissionOrbs[AppConstants
-            .missionEightCorrectAnswersId] ??
-        const [];
+    final attemptedSigns = widget.isReplay
+        ? _replayAttemptedSigns
+        : player.completedMissionOrbs[AppConstants.missionEightId] ?? const [];
+    final correctSigns = widget.isReplay
+        ? _replayCorrectSigns
+        : player.completedMissionOrbs[AppConstants
+                  .missionEightCorrectAnswersId] ??
+              const [];
     final completedCount = attemptedSigns.length.clamp(0, _warningSigns.length);
     final alreadyCompleted = AppConstants.missionEightWarningSignIds.every(
       attemptedSigns.contains,
@@ -107,11 +113,12 @@ class _MissionEightEruptionWarningLabScreenState
                         ? _MissionEightSummary(
                             correctCount: correctSigns.length,
                             totalSigns: _warningSigns.length,
-                            earnedXP: _earnedXP(correctSigns),
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : _earnedXP(correctSigns),
                             isPerfect:
                                 correctSigns.length == _warningSigns.length,
-                            onProceed: () =>
-                                context.push(AppRoutes.levelEightLesson),
+                            onProceed: () => context.go(AppRoutes.menu),
                           )
                         : _WarningContent(
                             sign: currentSign!,
@@ -146,9 +153,18 @@ class _MissionEightEruptionWarningLabScreenState
       _isSaving = true;
     });
 
-    await ref
-        .read(playerProvider.notifier)
-        .submitMissionEightWarningSign(signId: sign.id, isCorrect: isCorrect);
+    if (widget.isReplay) {
+      if (!_replayAttemptedSigns.contains(sign.id)) {
+        _replayAttemptedSigns.add(sign.id);
+      }
+      if (isCorrect && !_replayCorrectSigns.contains(sign.id)) {
+        _replayCorrectSigns.add(sign.id);
+      }
+    } else {
+      await ref
+          .read(playerProvider.notifier)
+          .submitMissionEightWarningSign(signId: sign.id, isCorrect: isCorrect);
+    }
 
     if (!mounted) {
       return;
@@ -159,7 +175,11 @@ class _MissionEightEruptionWarningLabScreenState
     });
     showMissionSnackBar(
       context,
-      isCorrect
+      widget.isReplay
+          ? isCorrect
+                ? 'Practice warning recorded'
+                : 'Correct warning sign: ${sign.correctAnswer.label}'
+          : isCorrect
           ? '+${AppConstants.missionEightXpDisplayPerCorrect} XP recorded'
           : 'Correct warning sign: ${sign.correctAnswer.label}',
       isError: !isCorrect,
@@ -725,7 +745,7 @@ class _MissionEightSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('READ FIELD LESSON'),
+                  child: const Text('RETURN TO MENU'),
                 ),
               ),
             ],

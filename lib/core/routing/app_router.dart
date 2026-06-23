@@ -57,40 +57,63 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.sideQuestVolcanoStructure,
-        builder: (context, state) => const VolcanoStructureSideQuestScreen(),
+        builder: (context, state) => VolcanoStructureSideQuestScreen(
+          isReplay: state.uri.queryParameters['replay'] == 'true',
+        ),
       ),
       GoRoute(
         path: AppRoutes.levelEightLesson,
-        builder: (context, state) => const LevelEightFieldLessonScreen(),
+        builder: (context, state) => LevelEightFieldLessonScreen(
+          isReplay: state.uri.queryParameters['replay'] == 'true',
+        ),
       ),
       GoRoute(
         path: AppRoutes.levelPath,
         builder: (context, state) {
           final levelId =
               int.tryParse(state.pathParameters['levelId'] ?? '') ?? 1;
+          final isReplay = state.uri.queryParameters['replay'] == 'true';
           if (levelId == 1) {
-            return MissionOneScreen(levelId: levelId);
+            return MissionOneScreen(levelId: levelId, isReplay: isReplay);
           }
           if (levelId == 2) {
-            return MissionTwoQuizScreen(levelId: levelId);
+            return MissionTwoQuizScreen(levelId: levelId, isReplay: isReplay);
           }
           if (levelId == 3) {
-            return MissionThreeWordBuilderScreen(levelId: levelId);
+            return MissionThreeWordBuilderScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           if (levelId == 4) {
-            return MissionFourMapQuizScreen(levelId: levelId);
+            return MissionFourMapQuizScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           if (levelId == 5) {
-            return MissionFiveAnatomyLabScreen(levelId: levelId);
+            return MissionFiveAnatomyLabScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           if (levelId == 6) {
-            return MissionSixVolcanoBuilderScreen(levelId: levelId);
+            return MissionSixVolcanoBuilderScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           if (levelId == 7) {
-            return MissionSevenInvestigationCenterScreen(levelId: levelId);
+            return MissionSevenInvestigationCenterScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           if (levelId == 8) {
-            return MissionEightEruptionWarningLabScreen(levelId: levelId);
+            return MissionEightEruptionWarningLabScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           if (levelId == 9) {
             final player = ref.read(playerProvider);
@@ -98,10 +121,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 player.completedMissionOrbs[AppConstants.levelEightLessonId]
                     ?.contains(AppConstants.levelEightLessonCompleteId) ??
                 false;
-            if (!lessonComplete) {
+            if (!lessonComplete && !isReplay) {
               return const LevelEightFieldLessonScreen();
             }
-            return MissionNineAssessmentScreen(levelId: levelId);
+            return MissionNineAssessmentScreen(
+              levelId: levelId,
+              isReplay: isReplay,
+            );
           }
           return MissionUnlockedScreen(levelId: levelId);
         },

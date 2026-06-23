@@ -37,12 +37,20 @@ void main() {
     (tester) async {
       await _pumpAppAtLevelSeven(tester);
 
-      await tester.tap(find.text('INITIALIZE MISSION'));
+      await tester.tap(
+        find.byKey(const ValueKey('splashInitializeMissionButton')),
+      );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('AVA'));
+      await tester.tap(find.text('AVA').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('CONTINUE MISSION'));
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -650));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('7'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('7'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('START'));
       await tester.pumpAndSettle();
 
       expect(find.text('VOLCANO INVESTIGATION CENTER'), findsOneWidget);
@@ -155,7 +163,7 @@ void main() {
     expect(find.text('LAVA BRIDGE CHAMPION'), findsNothing);
     expect(find.text('3/4'), findsOneWidget);
     expect(find.text('30 XP'), findsWidgets);
-    expect(find.text('PROCEED TO MISSION 8'), findsOneWidget);
+    expect(find.text('RETURN TO MENU'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 30);
@@ -318,6 +326,7 @@ Future<void> _selectClassification(
 ) async {
   final button = find.byKey(ValueKey('mission7-$volcanoId-$classification'));
   await tester.ensureVisible(button);
+  await tester.pumpAndSettle();
   await tester.tap(button);
   await tester.pumpAndSettle();
 }
@@ -325,7 +334,8 @@ Future<void> _selectClassification(
 Future<void> _tapAnalyze(WidgetTester tester) async {
   final button = find.widgetWithText(ElevatedButton, 'ANALYZE VOLCANO');
   await tester.ensureVisible(button);
-  await tester.tap(button);
+  await tester.pumpAndSettle();
+  tester.widget<ElevatedButton>(button).onPressed!();
   await tester.pumpAndSettle();
 }
 
