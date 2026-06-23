@@ -10,12 +10,10 @@ import '../../player/application/player_controller.dart';
 
 class MissionSevenInvestigationCenterScreen extends ConsumerStatefulWidget {
   final int levelId;
-  final bool isReplay;
 
   const MissionSevenInvestigationCenterScreen({
     super.key,
     required this.levelId,
-    this.isReplay = false,
   });
 
   @override
@@ -27,8 +25,6 @@ class _MissionSevenInvestigationCenterScreenState
     extends ConsumerState<MissionSevenInvestigationCenterScreen> {
   _VolcanoClassification? _selectedClassification;
   var _isSaving = false;
-  final _replayCompletedVolcanoes = <String>[];
-  final _replayCorrectVolcanoes = <String>[];
 
   static final _volcanoes = [
     _InvestigationVolcano(
@@ -72,14 +68,12 @@ class _MissionSevenInvestigationCenterScreenState
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
-    final completedVolcanoes = widget.isReplay
-        ? _replayCompletedVolcanoes
-        : player.completedMissionOrbs[AppConstants.missionSevenId] ?? const [];
-    final correctVolcanoes = widget.isReplay
-        ? _replayCorrectVolcanoes
-        : player.completedMissionOrbs[AppConstants
-                  .missionSevenCorrectAnswersId] ??
-              const [];
+    final completedVolcanoes =
+        player.completedMissionOrbs[AppConstants.missionSevenId] ?? const [];
+    final correctVolcanoes =
+        player.completedMissionOrbs[AppConstants
+            .missionSevenCorrectAnswersId] ??
+        const [];
     final completedCount = completedVolcanoes.length.clamp(
       0,
       _volcanoes.length,
@@ -123,12 +117,10 @@ class _MissionSevenInvestigationCenterScreenState
                         ? _MissionSevenSummary(
                             correctCount: correctVolcanoes.length,
                             totalVolcanoes: _volcanoes.length,
-                            earnedXP: widget.isReplay
-                                ? 0
-                                : _earnedXP(correctVolcanoes.length),
+                            earnedXP: _earnedXP(correctVolcanoes.length),
                             isPerfect:
                                 correctVolcanoes.length == _volcanoes.length,
-                            onProceed: () => context.go(AppRoutes.menu),
+                            onProceed: () => context.push(AppRoutes.level(8)),
                           )
                         : _InvestigationContent(
                             volcano: currentVolcano!,
@@ -174,21 +166,9 @@ class _MissionSevenInvestigationCenterScreenState
       _isSaving = true;
     });
 
-    if (widget.isReplay) {
-      if (!_replayCompletedVolcanoes.contains(volcano.id)) {
-        _replayCompletedVolcanoes.add(volcano.id);
-      }
-      if (isCorrect && !_replayCorrectVolcanoes.contains(volcano.id)) {
-        _replayCorrectVolcanoes.add(volcano.id);
-      }
-    } else {
-      await ref
-          .read(playerProvider.notifier)
-          .submitMissionSevenVolcano(
-            volcanoId: volcano.id,
-            isCorrect: isCorrect,
-          );
-    }
+    await ref
+        .read(playerProvider.notifier)
+        .submitMissionSevenVolcano(volcanoId: volcano.id, isCorrect: isCorrect);
 
     if (!mounted) {
       return;
@@ -200,11 +180,7 @@ class _MissionSevenInvestigationCenterScreenState
     });
     showMissionSnackBar(
       context,
-      widget.isReplay
-          ? isCorrect
-                ? 'Practice classification recorded'
-                : 'Incorrect classification - correct answer: $correctAnswer'
-          : isCorrect
+      isCorrect
           ? '+${AppConstants.missionSevenXpPerCorrect} XP recorded'
           : 'Incorrect classification - correct answer: $correctAnswer',
       isError: !isCorrect,
@@ -819,7 +795,7 @@ class _MissionSevenSummary extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
+                  child: const Text('PROCEED TO MISSION 8'),
                 ),
               ),
             ],

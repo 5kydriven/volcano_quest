@@ -10,9 +10,7 @@ import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 class LevelEightFieldLessonScreen extends ConsumerStatefulWidget {
-  final bool isReplay;
-
-  const LevelEightFieldLessonScreen({super.key, this.isReplay = false});
+  const LevelEightFieldLessonScreen({super.key});
 
   @override
   ConsumerState<LevelEightFieldLessonScreen> createState() =>
@@ -27,11 +25,10 @@ class _LevelEightFieldLessonScreenState
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
     final isComplete =
-        !widget.isReplay &&
-        (player.completedMissionOrbs[AppConstants.levelEightLessonId]?.contains(
-              AppConstants.levelEightLessonCompleteId,
-            ) ??
-            false);
+        player.completedMissionOrbs[AppConstants.levelEightLessonId]?.contains(
+          AppConstants.levelEightLessonCompleteId,
+        ) ??
+        false;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -179,9 +176,7 @@ class _LevelEightFieldLessonScreenState
                     const SizedBox(height: 8),
                     LabButton(
                       label: isComplete
-                          ? 'RETURN TO MENU'
-                          : widget.isReplay
-                          ? 'COMPLETE PRACTICE'
+                          ? 'CONTINUE TO LEVEL 9'
                           : 'COMPLETE LESSON',
                       isLoading: _isSaving,
                       onTap: isComplete
@@ -207,23 +202,18 @@ class _LevelEightFieldLessonScreenState
       _isSaving = true;
     });
 
-    if (!widget.isReplay) {
-      await ref.read(playerProvider.notifier).completeLevelEightLesson();
-    }
+    await ref.read(playerProvider.notifier).completeLevelEightLesson();
 
     if (!mounted) {
       return;
     }
 
-    showMissionSnackBar(
-      context,
-      widget.isReplay ? 'Practice lesson complete' : 'Field lesson complete',
-    );
-    context.go(AppRoutes.menu);
+    showMissionSnackBar(context, 'Field lesson complete');
+    context.go(AppRoutes.level(9));
   }
 
   void _continueToLevelNine() {
-    context.go(AppRoutes.menu);
+    context.go(AppRoutes.level(9));
   }
 }
 

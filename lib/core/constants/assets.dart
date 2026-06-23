@@ -103,6 +103,24 @@ class Assets {
       'assets/missions/misson-three/hint_container.png';
   static const String missionThreeLetterSlot =
       'assets/missions/misson-three/letter_slot.png';
+  static const String missionFiveSelectedContainer =
+      'assets/missions/mission-five/selected_container.png';
+  static const missionTwoAnswerContainers = [
+    'assets/missions/ABCD_container/A_container.png',
+    'assets/missions/ABCD_container/B_container.png',
+    'assets/missions/ABCD_container/C_container.png',
+    'assets/missions/ABCD_container/D_container.png',
+  ];
+  static const String missionSubmitAnswerButton =
+      'assets/missions/buttons/submit_answer_button.png';
+  static const String missionNextQuestionButton =
+      'assets/missions/buttons/next_question_button.png';
+  static const String missionViewResultsButton =
+      'assets/missions/buttons/view_results_button.png';
+  static const String squareContainer =
+      'assets/containers/square_container.png';
+  static const String rectangleContainer =
+      'assets/containers/rectangle_container.png';
   static const String volcanoCutaway =
       'assets/Meshy_AI_2fa1536bd2215c18f695398ed54154e2bd2d4a85.png';
   static const String volcano3dSection = 'assets/models/volcano-3d-section.glb';
