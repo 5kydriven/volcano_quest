@@ -6,7 +6,7 @@ import 'features/leaderboard/application/leaderboard_controller.dart';
 
 class VolcanoQuestApp extends ConsumerWidget {
   const VolcanoQuestApp({super.key});
-
+  //comment
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
