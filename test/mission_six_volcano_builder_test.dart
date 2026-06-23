@@ -33,20 +33,12 @@ void main() {
     (tester) async {
       await _pumpAppAtLevelSix(tester);
 
-      await tester.tap(
-        find.byKey(const ValueKey('splashInitializeMissionButton')),
-      );
+      await tester.tap(find.text('INITIALIZE MISSION'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('AVA').last);
+      await tester.tap(find.text('AVA'));
       await tester.pumpAndSettle();
 
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('6'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('6'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('START'));
+      await tester.tap(find.text('CONTINUE MISSION'));
       await tester.pumpAndSettle();
 
       expect(find.text('VOLCANO CONSTRUCTION SIMULATOR'), findsOneWidget);
@@ -211,10 +203,8 @@ Future<void> _answerCurrentQuestion(WidgetTester tester, String answer) async {
   await tester.tap(find.text(answer));
   await tester.pumpAndSettle();
 
-  final lockButton = find.widgetWithText(ElevatedButton, 'LOCK VOLCANO TYPE');
-  await tester.ensureVisible(lockButton);
-  await tester.pumpAndSettle();
-  tester.widget<ElevatedButton>(lockButton).onPressed!();
+  await tester.ensureVisible(find.text('LOCK VOLCANO TYPE'));
+  await tester.tap(find.text('LOCK VOLCANO TYPE'));
   await tester.pumpAndSettle();
 }
 

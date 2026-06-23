@@ -35,7 +35,7 @@ void main() {
 
     await _answerCurrentQuestion(tester, 'Crater');
 
-    expect(find.text('CORRECT ANSWER: MAGMA CHAMBER'), findsOneWidget);
+    expect(find.text('Correct answer: Magma chamber'), findsOneWidget);
     expect(find.text('0 XP'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
@@ -124,55 +124,11 @@ void main() {
       hasLength(5),
     );
   });
-
-  testWidgets('replay starts completed quiz without changing saved progress', (
-    tester,
-  ) async {
-    final completedPlayer = PlayerModel(
-      id: 'test-player',
-      name: 'Ava',
-      avatarIndex: 0,
-      currentLevel: 3,
-      totalXP: 75,
-      earnedBadges: const [AppConstants.lavaInvestigatorBadge],
-      completedMissionOrbs: {
-        AppConstants.missionTwoId: AppConstants.missionTwoQuestionIds,
-        AppConstants.missionTwoCorrectAnswersId:
-            AppConstants.missionTwoQuestionIds,
-      },
-    );
-    final prefs = await _pumpMissionTwo(
-      tester,
-      player: completedPlayer,
-      isReplay: true,
-    );
-
-    expect(
-      find.text(
-        "Which part of the volcano stores molten rock beneath the Earth's surface?",
-      ),
-      findsOneWidget,
-    );
-
-    await _answerCurrentQuestion(tester, 'Magma chamber');
-
-    expect(find.text('PRACTICE ANSWER RECORDED'), findsOneWidget);
-
-    final savedPlayer = _loadSavedPlayer(prefs);
-    expect(savedPlayer.totalXP, completedPlayer.totalXP);
-    expect(savedPlayer.currentLevel, completedPlayer.currentLevel);
-    expect(
-      savedPlayer.completedMissionOrbs,
-      completedPlayer.completedMissionOrbs,
-    );
-    expect(savedPlayer.earnedBadges, completedPlayer.earnedBadges);
-  });
 }
 
 Future<SharedPreferences> _pumpMissionTwo(
   WidgetTester tester, {
   PlayerModel? player,
-  bool isReplay = false,
 }) async {
   final testPlayer =
       player ??
@@ -193,9 +149,7 @@ Future<SharedPreferences> _pumpMissionTwo(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-      child: MaterialApp(
-        home: MissionTwoQuizScreen(levelId: 2, isReplay: isReplay),
-      ),
+      child: const MaterialApp(home: MissionTwoQuizScreen(levelId: 2)),
     ),
   );
   await tester.pumpAndSettle();
@@ -209,13 +163,11 @@ Future<void> _answerCurrentQuestion(WidgetTester tester, String answer) async {
     matching: find.byType(InkWell),
   );
   await tester.ensureVisible(answerTile);
-  await tester.pumpAndSettle();
   await tester.tap(answerTile);
   await tester.pumpAndSettle();
   final submitButton = find.widgetWithText(ElevatedButton, 'SUBMIT ANSWER');
   await tester.ensureVisible(submitButton);
-  await tester.pumpAndSettle();
-  tester.widget<ElevatedButton>(submitButton).onPressed!();
+  await tester.tap(submitButton);
   await tester.pumpAndSettle();
 }
 
@@ -228,12 +180,10 @@ Future<void> _goNext(WidgetTester tester) async {
   final viewResults = find.widgetWithText(ElevatedButton, 'VIEW RESULTS');
   if (nextQuestion.evaluate().isNotEmpty) {
     await tester.ensureVisible(nextQuestion);
-    await tester.pumpAndSettle();
-    tester.widget<ElevatedButton>(nextQuestion).onPressed!();
+    await tester.tap(nextQuestion);
   } else {
     await tester.ensureVisible(viewResults);
-    await tester.pumpAndSettle();
-    tester.widget<ElevatedButton>(viewResults).onPressed!();
+    await tester.tap(viewResults);
   }
   await tester.pumpAndSettle();
 }

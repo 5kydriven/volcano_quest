@@ -37,20 +37,12 @@ void main() {
     (tester) async {
       await _pumpAppAtLevelEight(tester);
 
-      await tester.tap(
-        find.byKey(const ValueKey('splashInitializeMissionButton')),
-      );
+      await tester.tap(find.text('INITIALIZE MISSION'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('AVA').last);
+      await tester.tap(find.text('AVA'));
       await tester.pumpAndSettle();
 
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -750));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('8'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('8'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('START'));
+      await tester.tap(find.text('CONTINUE MISSION'));
       await tester.pumpAndSettle();
 
       expect(find.text('ERUPTION WARNING LAB'), findsOneWidget);
@@ -118,7 +110,7 @@ void main() {
     expect(find.text('ERUPTION WARNING SPECIALIST BADGE'), findsOneWidget);
     expect(find.text('4/4'), findsOneWidget);
     expect(find.text('70 XP'), findsWidgets);
-    expect(find.text('RETURN TO MENU'), findsOneWidget);
+    expect(find.text('READ FIELD LESSON'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 70);
@@ -153,7 +145,7 @@ void main() {
     expect(find.text('ERUPTION WARNING SPECIALIST BADGE'), findsNothing);
     expect(find.text('3/4'), findsOneWidget);
     expect(find.text('38 XP'), findsWidgets);
-    expect(find.text('RETURN TO MENU'), findsOneWidget);
+    expect(find.text('READ FIELD LESSON'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 38);
@@ -201,24 +193,18 @@ void main() {
   testWidgets('level 9 is gated by the level 8 field lesson', (tester) async {
     final prefs = await _pumpAppAtLevelNineWithoutLesson(tester);
 
-    await tester.tap(
-      find.byKey(const ValueKey('splashInitializeMissionButton')),
-    );
+    await tester.tap(find.text('INITIALIZE MISSION'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('AVA').last);
+    await tester.tap(find.text('AVA'));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -850));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('L8'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('L8'));
+    expect(find.text('READ FIELD LESSON'), findsOneWidget);
+    expect(find.text('Advanced Volcano Response'), findsOneWidget);
+
+    await tester.tap(find.text('READ FIELD LESSON'));
     await tester.pumpAndSettle();
 
-    expect(find.text('START'), findsOneWidget);
-
-    await tester.tap(find.text('START'));
-    await tester.pumpAndSettle();
+    expect(find.text('FIELD LESSON'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('COMPLETE LESSON'),
@@ -226,29 +212,13 @@ void main() {
       scrollable: find.byType(Scrollable),
     );
     await tester.ensureVisible(find.text('COMPLETE LESSON'));
-    final completeLessonButton = find.widgetWithText(
-      ElevatedButton,
-      'COMPLETE LESSON',
-    );
-    tester.widget<ElevatedButton>(completeLessonButton).onPressed!();
+    await tester.tap(find.text('COMPLETE LESSON'));
     await tester.pumpAndSettle();
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.completedMissionOrbs[AppConstants.levelEightLessonId], [
       AppConstants.levelEightLessonCompleteId,
     ]);
-
-    expect(find.byType(CustomScrollView), findsOneWidget);
-
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('9'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('9'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('START'));
-    await tester.pumpAndSettle();
-
     expect(find.text('FINAL ASSESSMENT'), findsOneWidget);
     expect(find.text('NEW RESEARCH BRIEFING AVAILABLE SOON'), findsNothing);
   });
