@@ -408,7 +408,7 @@ class _MissionMap extends StatelessWidget {
                   child: _MissionNode(
                     node: positionedNodes[index],
                     size: nodeSize,
-                    onTap: positionedNodes[index].isActive
+                    onTap: positionedNodes[index].isUnlocked
                         ? () => _showMissionDialog(
                             context,
                             positionedNodes[index],
@@ -441,23 +441,39 @@ class _MissionMap extends StatelessWidget {
           AppConstants.levelEightLessonCompleteId,
         ) ??
         false;
+    final missionNineComplete = AppConstants.missionNineQuestionIds.every(
+      (id) =>
+          player.completedMissionOrbs[AppConstants.missionNineId]?.contains(
+            id,
+          ) ??
+          false,
+    );
     final fieldLessonAvailable =
         !sideQuestAvailable && activeLevel >= 9 && !levelEightLessonComplete;
 
     final nodes = <_MissionMapNode>[];
     for (var level = 1; level <= AppConstants.totalLevels; level++) {
       if (level == 4) {
+        final isUnlocked = _isMissionThreeComplete(player);
         nodes.add(
           _MissionMapNode(
             title: 'Structure of a Volcano',
             eyebrow: 'SIDE QUEST',
-            route: AppRoutes.sideQuestVolcanoStructure,
+            route: sideQuestComplete
+                ? AppRoutes.replay(AppRoutes.sideQuestVolcanoStructure)
+                : AppRoutes.sideQuestVolcanoStructure,
             primaryIcon: Icons.school_outlined,
             kindIcon: Icons.terrain_outlined,
             rewardLabel:
                 '+${AppConstants.sideQuestVolcanoStructureXp.fold<int>(0, (sum, xp) => sum + xp)} XP',
             numberLabel: 'SQ',
-            isActive: sideQuestAvailable,
+            status: sideQuestComplete
+                ? _MissionNodeStatus.complete
+                : sideQuestAvailable
+                ? _MissionNodeStatus.current
+                : isUnlocked
+                ? _MissionNodeStatus.current
+                : _MissionNodeStatus.locked,
             isComplete: sideQuestComplete,
           ),
         );
@@ -468,31 +484,47 @@ class _MissionMap extends StatelessWidget {
           _MissionMapNode(
             title: 'Advanced Volcano Response',
             eyebrow: 'FIELD LESSON',
-            route: AppRoutes.levelEightLesson,
+            route: levelEightLessonComplete
+                ? AppRoutes.replay(AppRoutes.levelEightLesson)
+                : AppRoutes.levelEightLesson,
             primaryIcon: Icons.menu_book_outlined,
             kindIcon: Icons.science_outlined,
             rewardLabel: 'LESSON',
             numberLabel: 'L8',
-            isActive: fieldLessonAvailable,
+            status: levelEightLessonComplete
+                ? _MissionNodeStatus.complete
+                : fieldLessonAvailable
+                ? _MissionNodeStatus.current
+                : _MissionNodeStatus.locked,
             isComplete: levelEightLessonComplete,
           ),
         );
       }
 
+      final isComplete =
+          level < activeLevel ||
+          (level == AppConstants.totalLevels && missionNineComplete);
+      final isUnlocked = level <= activeLevel;
       nodes.add(
         _MissionMapNode(
           title: AppConstants.levelNames[level - 1],
           eyebrow: 'LEVEL $level',
-          route: AppRoutes.level(level),
+          route: isComplete
+              ? AppRoutes.replayLevel(level)
+              : AppRoutes.level(level),
           primaryIcon: Icons.volcano_outlined,
           kindIcon: Icons.terrain_outlined,
           rewardLabel: '${AppConstants.levelXP[level - 1]} XP',
           numberLabel: '$level',
-          isActive:
-              !sideQuestAvailable &&
-              !fieldLessonAvailable &&
-              level == activeLevel,
-          isComplete: level < activeLevel,
+          status: isComplete
+              ? _MissionNodeStatus.complete
+              : isUnlocked &&
+                    !sideQuestAvailable &&
+                    !fieldLessonAvailable &&
+                    level == activeLevel
+              ? _MissionNodeStatus.current
+              : _MissionNodeStatus.locked,
+          isComplete: isComplete,
         ),
       );
     }
@@ -542,6 +574,8 @@ class _MissionMap extends StatelessWidget {
   }
 }
 
+enum _MissionNodeStatus { locked, current, complete }
+
 class _MissionMapNode {
   final String title;
   final String eyebrow;
@@ -550,7 +584,7 @@ class _MissionMapNode {
   final IconData kindIcon;
   final String rewardLabel;
   final String numberLabel;
-  final bool isActive;
+  final _MissionNodeStatus status;
   final bool isComplete;
 
   const _MissionMapNode({
@@ -561,9 +595,15 @@ class _MissionMapNode {
     required this.kindIcon,
     required this.rewardLabel,
     required this.numberLabel,
-    required this.isActive,
+    required this.status,
     required this.isComplete,
   });
+
+  bool get isUnlocked => status != _MissionNodeStatus.locked;
+
+  bool get isCurrent => status == _MissionNodeStatus.current;
+
+  bool get isReplay => status == _MissionNodeStatus.complete;
 }
 
 class _MissionNode extends StatelessWidget {
@@ -575,30 +615,30 @@ class _MissionNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColor = node.isActive
+    final foregroundColor = node.isCurrent
         ? AppColors.teal
         : node.isComplete
         ? AppColors.textMuted
         : AppColors.textDim;
-    final borderColor = node.isActive ? AppColors.teal : AppColors.borderAlt;
-    final backgroundColor = node.isActive
+    final borderColor = node.isCurrent ? AppColors.teal : AppColors.borderAlt;
+    final backgroundColor = node.isCurrent
         ? AppColors.tealDark.withValues(alpha: 0.94)
         : AppColors.background.withValues(alpha: 0.78);
     final statusIcon = node.isComplete
         ? Icons.check_circle
-        : node.isActive
+        : node.isCurrent
         ? Icons.play_circle_fill
         : Icons.lock;
 
     return Tooltip(
-      message: node.isActive
+      message: node.isCurrent
           ? 'Open ${node.eyebrow}'
           : node.isComplete
-          ? 'Completed ${node.eyebrow}'
+          ? 'Replay ${node.eyebrow}'
           : 'Locked ${node.eyebrow}',
       child: Semantics(
-        button: node.isActive,
-        enabled: node.isActive,
+        button: node.isUnlocked,
+        enabled: node.isUnlocked,
         label: '${node.eyebrow}, ${node.title}',
         child: InkResponse(
           onTap: onTap,
@@ -619,10 +659,10 @@ class _MissionNode extends StatelessWidget {
                     color: backgroundColor,
                     border: Border.all(
                       color: borderColor,
-                      width: node.isActive ? 2 : 1,
+                      width: node.isCurrent ? 2 : 1,
                     ),
                     borderRadius: BorderRadius.circular(13),
-                    boxShadow: node.isActive
+                    boxShadow: node.isCurrent
                         ? [
                             BoxShadow(
                               color: AppColors.teal.withValues(alpha: 0.28),
@@ -762,8 +802,13 @@ class _MissionStartDialog extends StatelessWidget {
                   Navigator.of(context).pop();
                   context.push(node.route);
                 },
-                icon: const Icon(Icons.play_arrow_outlined, size: 18),
-                label: const Text('START'),
+                icon: Icon(
+                  node.isReplay
+                      ? Icons.replay_outlined
+                      : Icons.play_arrow_outlined,
+                  size: 18,
+                ),
+                label: Text(node.isReplay ? 'REPLAY' : 'START'),
               ),
             ),
           ],

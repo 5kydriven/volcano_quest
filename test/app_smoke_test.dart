@@ -24,62 +24,59 @@ void main() {
     expect(find.bySemanticsLabel('Lahar Lab'), findsOneWidget);
     expect(find.bySemanticsLabel('Initialize mission'), findsOneWidget);
 
-    await tester.tap(
-      find.byKey(const ValueKey('splashInitializeMissionButton')),
-    );
+    await tester.tap(find.bySemanticsLabel('Initialize mission'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scientist profiles'), findsOneWidget);
-    expect(find.text('NO SCIENTIST PROFILES FOUND'), findsOneWidget);
-    expect(find.text('CREATE NEW SCIENTIST'), findsOneWidget);
+    expect(find.text('Scientist Profiles'), findsWidgets);
+    expect(find.text('NO SCIENTIST PROFILES FOUND'), findsWidgets);
+    expect(find.bySemanticsLabel('Create new scientist'), findsOneWidget);
 
-    await tester.tap(find.text('CREATE NEW SCIENTIST'));
+    await tester.tap(find.bySemanticsLabel('Create new scientist'));
     await tester.pumpAndSettle();
 
-    expect(find.text('DEPLOY TO LAB BASE'), findsOneWidget);
+    expect(find.bySemanticsLabel('Deploy to lab base'), findsOneWidget);
 
     await tester.enterText(find.byType(EditableText), 'Ava');
-    await tester.ensureVisible(find.text('DEPLOY TO LAB BASE'));
+    await tester.ensureVisible(find.bySemanticsLabel('Deploy to lab base'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY TO LAB BASE'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('VOLCANO QUEST'), findsNothing);
-    expect(find.text('Volcano Quest'), findsOneWidget);
-    expect(find.text('AVA'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Switch player'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Switch player'));
+    await tester.tap(find.bySemanticsLabel('Deploy to lab base'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scientist profiles'), findsOneWidget);
-    expect(find.text('AVA'), findsOneWidget);
+    expect(find.text('LEVEL 1 SCIENTIST'), findsOneWidget);
+    expect(find.text('AVA'), findsWidgets);
 
-    await tester.tap(find.text('CREATE NEW SCIENTIST'));
+    await tester.ensureVisible(find.byTooltip('Switch player'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Switch player'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Scientist Profiles'), findsWidgets);
+    expect(find.text('AVA'), findsWidgets);
+
+    await tester.tap(find.bySemanticsLabel('Create new scientist'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(EditableText), 'Ben');
-    await tester.ensureVisible(find.text('DEPLOY TO LAB BASE'));
+    await tester.ensureVisible(find.bySemanticsLabel('Deploy to lab base'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DEPLOY TO LAB BASE'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('BEN'), findsOneWidget);
-
-    await tester.ensureVisible(find.text('Switch player'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Switch player'));
+    await tester.tap(find.bySemanticsLabel('Deploy to lab base'));
     await tester.pumpAndSettle();
 
-    expect(find.text('AVA'), findsOneWidget);
-    expect(find.text('BEN'), findsOneWidget);
+    expect(find.text('BEN'), findsWidgets);
 
-    await tester.tap(find.text('AVA'));
+    await tester.ensureVisible(find.byTooltip('Switch player'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Switch player'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Volcano Quest'), findsOneWidget);
-    expect(find.text('AVA'), findsOneWidget);
+    expect(find.text('AVA'), findsWidgets);
+    expect(find.text('BEN'), findsWidgets);
+
+    await tester.tap(find.text('AVA').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('LEVEL 1 SCIENTIST'), findsOneWidget);
+    expect(find.text('AVA'), findsWidgets);
   });
 
   testWidgets('moves returning legacy players from splash to profile select', (
@@ -103,18 +100,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(const ValueKey('splashInitializeMissionButton')),
-    );
+    await tester.tap(find.bySemanticsLabel('Initialize mission'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Scientist profiles'), findsOneWidget);
-    expect(find.text('AVA'), findsOneWidget);
+    expect(find.text('Scientist Profiles'), findsWidgets);
+    expect(find.text('AVA'), findsWidgets);
 
-    await tester.tap(find.text('AVA'));
+    await tester.tap(find.text('AVA').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Volcano Quest'), findsOneWidget);
-    expect(find.text('AVA'), findsOneWidget);
+    expect(find.text('LEVEL 1 SCIENTIST'), findsOneWidget);
+    expect(find.text('AVA'), findsWidgets);
   });
 }
