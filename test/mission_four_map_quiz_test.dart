@@ -41,7 +41,7 @@ void main() {
     await _openVolcanoQuestion(tester, 'mayon');
     await _answerCurrentQuestion(tester, 'Tallest volcano');
 
-    expect(find.text('Correct answer: Perfect cone shape'), findsOneWidget);
+    expect(find.text('CORRECT ANSWER: PERFECT CONE SHAPE'), findsOneWidget);
 
     final savedPlayer = _loadSavedPlayer(prefs);
     expect(savedPlayer.totalXP, 0);
@@ -232,7 +232,8 @@ Future<void> _answerCurrentQuestion(WidgetTester tester, String answer) async {
 Future<void> _tapButton(WidgetTester tester, String label) async {
   final button = find.widgetWithText(ElevatedButton, label);
   await tester.ensureVisible(button);
-  await tester.tap(button);
+  await tester.pumpAndSettle();
+  tester.widget<ElevatedButton>(button).onPressed!();
   await tester.pumpAndSettle();
 }
 

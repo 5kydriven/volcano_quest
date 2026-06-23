@@ -352,25 +352,30 @@ class _CreateScientistButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _MoltenHover(
-      borderRadius: BorderRadius.circular(28),
-      onTap: onTap,
-      child: AspectRatio(
-        aspectRatio: 694 / 150,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                Assets.createNewScientistButton,
-                fit: BoxFit.fill,
+    return Semantics(
+      button: true,
+      label: 'Create new scientist',
+      child: _MoltenHover(
+        borderRadius: BorderRadius.circular(28),
+        onTap: onTap,
+        child: AspectRatio(
+          aspectRatio: 694 / 150,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  Assets.createNewScientistButton,
+                  fit: BoxFit.fill,
+                  excludeFromSemantics: true,
+                ),
               ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 46),
-              child: FittedBox(fit: BoxFit.scaleDown),
-            ),
-          ],
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 46),
+                child: FittedBox(fit: BoxFit.scaleDown),
+              ),
+            ],
+          ),
         ),
       ),
     );

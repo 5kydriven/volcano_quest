@@ -10,7 +10,9 @@ import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 class LevelEightFieldLessonScreen extends ConsumerStatefulWidget {
-  const LevelEightFieldLessonScreen({super.key});
+  final bool isReplay;
+
+  const LevelEightFieldLessonScreen({super.key, this.isReplay = false});
 
   @override
   ConsumerState<LevelEightFieldLessonScreen> createState() =>
@@ -25,10 +27,11 @@ class _LevelEightFieldLessonScreenState
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
     final isComplete =
-        player.completedMissionOrbs[AppConstants.levelEightLessonId]?.contains(
-          AppConstants.levelEightLessonCompleteId,
-        ) ??
-        false;
+        !widget.isReplay &&
+        (player.completedMissionOrbs[AppConstants.levelEightLessonId]?.contains(
+              AppConstants.levelEightLessonCompleteId,
+            ) ??
+            false);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -176,7 +179,9 @@ class _LevelEightFieldLessonScreenState
                     const SizedBox(height: 8),
                     LabButton(
                       label: isComplete
-                          ? 'CONTINUE TO LEVEL 9'
+                          ? 'RETURN TO MENU'
+                          : widget.isReplay
+                          ? 'COMPLETE PRACTICE'
                           : 'COMPLETE LESSON',
                       isLoading: _isSaving,
                       onTap: isComplete
@@ -202,18 +207,23 @@ class _LevelEightFieldLessonScreenState
       _isSaving = true;
     });
 
-    await ref.read(playerProvider.notifier).completeLevelEightLesson();
+    if (!widget.isReplay) {
+      await ref.read(playerProvider.notifier).completeLevelEightLesson();
+    }
 
     if (!mounted) {
       return;
     }
 
-    showMissionSnackBar(context, 'Field lesson complete');
-    context.go(AppRoutes.level(9));
+    showMissionSnackBar(
+      context,
+      widget.isReplay ? 'Practice lesson complete' : 'Field lesson complete',
+    );
+    context.go(AppRoutes.menu);
   }
 
   void _continueToLevelNine() {
-    context.go(AppRoutes.level(9));
+    context.go(AppRoutes.menu);
   }
 }
 
