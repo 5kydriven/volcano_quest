@@ -115,6 +115,10 @@ class Assets {
       'assets/missions/mission-seven/mount_arayat.png';
   static const String missionSevenMakiling =
       'assets/missions/mission-seven/mount_makiling.png';
+  static const String missionEightMagmaClassification =
+      'assets/missions/mission_eight/magma_classification.png';
+  static const String missionEightWhyLiveNearVolcanoes =
+      'assets/missions/mission_eight/why_live_near_volcanoes.png';
   static const missionTwoAnswerContainers = [
     'assets/missions/ABCD_container/A_container.png',
     'assets/missions/ABCD_container/B_container.png',
