@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
@@ -26,6 +27,8 @@ class MissionEightEruptionWarningLabScreen extends ConsumerStatefulWidget {
 class _MissionEightEruptionWarningLabScreenState
     extends ConsumerState<MissionEightEruptionWarningLabScreen> {
   var _isSaving = false;
+  _WarningAnswer? _selectedAnswer;
+  var _selectedAnswerIsCorrect = false;
   final _replayAttemptedSigns = <String>[];
   final _replayCorrectSigns = <String>[];
 
@@ -125,6 +128,8 @@ class _MissionEightEruptionWarningLabScreenState
                             completedCount: completedCount,
                             totalCount: _warningSigns.length,
                             isSaving: _isSaving,
+                            selectedAnswer: _selectedAnswer,
+                            selectedAnswerIsCorrect: _selectedAnswerIsCorrect,
                             onAnswer: (answer) => _submitAnswer(
                               sign: currentSign,
                               answer: answer,
@@ -151,7 +156,14 @@ class _MissionEightEruptionWarningLabScreenState
     final isCorrect = answer == sign.correctAnswer;
     setState(() {
       _isSaving = true;
+      _selectedAnswer = answer;
+      _selectedAnswerIsCorrect = isCorrect;
     });
+
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) {
+      return;
+    }
 
     if (widget.isReplay) {
       if (!_replayAttemptedSigns.contains(sign.id)) {
@@ -172,6 +184,8 @@ class _MissionEightEruptionWarningLabScreenState
 
     setState(() {
       _isSaving = false;
+      _selectedAnswer = null;
+      _selectedAnswerIsCorrect = false;
     });
     showMissionSnackBar(
       context,
@@ -206,6 +220,8 @@ class _WarningContent extends StatelessWidget {
   final int completedCount;
   final int totalCount;
   final bool isSaving;
+  final _WarningAnswer? selectedAnswer;
+  final bool selectedAnswerIsCorrect;
   final ValueChanged<_WarningAnswer> onAnswer;
 
   const _WarningContent({
@@ -213,6 +229,8 @@ class _WarningContent extends StatelessWidget {
     required this.completedCount,
     required this.totalCount,
     required this.isSaving,
+    required this.selectedAnswer,
+    required this.selectedAnswerIsCorrect,
     required this.onAnswer,
   });
 
@@ -229,11 +247,16 @@ class _WarningContent extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              _WarningSignCard(sign: sign),
+              _WarningSignCard(
+                sign: sign,
+                showCorrectAlarm: selectedAnswerIsCorrect,
+              ),
               const SizedBox(height: 12),
               _AnswerGrid(
                 signId: sign.id,
                 isSaving: isSaving,
+                selectedAnswer: selectedAnswer,
+                selectedAnswerIsCorrect: selectedAnswerIsCorrect,
                 onAnswer: onAnswer,
               ),
             ],
@@ -252,31 +275,44 @@ class _SignalStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.84),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
+    return SizedBox(
+      height: 80,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: _TelemetryCell(
-              label: 'DETECTED',
-              value: '$completedCount/$totalCount',
+          ClipRect(
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.diagonal3Values(1.1, 2.2, 1),
+              child: Image.asset(
+                Assets.missionSevenStatsContainer,
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.high,
+                excludeFromSemantics: true,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: _TelemetryCell(
-              label: 'EACH',
-              value: '${AppConstants.missionEightXpDisplayPerCorrect} XP',
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _TelemetryCell(
+                    label: 'DETECTED',
+                    value: '$completedCount/$totalCount',
+                  ),
+                ),
+                const Expanded(
+                  child: _TelemetryCell(
+                    label: 'EACH',
+                    value: '${AppConstants.missionEightXpDisplayPerCorrect} XP',
+                  ),
+                ),
+                const Expanded(
+                  child: _TelemetryCell(label: 'PERFECT', value: '70 XP'),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: _TelemetryCell(label: 'PERFECT', value: '70 XP'),
           ),
         ],
       ),
@@ -286,77 +322,102 @@ class _SignalStrip extends StatelessWidget {
 
 class _WarningSignCard extends StatelessWidget {
   final _WarningSign sign;
+  final bool showCorrectAlarm;
 
-  const _WarningSignCard({required this.sign});
+  const _WarningSignCard({
+    required this.sign,
+    required this.showCorrectAlarm,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF071A2A).withValues(alpha: 0.92),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _WarningImage(sign: sign),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.tealDim, width: 0.8),
-                ),
-                child: Icon(sign.icon, color: AppColors.teal, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      sign.title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 17,
-                        height: 1.1,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      sign.monitorLabel,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
+    return SizedBox(
+      width: double.infinity,
+      child: ClipRect(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Transform.scale(
+                scale: 1.1,
+                child: Image.asset(
+                  Assets.squareContainer,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.high,
+                  excludeFromSemantics: true,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            sign.detail,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              height: 1.35,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0,
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(33),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _WarningImage(
+                    sign: sign,
+                    showAlarm: showCorrectAlarm,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: AppColors.teal.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.tealDim,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Icon(sign.icon, color: AppColors.teal, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              sign.title,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 17,
+                                height: 1.1,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              sign.monitorLabel,
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    sign.detail,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -364,8 +425,12 @@ class _WarningSignCard extends StatelessWidget {
 
 class _WarningImage extends StatelessWidget {
   final _WarningSign sign;
+  final bool showAlarm;
 
-  const _WarningImage({required this.sign});
+  const _WarningImage({
+    required this.sign,
+    required this.showAlarm,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +471,90 @@ class _WarningImage extends StatelessWidget {
               size: 16,
             ),
           ),
+          if (showAlarm)
+            const Positioned.fill(
+              child: _FlashingWarningAlarm(
+                key: ValueKey('mission8-correct-warning-alarm'),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _FlashingWarningAlarm extends StatefulWidget {
+  const _FlashingWarningAlarm({super.key});
+
+  @override
+  State<_FlashingWarningAlarm> createState() => _FlashingWarningAlarmState();
+}
+
+class _FlashingWarningAlarmState extends State<_FlashingWarningAlarm>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+      lowerBound: 0.25,
+      upperBound: 1,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Container(
+            color: const Color(
+              0xFFFF3B30,
+            ).withValues(alpha: 0.12 * _controller.value),
+            alignment: Alignment.topCenter,
+            padding: const EdgeInsets.only(top: 10),
+            child: Opacity(
+              opacity: _controller.value,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
+                color: const Color(0xFF9C1C16),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Color(0xFFFFD166),
+                      size: 15,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'WARNING SIGNAL CONFIRMED',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -581,11 +729,15 @@ class _WarningImagePainter extends CustomPainter {
 class _AnswerGrid extends StatelessWidget {
   final String signId;
   final bool isSaving;
+  final _WarningAnswer? selectedAnswer;
+  final bool selectedAnswerIsCorrect;
   final ValueChanged<_WarningAnswer> onAnswer;
 
   const _AnswerGrid({
     required this.signId,
     required this.isSaving,
+    required this.selectedAnswer,
+    required this.selectedAnswerIsCorrect,
     required this.onAnswer,
   });
 
@@ -603,6 +755,9 @@ class _AnswerGrid extends StatelessWidget {
           _AnswerButton(
             key: ValueKey('mission8-$signId-${answer.id}'),
             answer: answer,
+            isSelected: selectedAnswer == answer,
+            showCorrectCheck:
+                selectedAnswer == answer && selectedAnswerIsCorrect,
             isEnabled: !isSaving,
             onTap: () => onAnswer(answer),
           ),
@@ -613,12 +768,16 @@ class _AnswerGrid extends StatelessWidget {
 
 class _AnswerButton extends StatelessWidget {
   final _WarningAnswer answer;
+  final bool isSelected;
+  final bool showCorrectCheck;
   final bool isEnabled;
   final VoidCallback onTap;
 
   const _AnswerButton({
     super.key,
     required this.answer,
+    required this.isSelected,
+    required this.showCorrectCheck,
     required this.isEnabled,
     required this.onTap,
   });
@@ -627,24 +786,77 @@ class _AnswerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: isEnabled ? onTap : null,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B2A36),
-          border: Border.all(color: AppColors.borderAlt, width: 1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          answer.label,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: isEnabled ? AppColors.textPrimary : AppColors.textDim,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.8,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: isEnabled || isSelected ? 1 : 0.45,
+        child: ClipRect(
+          child: Stack(
+            fit: StackFit.expand,
+            alignment: Alignment.center,
+            children: [
+              Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.diagonal3Values(1.15, 1.3, 1),
+                child: Image.asset(
+                  Assets.rectangleContainer,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.high,
+                  excludeFromSemantics: true,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Center(
+                  child: Text(
+                    answer.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: isEnabled || isSelected
+                          ? AppColors.textPrimary
+                          : AppColors.textDim,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ),
+              if (showCorrectCheck)
+                Positioned(
+                  top: 4,
+                  right: 6,
+                  child: Container(
+                    key: ValueKey(
+                      'mission8-${answer.id}-selected-indicator',
+                    ),
+                    width: 21,
+                    height: 21,
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF42D77D),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF42D77D,
+                          ).withValues(alpha: 0.7),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: Color(0xFF42D77D),
+                      size: 15,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -795,17 +1007,13 @@ class _WarningPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
+            minHeight: 6,
             backgroundColor: AppColors.surface,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
           ),
@@ -875,14 +1083,10 @@ class _TelemetryCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.border, width: 0.6),
-        borderRadius: BorderRadius.circular(4),
-      ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             value,
