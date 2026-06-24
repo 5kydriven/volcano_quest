@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
@@ -27,6 +28,7 @@ class _MissionSevenInvestigationCenterScreenState
     extends ConsumerState<MissionSevenInvestigationCenterScreen> {
   _VolcanoClassification? _selectedClassification;
   var _isSaving = false;
+  var _showCorrectEffects = false;
   final _replayCompletedVolcanoes = <String>[];
   final _replayCorrectVolcanoes = <String>[];
 
@@ -35,6 +37,7 @@ class _MissionSevenInvestigationCenterScreenState
       id: AppConstants.missionSevenVolcanoIds[0],
       name: 'Mayon Volcano',
       tag: 'ALBAY MONITOR',
+      imagePath: Assets.missionSevenMayon,
       correctClassification: _VolcanoClassification.active,
       eruptionRecord: 'Recent historical eruptions recorded',
       gasEmission: 'Elevated sulfur output',
@@ -44,6 +47,7 @@ class _MissionSevenInvestigationCenterScreenState
       id: AppConstants.missionSevenVolcanoIds[1],
       name: 'Taal Volcano',
       tag: 'BATANGAS MONITOR',
+      imagePath: Assets.missionSevenTaal,
       correctClassification: _VolcanoClassification.active,
       eruptionRecord: 'Recent historical eruptions recorded',
       gasEmission: 'Persistent gas release',
@@ -53,6 +57,7 @@ class _MissionSevenInvestigationCenterScreenState
       id: AppConstants.missionSevenVolcanoIds[2],
       name: 'Mount Arayat',
       tag: 'PAMPANGA MONITOR',
+      imagePath: Assets.missionSevenArayat,
       correctClassification: _VolcanoClassification.inactive,
       eruptionRecord: 'No confirmed historical eruption',
       gasEmission: 'No active gas plume',
@@ -62,6 +67,7 @@ class _MissionSevenInvestigationCenterScreenState
       id: AppConstants.missionSevenVolcanoIds[3],
       name: 'Mount Makiling',
       tag: 'LAGUNA MONITOR',
+      imagePath: Assets.missionSevenMakiling,
       correctClassification: _VolcanoClassification.inactive,
       eruptionRecord: 'No confirmed historical eruption',
       gasEmission: 'Low background gas readings',
@@ -136,6 +142,7 @@ class _MissionSevenInvestigationCenterScreenState
                             totalCount: _volcanoes.length,
                             selectedClassification: _selectedClassification,
                             isSaving: _isSaving,
+                            showCorrectEffects: _showCorrectEffects,
                             onSelect: _selectClassification,
                             onSubmit: _selectedClassification == null
                                 ? null
@@ -172,7 +179,15 @@ class _MissionSevenInvestigationCenterScreenState
 
     setState(() {
       _isSaving = true;
+      _showCorrectEffects = isCorrect;
     });
+
+    if (isCorrect) {
+      await Future<void>.delayed(const Duration(milliseconds: 900));
+      if (!mounted) {
+        return;
+      }
+    }
 
     if (widget.isReplay) {
       if (!_replayCompletedVolcanoes.contains(volcano.id)) {
@@ -197,6 +212,7 @@ class _MissionSevenInvestigationCenterScreenState
     setState(() {
       _selectedClassification = null;
       _isSaving = false;
+      _showCorrectEffects = false;
     });
     showMissionSnackBar(
       context,
@@ -225,6 +241,7 @@ class _InvestigationContent extends StatelessWidget {
   final int totalCount;
   final _VolcanoClassification? selectedClassification;
   final bool isSaving;
+  final bool showCorrectEffects;
   final ValueChanged<_VolcanoClassification> onSelect;
   final VoidCallback? onSubmit;
 
@@ -234,6 +251,7 @@ class _InvestigationContent extends StatelessWidget {
     required this.totalCount,
     required this.selectedClassification,
     required this.isSaving,
+    required this.showCorrectEffects,
     required this.onSelect,
     required this.onSubmit,
   });
@@ -255,6 +273,7 @@ class _InvestigationContent extends StatelessWidget {
                 volcano: volcano,
                 selectedClassification: selectedClassification,
                 isSaving: isSaving,
+                showCorrectEffects: showCorrectEffects,
                 onSelect: onSelect,
               ),
             ],
@@ -265,16 +284,44 @@ class _InvestigationContent extends StatelessWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: isSaving ? null : onSubmit,
-            child: isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: AppColors.teal,
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: Colors.transparent,
+              disabledBackgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              side: BorderSide.none,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              ),
+            ),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              opacity: onSubmit == null && !isSaving ? 0.45 : 1,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Image.asset(
+                    Assets.missionAnalyzeVolcanoButton,
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
+                    filterQuality: FilterQuality.high,
+                    excludeFromSemantics: true,
+                  ),
+                  if (isSaving)
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  )
-                : const Text('ANALYZE VOLCANO'),
+                  const Opacity(opacity: 0, child: Text('ANALYZE VOLCANO')),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -290,28 +337,40 @@ class _SignalStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.84),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
+    return SizedBox(
+      height: 80,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: _TelemetryCell(
-              label: 'CLASSIFIED',
-              value: '$completedCount/$totalCount',
+          ClipRect(
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.diagonal3Values(1.1, 2.2, 1),
+              child: Image.asset(
+                Assets.missionSevenStatsContainer,
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.high,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: _TelemetryCell(label: 'EACH', value: '10 XP'),
-          ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: _TelemetryCell(label: 'TOTAL', value: '60 XP'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _TelemetryCell(
+                    label: 'CLASSIFIED',
+                    value: '$completedCount/$totalCount',
+                  ),
+                ),
+                const Expanded(
+                  child: _TelemetryCell(label: 'EACH', value: '10 XP'),
+                ),
+                const Expanded(
+                  child: _TelemetryCell(label: 'TOTAL', value: '60 XP'),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -323,349 +382,338 @@ class _VolcanoInvestigationCard extends StatelessWidget {
   final _InvestigationVolcano volcano;
   final _VolcanoClassification? selectedClassification;
   final bool isSaving;
+  final bool showCorrectEffects;
   final ValueChanged<_VolcanoClassification> onSelect;
 
   const _VolcanoInvestigationCard({
     required this.volcano,
     required this.selectedClassification,
     required this.isSaving,
+    required this.showCorrectEffects,
     required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF071A2A).withValues(alpha: 0.92),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _VolcanoImagePlaceholder(),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.tealDim, width: 0.8),
-                ),
-                child: Icon(
-                  Icons.terrain_outlined,
-                  color: AppColors.teal,
-                  size: 18,
+    return SizedBox(
+      width: double.infinity,
+      child: ClipRect(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Transform.scale(
+                scale: 1.1,
+                child: Image.asset(
+                  Assets.squareContainer,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.high,
+                  excludeFromSemantics: true,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      volcano.name,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 17,
-                        height: 1.1,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(33),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _VolcanoImage(
+                    imagePath: volcano.imagePath,
+                    semanticLabel: volcano.name,
+                    showRadar: showCorrectEffects,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.teal.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.tealDim,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.terrain_outlined,
+                          color: AppColors.teal,
+                          size: 18,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      volcano.tag,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              volcano.name,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 17,
+                                height: 1.1,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              volcano.tag,
+                              style: const TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 9),
+                  _MonitoringRow(
+                    icon: Icons.history_toggle_off_outlined,
+                    label: 'ERUPTION RECORDS',
+                    value: volcano.eruptionRecord,
+                    isGlowing: showCorrectEffects,
+                  ),
+                  const SizedBox(height: 5),
+                  _MonitoringRow(
+                    icon: Icons.air_outlined,
+                    label: 'GAS EMISSIONS',
+                    value: volcano.gasEmission,
+                    isGlowing: showCorrectEffects,
+                  ),
+                  const SizedBox(height: 5),
+                  _MonitoringRow(
+                    icon: Icons.graphic_eq_outlined,
+                    label: 'SEISMIC ACTIVITY',
+                    value: volcano.seismicActivity,
+                    isGlowing: showCorrectEffects,
+                  ),
+                  const SizedBox(height: 9),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ClassificationButton(
+                          key: ValueKey('mission7-${volcano.id}-active'),
+                          label: 'ACTIVE',
+                          isSelected:
+                              selectedClassification ==
+                              _VolcanoClassification.active,
+                          isEnabled: !isSaving,
+                          onTap: () => onSelect(_VolcanoClassification.active),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ClassificationButton(
+                          key: ValueKey('mission7-${volcano.id}-inactive'),
+                          label: 'INACTIVE',
+                          isSelected:
+                              selectedClassification ==
+                              _VolcanoClassification.inactive,
+                          isEnabled: !isSaving,
+                          onTap: () =>
+                              onSelect(_VolcanoClassification.inactive),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          _MonitoringRow(
-            icon: Icons.history_toggle_off_outlined,
-            label: 'ERUPTION RECORDS',
-            value: volcano.eruptionRecord,
-          ),
-          const SizedBox(height: 5),
-          _MonitoringRow(
-            icon: Icons.air_outlined,
-            label: 'GAS EMISSIONS',
-            value: volcano.gasEmission,
-          ),
-          const SizedBox(height: 5),
-          _MonitoringRow(
-            icon: Icons.graphic_eq_outlined,
-            label: 'SEISMIC ACTIVITY',
-            value: volcano.seismicActivity,
-          ),
-          const SizedBox(height: 9),
-          Row(
-            children: [
-              Expanded(
-                child: _ClassificationButton(
-                  key: ValueKey('mission7-${volcano.id}-active'),
-                  label: 'ACTIVE',
-                  isSelected:
-                      selectedClassification == _VolcanoClassification.active,
-                  isEnabled: !isSaving,
-                  onTap: () => onSelect(_VolcanoClassification.active),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ClassificationButton(
-                  key: ValueKey('mission7-${volcano.id}-inactive'),
-                  label: 'INACTIVE',
-                  isSelected:
-                      selectedClassification == _VolcanoClassification.inactive,
-                  isEnabled: !isSaving,
-                  onTap: () => onSelect(_VolcanoClassification.inactive),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _VolcanoImagePlaceholder extends StatelessWidget {
-  const _VolcanoImagePlaceholder();
+class _VolcanoImage extends StatelessWidget {
+  final String imagePath;
+  final String semanticLabel;
+  final bool showRadar;
+
+  const _VolcanoImage({
+    required this.imagePath,
+    required this.semanticLabel,
+    required this.showRadar,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       key: const ValueKey('mission7-volcano-image-placeholder'),
-      height: 54,
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.background,
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
+        border: Border.all(color: AppColors.borderAlt, width: 3),
         borderRadius: BorderRadius.circular(7),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          const Positioned.fill(child: _VolcanoPlaceholderPainterView()),
-          Positioned(
-            left: 12,
-            top: 10,
-            child: Text(
-              'VOLCANO IMAGE',
-              style: TextStyle(
-                color: AppColors.textMuted.withValues(alpha: 0.84),
-                fontSize: 8,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1,
+          Image.asset(
+            imagePath,
+            width: double.infinity,
+            fit: BoxFit.fitWidth,
+            filterQuality: FilterQuality.high,
+            semanticLabel: semanticLabel,
+          ),
+          if (showRadar)
+            const Positioned.fill(
+              child: _VolcanoRadarEffect(
+                key: ValueKey('mission7-volcano-radar-effect'),
               ),
             ),
-          ),
-          Positioned(
-            right: 12,
-            top: 10,
-            child: Icon(
-              Icons.image_search_outlined,
-              color: AppColors.teal.withValues(alpha: 0.62),
-              size: 15,
-            ),
-          ),
         ],
       ),
     );
   }
-}
-
-class _VolcanoPlaceholderPainterView extends StatelessWidget {
-  const _VolcanoPlaceholderPainterView();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _VolcanoPlaceholderPainter());
-  }
-}
-
-class _VolcanoPlaceholderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = AppColors.tealDim.withValues(alpha: 0.08)
-      ..strokeWidth = 0.6;
-    const spacing = 18.0;
-    for (var x = 0.0; x <= size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (var y = 0.0; y <= size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    final mountainPaint = Paint()
-      ..color = const Color(0xFF2C3A3E).withValues(alpha: 0.96)
-      ..style = PaintingStyle.fill;
-    final highlightPaint = Paint()
-      ..color = AppColors.teal.withValues(alpha: 0.18)
-      ..style = PaintingStyle.fill;
-    final lavaPaint = Paint()
-      ..color = const Color(0xFFFF8A4C).withValues(alpha: 0.78)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-    final rimPaint = Paint()
-      ..color = AppColors.teal.withValues(alpha: 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1;
-
-    final baseY = size.height * 0.88;
-    final peak = Offset(size.width * 0.5, size.height * 0.28);
-    final mountain = Path()
-      ..moveTo(size.width * 0.12, baseY)
-      ..quadraticBezierTo(
-        size.width * 0.29,
-        size.height * 0.58,
-        peak.dx - 20,
-        peak.dy + 16,
-      )
-      ..quadraticBezierTo(peak.dx, peak.dy, peak.dx + 20, peak.dy + 16)
-      ..quadraticBezierTo(
-        size.width * 0.70,
-        size.height * 0.58,
-        size.width * 0.88,
-        baseY,
-      )
-      ..close();
-    canvas.drawPath(mountain, mountainPaint);
-    canvas.drawPath(mountain, rimPaint);
-
-    final shadow = Path()
-      ..moveTo(peak.dx, peak.dy + 5)
-      ..lineTo(size.width * 0.66, baseY)
-      ..lineTo(size.width * 0.88, baseY)
-      ..quadraticBezierTo(
-        size.width * 0.70,
-        size.height * 0.58,
-        peak.dx + 20,
-        peak.dy + 16,
-      )
-      ..close();
-    canvas.drawPath(shadow, highlightPaint);
-
-    final crater = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(peak.dx, peak.dy + 14),
-        width: 54,
-        height: 14,
-      ),
-      const Radius.circular(20),
-    );
-    canvas.drawRRect(
-      crater,
-      Paint()
-        ..color = AppColors.background.withValues(alpha: 0.96)
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawRRect(crater, rimPaint);
-
-    final lava = Path()
-      ..moveTo(peak.dx, peak.dy + 22)
-      ..cubicTo(
-        peak.dx - 8,
-        size.height * 0.48,
-        peak.dx + 14,
-        size.height * 0.58,
-        peak.dx + 4,
-        size.height * 0.72,
-      )
-      ..cubicTo(
-        peak.dx,
-        size.height * 0.78,
-        peak.dx + 18,
-        size.height * 0.82,
-        peak.dx + 12,
-        baseY - 8,
-      );
-    canvas.drawPath(lava, lavaPaint);
-
-    final plumePaint = Paint()
-      ..color = AppColors.textMuted.withValues(alpha: 0.16)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromLTWH(peak.dx - 28, 10, 40, 32),
-      2.5,
-      2.4,
-      false,
-      plumePaint,
-    );
-    canvas.drawArc(
-      Rect.fromLTWH(peak.dx - 2, 4, 54, 38),
-      2.7,
-      2.1,
-      false,
-      plumePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _MonitoringRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final bool isGlowing;
 
   const _MonitoringRow({
     required this.icon,
     required this.label,
     required this.value,
+    required this.isGlowing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppColors.tealDim, size: 14),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 112,
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+    return AnimatedContainer(
+      key: ValueKey('mission7-monitor-$label'),
+      duration: const Duration(milliseconds: 260),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      decoration: BoxDecoration(
+        color: isGlowing
+            ? AppColors.teal.withValues(alpha: 0.12)
+            : Colors.transparent,
+        border: Border.all(
+          color: isGlowing
+              ? AppColors.teal.withValues(alpha: 0.82)
+              : Colors.transparent,
+        ),
+        boxShadow: isGlowing
+            ? [
+                BoxShadow(
+                  color: AppColors.teal.withValues(alpha: 0.42),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              ]
+            : const [],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            color: isGlowing ? AppColors.teal : AppColors.tealDim,
+            size: 14,
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 104,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isGlowing ? AppColors.teal : AppColors.textMuted,
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              height: 1.25,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0,
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: isGlowing
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
+                fontSize: 12,
+                height: 1.25,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+}
+
+class _VolcanoRadarEffect extends StatelessWidget {
+  const _VolcanoRadarEffect({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 850),
+      curve: Curves.easeOutCubic,
+      builder: (context, progress, child) {
+        return CustomPaint(
+          painter: _VolcanoRadarPainter(progress),
+          child: child,
+        );
+      },
+      child: const SizedBox.expand(),
+    );
+  }
+}
+
+class _VolcanoRadarPainter extends CustomPainter {
+  final double progress;
+
+  const _VolcanoRadarPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * 0.5, size.height * 0.52);
+    final radius = size.shortestSide * 0.36;
+    final glowPaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.22 * (1 - progress * 0.35))
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius * progress, glowPaint);
+
+    final ringPaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.9 * (1 - progress))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawCircle(center, radius * progress, ringPaint);
+    canvas.drawCircle(center, radius * progress * 0.66, ringPaint);
+
+    final sweepPaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.82)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    final angle = progress * 6.283185307179586;
+    canvas.drawLine(
+      center,
+      center + Offset.fromDirection(angle, radius),
+      sweepPaint,
+    );
+    canvas.drawCircle(
+      center,
+      4,
+      Paint()..color = AppColors.textPrimary.withValues(alpha: 0.9),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _VolcanoRadarPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
 
@@ -685,28 +733,77 @@ class _ClassificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isSelected ? AppColors.teal : AppColors.borderAlt;
+    final imagePath = label == _VolcanoClassification.active.label
+        ? Assets.missionActiveButton
+        : Assets.missionInactiveButton;
+    final opacity = !isEnabled
+        ? 0.45
+        : isSelected
+        ? 1.0
+        : 0.72;
+
     return InkWell(
       onTap: isEnabled ? onTap : null,
-      borderRadius: BorderRadius.circular(6),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        height: 42,
-        alignment: Alignment.center,
+        duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.teal.withValues(alpha: 0.16)
-              : const Color(0xFF1B2A36),
-          border: Border.all(color: borderColor, width: 1),
-          borderRadius: BorderRadius.circular(6),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.teal.withValues(alpha: 0.65),
+                    blurRadius: 14,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : const [],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isEnabled ? AppColors.textPrimary : AppColors.textDim,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 150),
+          opacity: opacity,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Image.asset(
+                imagePath,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+                filterQuality: FilterQuality.high,
+                excludeFromSemantics: true,
+              ),
+              if (isSelected)
+                Positioned(
+                  top: 2,
+                  right: 4,
+                  child: Container(
+                    key: ValueKey(
+                      'mission7-${label.toLowerCase()}-selected-indicator',
+                    ),
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: AppColors.teal,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.textPrimary,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.teal.withValues(alpha: 0.7),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: AppColors.background,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              Opacity(opacity: 0, child: Text(label)),
+            ],
           ),
         ),
       ),
@@ -869,17 +966,13 @@ class _InvestigationPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
+            minHeight: 6,
             backgroundColor: AppColors.surface,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
           ),
@@ -949,14 +1042,10 @@ class _TelemetryCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.border, width: 0.6),
-        borderRadius: BorderRadius.circular(4),
-      ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             value,
@@ -1073,6 +1162,7 @@ class _InvestigationVolcano {
   final String id;
   final String name;
   final String tag;
+  final String imagePath;
   final _VolcanoClassification correctClassification;
   final String eruptionRecord;
   final String gasEmission;
@@ -1082,6 +1172,7 @@ class _InvestigationVolcano {
     required this.id,
     required this.name,
     required this.tag,
+    required this.imagePath,
     required this.correctClassification,
     required this.eruptionRecord,
     required this.gasEmission,

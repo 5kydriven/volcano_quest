@@ -105,6 +105,16 @@ class Assets {
       'assets/missions/misson-three/letter_slot.png';
   static const String missionFiveSelectedContainer =
       'assets/missions/mission-five/selected_container.png';
+  static const String missionSevenStatsContainer =
+      'assets/images/mission_seven_stats_container.png';
+  static const String missionSevenMayon =
+      'assets/missions/mission-seven/mayon_volcano.jpg';
+  static const String missionSevenTaal =
+      'assets/missions/mission-seven/taal_volcano.jpg';
+  static const String missionSevenArayat =
+      'assets/missions/mission-seven/mount_arayat.png';
+  static const String missionSevenMakiling =
+      'assets/missions/mission-seven/mount_makiling.png';
   static const missionTwoAnswerContainers = [
     'assets/missions/ABCD_container/A_container.png',
     'assets/missions/ABCD_container/B_container.png',
@@ -117,6 +127,12 @@ class Assets {
       'assets/missions/buttons/next_question_button.png';
   static const String missionViewResultsButton =
       'assets/missions/buttons/view_results_button.png';
+  static const String missionActiveButton =
+      'assets/missions/buttons/active_button.png';
+  static const String missionInactiveButton =
+      'assets/missions/buttons/inactive_button.png';
+  static const String missionAnalyzeVolcanoButton =
+      'assets/missions/buttons/analyze_volcano_button.png';
   static const String squareContainer =
       'assets/containers/square_container.png';
   static const String rectangleContainer =
