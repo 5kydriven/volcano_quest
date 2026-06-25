@@ -165,4 +165,5 @@ class Assets {
   static const String settingToggleOff = 'assets/setting_screen/toggle_of.png';
   static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
   static const String menuBg = 'assets/menu_screen/menu_bg.jpeg';
+  static const String appLogo = 'assets/app_logo.png';
 }
