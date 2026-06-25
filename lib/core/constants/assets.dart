@@ -89,6 +89,14 @@ class Assets {
   static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String missionScreenBackground =
       'assets/missions/backgrounds/mission_screen_background.jpeg';
+  static const String missionOneLabBackground =
+      'assets/missions/mission_one/lab_background.png';
+  static const String missionOneGlowingBall =
+      'assets/missions/mission_one/glowing_ball.png';
+  static const String missionOneVolcanoTypeContainer =
+      'assets/missions/mission_one/volcano_type_container.png';
+  static const String missionOneButtonContainer =
+      'assets/missions/buttons/button_container.png';
   static const String onboardingScientistIdentity =
       'assets/onboarding_screen/20260617_231800_0000.png';
   static const String onboardingScientistProfileLabel =
@@ -105,6 +113,20 @@ class Assets {
       'assets/missions/misson-three/letter_slot.png';
   static const String missionFiveSelectedContainer =
       'assets/missions/mission-five/selected_container.png';
+  static const String missionSevenStatsContainer =
+      'assets/images/mission_seven_stats_container.png';
+  static const String missionSevenMayon =
+      'assets/missions/mission-seven/mayon_volcano.jpg';
+  static const String missionSevenTaal =
+      'assets/missions/mission-seven/taal_volcano.jpg';
+  static const String missionSevenArayat =
+      'assets/missions/mission-seven/mount_arayat.png';
+  static const String missionSevenMakiling =
+      'assets/missions/mission-seven/mount_makiling.png';
+  static const String missionEightMagmaClassification =
+      'assets/missions/mission_eight/magma_classification.png';
+  static const String missionEightWhyLiveNearVolcanoes =
+      'assets/missions/mission_eight/why_live_near_volcanoes.png';
   static const missionTwoAnswerContainers = [
     'assets/missions/ABCD_container/A_container.png',
     'assets/missions/ABCD_container/B_container.png',
@@ -117,6 +139,12 @@ class Assets {
       'assets/missions/buttons/next_question_button.png';
   static const String missionViewResultsButton =
       'assets/missions/buttons/view_results_button.png';
+  static const String missionActiveButton =
+      'assets/missions/buttons/active_button.png';
+  static const String missionInactiveButton =
+      'assets/missions/buttons/inactive_button.png';
+  static const String missionAnalyzeVolcanoButton =
+      'assets/missions/buttons/analyze_volcano_button.png';
   static const String squareContainer =
       'assets/containers/square_container.png';
   static const String rectangleContainer =
@@ -137,4 +165,5 @@ class Assets {
   static const String settingToggleOff = 'assets/setting_screen/toggle_of.png';
   static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
   static const String menuBg = 'assets/menu_screen/menu_bg.jpeg';
+  static const String appLogo = 'assets/app_logo.png';
 }

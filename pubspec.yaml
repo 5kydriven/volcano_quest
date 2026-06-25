@@ -29,6 +29,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   path_provider: ^2.1.5
   path: ^1.9.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -47,11 +49,38 @@ flutter:
     - assets/avatars/
     - assets/videos/
     - assets/models/
+    - assets/containers/
     - assets/icons/
     - assets/missions/backgrounds/
+    - assets/missions/mission_one/
+    - assets/missions/ABCD_container/
+    - assets/missions/buttons/
     - assets/missions/misson-three/
+    - assets/missions/mission-five/
+    - assets/missions/mission-seven/
+    - assets/missions/mission_eight/
     - assets/animated_avatars/
     - assets/splash_screen/
     - assets/onboarding_screen/
     - assets/setting_screen/
     - assets/menu_screen/
+
+flutter_launcher_icons:
+  android: 'launcher_icon'
+  ios: true
+  image_path: 'assets/app_icon.png'
+  adaptive_icon_background: '#1E1917'
+  adaptive_icon_foreground: 'assets/app_icon.png'
+  remove_alpha_ios: true
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: '#1E1917'
+  image: assets/app_logo_v2.png
+
+  android_12:
+    image: assets/app_logo_v2.png
+    color: '#1E1917'
+  android: true
+  ios: true
+  web: false

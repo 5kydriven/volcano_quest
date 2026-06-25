@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
@@ -129,8 +130,13 @@ class MissionUnlockedScreen extends StatelessWidget {
 class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _floatController;
-  late final List<_MagmaCoreData> _cores;
   final _replayCompletedOrbs = <String>{};
+
+  static const _cores = [
+    _MagmaCoreData(x: 0.84, y: 0.56, sizeFactor: 0.19, phase: 2.1),
+    _MagmaCoreData(x: 0.44, y: 0.63, sizeFactor: 0.20, phase: 4.2),
+    _MagmaCoreData(x: 0.27, y: 0.38, sizeFactor: 0.20, phase: 0),
+  ];
 
   static final _missionOrbs = [
     _MissionOrbContent(
@@ -179,19 +185,8 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
     super.initState();
     _floatController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3600),
+      duration: const Duration(milliseconds: 2800),
     )..repeat();
-
-    final random = math.Random(DateTime.now().millisecondsSinceEpoch);
-    _cores = List.generate(3, (index) {
-      return _MagmaCoreData(
-        x: 0.13 + random.nextDouble() * 0.72,
-        y: 0.28 + random.nextDouble() * 0.58,
-        size: 36 + random.nextDouble() * 22,
-        phase: random.nextDouble() * math.pi * 2,
-        drift: 5 + random.nextDouble() * 7,
-      );
-    });
   }
 
   @override
@@ -351,12 +346,12 @@ class _ResearchBasePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(Assets.missionOneLabBackground),
+          fit: BoxFit.cover,
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
           const Positioned.fill(child: _LabGrid()),
@@ -372,32 +367,29 @@ class _ResearchBasePanel extends StatelessWidget {
             ),
           ),
           Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 104, bottom: 18),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return AnimatedBuilder(
-                    animation: animation,
-                    builder: (context, _) {
-                      return Stack(
-                        children: [
-                          for (var index = 0; index < cores.length; index++)
-                            _AnimatedMagmaCore(
-                              data: cores[index],
-                              orb: missionOrbs[index],
-                              size: constraints.biggest,
-                              progress: animation.value,
-                              isInitialized: initializedCores.contains(
-                                missionOrbs[index].id,
-                              ),
-                              onTap: () => onCoreTap(index),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, _) {
+                    return Stack(
+                      children: [
+                        for (var index = 0; index < cores.length; index++)
+                          _FixedMagmaCore(
+                            data: cores[index],
+                            orb: missionOrbs[index],
+                            size: constraints.biggest,
+                            floatProgress: animation.value,
+                            isInitialized: initializedCores.contains(
+                              missionOrbs[index].id,
                             ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+                            onTap: () => onCoreTap(index),
+                          ),
+                      ],
+                    );
+                  },
+                );
+              },
             ),
           ),
           if (isComplete)
@@ -430,11 +422,7 @@ class _MissionPrompt extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF172D40),
-        border: Border.all(color: AppColors.border, width: 0.6),
-        borderRadius: BorderRadius.circular(4),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -478,38 +466,40 @@ class _MissionPrompt extends StatelessWidget {
   }
 }
 
-class _AnimatedMagmaCore extends StatelessWidget {
+class _FixedMagmaCore extends StatelessWidget {
   final _MagmaCoreData data;
   final _MissionOrbContent orb;
   final Size size;
-  final double progress;
+  final double floatProgress;
   final bool isInitialized;
   final VoidCallback onTap;
 
-  const _AnimatedMagmaCore({
+  const _FixedMagmaCore({
     required this.data,
     required this.orb,
     required this.size,
-    required this.progress,
+    required this.floatProgress,
     required this.isInitialized,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final phase = progress * math.pi * 2 + data.phase;
-    final x = (size.width * data.x) - (data.size / 2);
-    final y = (size.height * data.y) - (data.size / 2);
-    final dy = math.sin(phase) * data.drift;
-    final dx = math.cos(phase * 0.7) * 3;
+    final coreSize = (size.width * data.sizeFactor)
+        .clamp(64.0, 104.0)
+        .toDouble();
+    final x = (size.width * data.x) - (coreSize / 2);
+    final floatOffset =
+        math.sin((floatProgress * math.pi * 2) + data.phase) * 6;
+    final y = (size.height * data.y) - (coreSize / 2) + floatOffset;
 
     return Positioned(
-      left: x + dx,
-      top: y + dy,
+      left: x,
+      top: y,
       child: GestureDetector(
         onTap: onTap,
         child: _MagmaCore(
-          size: data.size,
+          size: coreSize,
           icon: orb.icon,
           isInitialized: isInitialized,
         ),
@@ -531,43 +521,46 @@ class _MagmaCore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          center: const Alignment(-0.32, -0.42),
-          radius: 0.9,
-          colors: [
-            Colors.white.withValues(alpha: isInitialized ? 0.96 : 0.86),
-            const Color(0xFF9CF7E8),
-            AppColors.teal,
-            const Color(0xFF31AFA4),
-          ],
-          stops: const [0, 0.22, 0.64, 1],
-        ),
-        border: isInitialized
-            ? Border.all(color: AppColors.textPrimary, width: 1.4)
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.teal.withValues(alpha: isInitialized ? 0.72 : 0.5),
-            blurRadius: isInitialized ? 30 : 24,
-            spreadRadius: isInitialized ? 8 : 5,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: size * 0.72,
+            height: size * 0.72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFFFF6A00,
+                  ).withValues(alpha: isInitialized ? 0.72 : 0.58),
+                  blurRadius: size * 0.34,
+                  spreadRadius: size * 0.08,
+                  offset: Offset(0, size * 0.09),
+                ),
+                BoxShadow(
+                  color: const Color(0xFFFFB000).withValues(alpha: 0.28),
+                  blurRadius: size * 0.5,
+                  spreadRadius: size * 0.03,
+                ),
+              ],
+            ),
           ),
-          BoxShadow(
-            color: AppColors.teal.withValues(alpha: 0.22),
-            blurRadius: 52,
-            spreadRadius: 12,
+          Positioned.fill(
+            child: Image.asset(
+              Assets.missionOneGlowingBall,
+              fit: BoxFit.contain,
+            ),
+          ),
+          Icon(
+            isInitialized ? Icons.check : icon,
+            color: const Color(0xFF19120B),
+            size: size * 0.31,
           ),
         ],
-      ),
-      child: Icon(
-        isInitialized ? Icons.check : icon,
-        color: AppColors.background,
-        size: isInitialized ? 18 : 19,
       ),
     );
   }
@@ -596,61 +589,21 @@ class _MissionOrbSheet extends StatelessWidget {
         maxChildSize: 0.9,
         builder: (context, scrollController) {
           return Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border.all(color: AppColors.borderAlt, width: 1),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(8),
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(Assets.missionOneVolcanoTypeContainer),
+                fit: BoxFit.fill,
               ),
             ),
             child: ListView(
               controller: scrollController,
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+              padding: const EdgeInsets.fromLTRB(38, 42, 38, 34),
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: AppColors.teal.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.teal, width: 1),
-                      ),
-                      child: Icon(orb.icon, color: AppColors.teal, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            orb.title.toUpperCase(),
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            orb.subtitle.toUpperCase(),
-                            style: const TextStyle(
-                              color: AppColors.teal,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                _MissionOneOrbHeader(orb: orb),
+                const SizedBox(height: 26),
+                for (final fact in orb.facts) _MissionOneOrbFactRow(text: fact),
                 const SizedBox(height: 18),
-                for (final fact in orb.facts) _FactRow(text: fact),
-                const SizedBox(height: 12),
                 _CompleteOrbButton(
                   isCompleted: isCompleted,
                   isReplay: isReplay,
@@ -665,35 +618,114 @@ class _MissionOrbSheet extends StatelessWidget {
   }
 }
 
-class _FactRow extends StatelessWidget {
-  final String text;
+class _MissionOneOrbHeader extends StatelessWidget {
+  static const _orange = Color(0xFFFF7A00);
 
-  const _FactRow({required this.text});
+  final _MissionOrbContent orb;
+
+  const _MissionOneOrbHeader({required this.orb});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _orange.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: _orange.withValues(alpha: 0.72),
+                  width: 1,
+                ),
+              ),
+              child: Icon(orb.icon, color: _orange, size: 25),
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Text(
+                orb.title.toUpperCase(),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 19,
+                  height: 1.05,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.9,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(
+          orb.subtitle.toUpperCase(),
+          style: const TextStyle(
+            color: _orange,
+            fontSize: 10,
+            height: 1.35,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_orange, _orange.withValues(alpha: 0)],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MissionOneOrbFactRow extends StatelessWidget {
+  static const _orange = Color(0xFFFF7A00);
+
+  final String text;
+
+  const _MissionOneOrbFactRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: _orange.withValues(alpha: 0.22),
+            width: 0.8,
+          ),
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 5,
-            height: 5,
-            margin: const EdgeInsets.only(top: 7),
-            decoration: const BoxDecoration(
-              color: AppColors.teal,
-              shape: BoxShape.circle,
+            width: 8,
+            height: 8,
+            margin: const EdgeInsets.only(top: 5),
+            transform: Matrix4.rotationZ(math.pi / 4),
+            decoration: BoxDecoration(
+              color: _orange.withValues(alpha: 0.18),
+              border: Border.all(color: _orange, width: 1),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
               text,
               style: const TextStyle(
-                color: AppColors.textSecondary,
+                color: Color(0xFFE7E1D8),
                 fontSize: 12,
-                height: 1.45,
+                height: 1.55,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -723,39 +755,36 @@ class _CompleteOrbButtonState extends State<_CompleteOrbButton> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: widget.isCompleted || _isSaving
-            ? null
-            : () async {
+    return _MissionOneImageButton(
+      onPressed: widget.isCompleted || _isSaving
+          ? null
+          : () async {
+              setState(() {
+                _isSaving = true;
+              });
+              await widget.onComplete();
+              if (mounted) {
                 setState(() {
-                  _isSaving = true;
+                  _isSaving = false;
                 });
-                await widget.onComplete();
-                if (mounted) {
-                  setState(() {
-                    _isSaving = false;
-                  });
-                }
-              },
-        child: _isSaving
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: AppColors.teal,
-                ),
-              )
-            : Text(
-                widget.isCompleted
-                    ? 'COMPLETED'
-                    : widget.isReplay
-                    ? 'COMPLETE PRACTICE'
-                    : 'COMPLETE +10 XP',
+              }
+            },
+      child: _isSaving
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: AppColors.textPrimary,
               ),
-      ),
+            )
+          : Text(
+              widget.isCompleted
+                  ? 'COMPLETED'
+                  : widget.isReplay
+                  ? 'COMPLETE PRACTICE'
+                  : 'COMPLETE +10 XP',
+            ),
     );
   }
 }
@@ -763,9 +792,52 @@ class _CompleteOrbButtonState extends State<_CompleteOrbButton> {
 class _ProceedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return _MissionOneImageButton(
       onPressed: () => context.go(AppRoutes.menu),
       child: const Text('RETURN TO MENU'),
+    );
+  }
+}
+
+class _MissionOneImageButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Widget child;
+
+  const _MissionOneImageButton({required this.onPressed, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Opacity(
+        opacity: isEnabled ? 1 : 0.55,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(Assets.missionOneButtonContainer, fit: BoxFit.fill),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onPressed,
+                child: Center(
+                  child: DefaultTextStyle(
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                    child: child,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -815,16 +887,14 @@ class _LabGridPainter extends CustomPainter {
 class _MagmaCoreData {
   final double x;
   final double y;
-  final double size;
+  final double sizeFactor;
   final double phase;
-  final double drift;
 
   const _MagmaCoreData({
     required this.x,
     required this.y,
-    required this.size,
+    required this.sizeFactor,
     required this.phase,
-    required this.drift,
   });
 }
 
