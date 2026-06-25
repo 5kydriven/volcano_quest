@@ -89,6 +89,14 @@ class Assets {
   static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String missionScreenBackground =
       'assets/missions/backgrounds/mission_screen_background.jpeg';
+  static const String missionOneLabBackground =
+      'assets/missions/mission_one/lab_background.png';
+  static const String missionOneGlowingBall =
+      'assets/missions/mission_one/glowing_ball.png';
+  static const String missionOneVolcanoTypeContainer =
+      'assets/missions/mission_one/volcano_type_container.png';
+  static const String missionOneButtonContainer =
+      'assets/missions/buttons/button_container.png';
   static const String onboardingScientistIdentity =
       'assets/onboarding_screen/20260617_231800_0000.png';
   static const String onboardingScientistProfileLabel =

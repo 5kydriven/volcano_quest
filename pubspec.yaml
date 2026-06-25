@@ -52,6 +52,7 @@ flutter:
     - assets/containers/
     - assets/icons/
     - assets/missions/backgrounds/
+    - assets/missions/mission_one/
     - assets/missions/ABCD_container/
     - assets/missions/buttons/
     - assets/missions/misson-three/
