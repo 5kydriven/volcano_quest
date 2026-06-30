@@ -97,6 +97,8 @@ class Assets {
       'assets/missions/mission_one/volcano_type_container.png';
   static const String missionOneButtonContainer =
       'assets/missions/buttons/button_container.png';
+  static const String missionFourPhilippinesMap =
+      'assets/missions/mission-four/philippines_volcano_map.png';
   static const String onboardingScientistIdentity =
       'assets/onboarding_screen/20260617_231800_0000.png';
   static const String onboardingScientistProfileLabel =
