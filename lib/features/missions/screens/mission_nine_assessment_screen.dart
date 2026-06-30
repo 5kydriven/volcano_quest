@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
@@ -104,7 +105,7 @@ class _MissionNineAssessmentScreenState
     final allAnswered = AppConstants.missionNineQuestionIds.every(
       answeredIds.contains,
     );
-    final shouldShowSummary = _showSummary || (allAnswered && !_submitted);
+    final shouldShowSummary = _showSummary || allAnswered;
     final displayIndex = shouldShowSummary
         ? _questionIndex.clamp(0, _questions.length - 1)
         : _activeQuestionIndex(answeredIds);
@@ -140,9 +141,11 @@ class _MissionNineAssessmentScreenState
                     percentComplete: (progress * 100).round(),
                     child: shouldShowSummary
                         ? _AssessmentSummary(
-                            playerName: player.name,
                             correctCount: correctIds.length,
                             totalQuestions: _questions.length,
+                            earnedXP: widget.isReplay
+                                ? 0
+                                : AppConstants.missionNineXp,
                             onReturn: () => context.go(AppRoutes.menu),
                           )
                         : _AssessmentContent(
@@ -299,17 +302,13 @@ class _AssessmentPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
+            minHeight: 6,
             backgroundColor: AppColors.surface,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
           ),
@@ -332,7 +331,7 @@ class _AssessmentPanel extends StatelessWidget {
                 ),
                 Positioned.fill(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 26, 14, 18),
+                    padding: const EdgeInsets.fromLTRB(0, 26, 0, 18),
                     child: child,
                   ),
                 ),
@@ -374,13 +373,12 @@ class _AssessmentContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: ListView(
-            padding: EdgeInsets.zero,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _ScannerLabel(text: 'FINAL ASSESSMENT'),
-              const SizedBox(height: 8),
-              _QuestionTag(text: question.tag),
+              _ScannerLabel(text: question.tag),
               const SizedBox(height: 14),
               Text(
                 question.question,
@@ -402,47 +400,426 @@ class _AssessmentContent extends StatelessWidget {
                   letterSpacing: 1,
                 ),
               ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
               const SizedBox(height: 20),
               for (var index = 0; index < question.options.length; index++) ...[
-                _AnswerOptionTile(
-                  key: ValueKey('mission9-${question.id}-$index'),
-                  letter: String.fromCharCode(65 + index),
-                  text: question.options[index],
-                  isSelected: selectedOptionIndex == index,
-                  isSubmitted: submitted,
-                  isCorrect: question.correctOptionIndex == index,
-                  onTap: onSelect == null ? null : () => onSelect!(index),
+                Builder(
+                  builder: (context) {
+                    final isSelected = selectedOptionIndex == index;
+                    final isCorrect = question.correctOptionIndex == index;
+                    final showCorrect = submitted && isCorrect;
+                    final showWrong = submitted && isSelected && !isCorrect;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: onSelect == null ? null : () => onSelect!(index),
+                        borderRadius: BorderRadius.zero,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: double.infinity,
+                          height: 55,
+                          clipBehavior: Clip.none,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            clipBehavior: Clip.none,
+                            children: [
+                              _MissionAnswerContainer(
+                                letter: String.fromCharCode(65 + index),
+                                isSelected: isSelected && !submitted,
+                                feedback: showCorrect
+                                    ? _MissionAnswerFeedback.correct
+                                    : showWrong
+                                    ? _MissionAnswerFeedback.wrong
+                                    : _MissionAnswerFeedback.none,
+                              ),
+                              Positioned.fill(
+                                child: FractionallySizedBox(
+                                  widthFactor: 0.72,
+                                  alignment: Alignment.centerRight,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      question.options[index],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.left,
+                                      style: const TextStyle(
+                                        color: Color(0xFF292828),
+                                        fontSize: 18,
+                                        height: 1,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0,
+                                        shadows: [
+                                          Shadow(
+                                            color: Color(0x99FFF0C9),
+                                            offset: Offset(0, 1),
+                                            blurRadius: 0,
+                                          ),
+                                          Shadow(
+                                            color: Color(0x33000000),
+                                            offset: Offset(1, 1),
+                                            blurRadius: 1,
+                                          ),
+                                        ],
+                                      ),
+                                      strutStyle: const StrutStyle(
+                                        fontSize: 18,
+                                        height: 1,
+                                        forceStrutHeight: true,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
               ],
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: submitted || canSubmit ? onAction : null,
-            child: isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: AppColors.teal,
-                    ),
-                  )
-                : Text(
-                    submitted
-                        ? isLastQuestion
-                              ? 'VIEW RESULTS'
-                              : 'NEXT QUESTION'
-                        : 'SUBMIT ANSWER',
-                  ),
-          ),
+        _QuizActionButton(
+          submitted: submitted,
+          canSubmit: canSubmit,
+          isSaving: isSaving,
+          isLastQuestion: isLastQuestion,
+          onPressed: submitted || canSubmit ? onAction : null,
         ),
       ],
     );
+  }
+}
+
+class _QuizActionButton extends StatelessWidget {
+  final bool submitted;
+  final bool canSubmit;
+  final bool isSaving;
+  final bool isLastQuestion;
+  final VoidCallback? onPressed;
+
+  const _QuizActionButton({
+    required this.submitted,
+    required this.canSubmit,
+    required this.isSaving,
+    required this.isLastQuestion,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (submitted) {
+      return _MissionImageActionButton(
+        assetPath: isLastQuestion
+            ? Assets.missionViewResultsButton
+            : Assets.missionNextQuestionButton,
+        semanticLabel: isLastQuestion ? 'VIEW RESULTS' : 'NEXT QUESTION',
+        onPressed: onPressed,
+      );
+    }
+
+    return _MissionImageActionButton(
+      assetPath: Assets.missionSubmitAnswerButton,
+      semanticLabel: 'SUBMIT ANSWER',
+      onPressed: onPressed,
+      opacity: canSubmit || isSaving ? 1 : 0.45,
+      child: isSaving
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.8,
+                color: AppColors.textPrimary,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _MissionImageActionButton extends StatelessWidget {
+  final String assetPath;
+  final String semanticLabel;
+  final VoidCallback? onPressed;
+  final double opacity;
+  final Widget? child;
+
+  const _MissionImageActionButton({
+    required this.assetPath,
+    required this.semanticLabel,
+    required this.onPressed,
+    this.opacity = 1,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          foregroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          side: BorderSide.none,
+          disabledForegroundColor: Colors.transparent,
+          overlayColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Opacity(
+          opacity: opacity,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                child: Image.asset(
+                  assetPath,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                ),
+              ),
+              ?child,
+              Opacity(opacity: 0, child: Text(semanticLabel)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _MissionAnswerFeedback { none, correct, wrong }
+
+class _MissionAnswerContainer extends StatelessWidget {
+  final String letter;
+  final bool isSelected;
+  final _MissionAnswerFeedback feedback;
+
+  const _MissionAnswerContainer({
+    required this.letter,
+    required this.isSelected,
+    required this.feedback,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _MissionAnswerContainerPainter(
+        isSelected: isSelected,
+        feedback: feedback,
+      ),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: FractionallySizedBox(
+          widthFactor: 0.2,
+          heightFactor: 0.82,
+          child: Center(
+            child: Text(
+              letter,
+              style: const TextStyle(
+                color: Color(0xFF292828),
+                fontSize: 20,
+                height: 1,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+                shadows: [
+                  Shadow(
+                    color: Color(0x99FFF0C9),
+                    offset: Offset(0, 1),
+                    blurRadius: 0,
+                  ),
+                  Shadow(
+                    color: Color(0x33000000),
+                    offset: Offset(1, 1),
+                    blurRadius: 1,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionAnswerContainerPainter extends CustomPainter {
+  final bool isSelected;
+  final _MissionAnswerFeedback feedback;
+
+  const _MissionAnswerContainerPainter({
+    required this.isSelected,
+    required this.feedback,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = size.height * 0.12;
+    final notch = size.height * 0.22;
+    final leftBand = size.width * 0.22;
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final bodyPath = Path()
+      ..moveTo(radius, 0)
+      ..lineTo(size.width - radius, 0)
+      ..quadraticBezierTo(size.width, 0, size.width, radius)
+      ..lineTo(size.width, size.height - radius)
+      ..quadraticBezierTo(
+        size.width,
+        size.height,
+        size.width - radius,
+        size.height,
+      )
+      ..lineTo(radius, size.height)
+      ..quadraticBezierTo(0, size.height, 0, size.height - radius)
+      ..lineTo(0, radius)
+      ..quadraticBezierTo(0, 0, radius, 0)
+      ..close();
+
+    if (isSelected) {
+      canvas.drawShadow(bodyPath, const Color(0xFFFF5A00), 12, false);
+      final glowPaint = Paint()
+        ..color = const Color(0xFFFF5A00).withValues(alpha: 0.34)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect.inflate(2), Radius.circular(radius)),
+        glowPaint,
+      );
+    }
+
+    final bodyPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: _bodyColors,
+        stops: const [0, 0.45, 1],
+      ).createShader(rect);
+    canvas.drawPath(bodyPath, bodyPaint);
+
+    final borderPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.height * 0.045
+      ..color = _borderColor;
+    canvas.drawPath(bodyPath, borderPaint);
+
+    final highlightPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.height * 0.028
+      ..color = const Color(0xFFF8E2CF).withValues(alpha: 0.72);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        rect.deflate(size.height * 0.08),
+        Radius.circular(radius * 0.72),
+      ),
+      highlightPaint,
+    );
+
+    final bandPath = Path()
+      ..moveTo(0, 0)
+      ..lineTo(leftBand + notch, 0)
+      ..quadraticBezierTo(
+        leftBand,
+        size.height * 0.5,
+        leftBand + notch,
+        size.height,
+      )
+      ..lineTo(0, size.height)
+      ..close();
+    final bandPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: _bandColors,
+      ).createShader(Rect.fromLTWH(0, 0, leftBand + notch, size.height));
+    canvas.drawPath(bandPath, bandPaint);
+
+    final dividerPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.height * 0.035
+      ..color = const Color(0xFF292828).withValues(alpha: 0.76);
+    canvas.drawPath(
+      Path()
+        ..moveTo(leftBand + notch * 0.75, size.height * 0.08)
+        ..quadraticBezierTo(
+          leftBand,
+          size.height * 0.5,
+          leftBand + notch * 0.75,
+          size.height * 0.92,
+        ),
+      dividerPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionAnswerContainerPainter oldDelegate) {
+    return oldDelegate.isSelected != isSelected ||
+        oldDelegate.feedback != feedback;
+  }
+
+  List<Color> get _bodyColors {
+    return switch (feedback) {
+      _MissionAnswerFeedback.correct => const [
+        Color(0xFFEAF0D3),
+        Color(0xFFD5C9A0),
+        Color(0xFFB59E76),
+      ],
+      _MissionAnswerFeedback.wrong => const [
+        Color(0xFFF4D3C8),
+        Color(0xFFE0B39E),
+        Color(0xFFC48A72),
+      ],
+      _MissionAnswerFeedback.none => const [
+        Color(0xFFF3DCC8),
+        Color(0xFFE2BEA4),
+        Color(0xFFC99573),
+      ],
+    };
+  }
+
+  List<Color> get _bandColors {
+    return switch (feedback) {
+      _MissionAnswerFeedback.correct => const [
+        Color(0xFFC8C94B),
+        Color(0xFFAEB13B),
+        Color(0xFF8F842A),
+      ],
+      _MissionAnswerFeedback.wrong => const [
+        Color(0xFFE89444),
+        Color(0xFFD77832),
+        Color(0xFFB14F22),
+      ],
+      _MissionAnswerFeedback.none => const [
+        Color(0xFFFFC248),
+        Color(0xFFFFA700),
+        Color(0xFFD96F00),
+      ],
+    };
+  }
+
+  Color get _borderColor {
+    return switch (feedback) {
+      _MissionAnswerFeedback.correct => const Color(0xFF27342D),
+      _MissionAnswerFeedback.wrong => const Color(0xFF3F2522),
+      _MissionAnswerFeedback.none => const Color(0xFF232221),
+    };
   }
 }
 
@@ -456,7 +833,7 @@ class _ScannerLabel extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.fact_check_outlined, color: AppColors.teal, size: 12),
+        const Icon(Icons.radar_outlined, color: AppColors.teal, size: 12),
         const SizedBox(width: 7),
         Text(
           text,
@@ -472,233 +849,140 @@ class _ScannerLabel extends StatelessWidget {
   }
 }
 
-class _QuestionTag extends StatelessWidget {
-  final String text;
-
-  const _QuestionTag({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: AppColors.teal.withValues(alpha: 0.12),
-          border: Border.all(color: AppColors.tealDim, width: 0.8),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: AppColors.teal,
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AnswerOptionTile extends StatelessWidget {
-  final String letter;
-  final String text;
-  final bool isSelected;
-  final bool isSubmitted;
-  final bool isCorrect;
-  final VoidCallback? onTap;
-
-  const _AnswerOptionTile({
-    super.key,
-    required this.letter,
-    required this.text,
-    required this.isSelected,
-    required this.isSubmitted,
-    required this.isCorrect,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final showCorrect = isSubmitted && isCorrect;
-    final showWrong = isSubmitted && isSelected && !isCorrect;
-    final borderColor = showCorrect
-        ? AppColors.teal
-        : showWrong
-        ? const Color(0xFFFF7A7A)
-        : isSelected
-        ? AppColors.tealDim
-        : AppColors.borderAlt;
-    final backgroundColor = showCorrect
-        ? AppColors.teal.withValues(alpha: 0.18)
-        : showWrong
-        ? const Color(0xFFFF7A7A).withValues(alpha: 0.12)
-        : isSelected
-        ? AppColors.surfaceAlt.withValues(alpha: 0.88)
-        : const Color(0xFF1B2A36);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 60),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: borderColor, width: 1),
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                border: Border.all(color: borderColor, width: 0.8),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                letter,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  height: 1.25,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
-            if (showCorrect)
-              const Icon(Icons.check, color: AppColors.teal, size: 18)
-            else if (showWrong)
-              const Icon(Icons.close, color: Color(0xFFFF7A7A), size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _AssessmentSummary extends StatelessWidget {
-  final String playerName;
   final int correctCount;
   final int totalQuestions;
+  final int earnedXP;
   final VoidCallback onReturn;
 
   const _AssessmentSummary({
-    required this.playerName,
     required this.correctCount,
     required this.totalQuestions,
+    required this.earnedXP,
     required this.onReturn,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.teal, width: 1),
+      child: Transform.scale(
+        scale: 1.2,
+        child: SingleChildScrollView(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(42, 48, 42, 42),
+            decoration: BoxDecoration(
+              color: const Color(0xFF171717),
+              border: Border.all(color: const Color(0xFFFF6A00), width: 4),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF5A00).withValues(alpha: 0.18),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6A00).withValues(alpha: 0.36),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.local_fire_department_outlined,
+                    color: Color(0xFFFFB000),
+                    size: 30,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.workspace_premium_outlined,
-                  color: AppColors.teal,
-                  size: 30,
+                const SizedBox(height: 16),
+                const Text(
+                  'MISSION 9 COMPLETE',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 9 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
+                const SizedBox(height: 8),
+                const Text(
+                  'VOLCANO MASTER BADGE',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFFFFB000),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'VOLCANO MASTER BADGE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.teal,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryMetric(
+                        label: 'SCORE',
+                        value: '$correctCount/$totalQuestions',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _SummaryMetric(
+                        label: 'EARNED',
+                        value: '$earnedXP XP',
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Congratulations, $playerName! You completed all missions.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                  height: 1.35,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'SCORE',
-                      value: '$correctCount/$totalQuestions',
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: onReturn,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: AppColors.textPrimary,
+                      shadowColor: const Color(0xFFFF5A00),
+                      elevation: 0,
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9E2E0A),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFFF5A00,
+                            ).withValues(alpha: 0.32),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'RETURN TO MENU',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '${AppConstants.missionNineXp} XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onReturn,
-                  child: const Text('RETURN TO MENU'),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -714,32 +998,36 @@ class _SummaryMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
+    return AspectRatio(
+      aspectRatio: 1.85,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+          Image.asset(Assets.rectangleContainer, fit: BoxFit.fill),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Color(0xFFFFB000),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
