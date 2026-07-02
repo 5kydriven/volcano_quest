@@ -168,4 +168,12 @@ class Assets {
   static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
   static const String menuBg = 'assets/menu_screen/menu_bg.jpeg';
   static const String appLogo = 'assets/app_logo.png';
+  static const String containerList = 'assets/leaderboard/container_list.png';
+  static const String header = 'assets/leaderboard/header.png';
+  static const String leaderboardBg = 'assets/leaderboard/leaderboard_bg.png';
+  static const String no1Container = 'assets/leaderboard/no_1_container.png';
+  static const String rankingContainer =
+      'assets/leaderboard/ranking_container.png';
+  static const String stats = 'assets/leaderboard/stats.png';
+  static const String trackContainer = 'assets/leaderboard/track_container.png';
 }

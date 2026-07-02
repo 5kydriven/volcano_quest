@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_screen_background.dart';
 import '../application/leaderboard_controller.dart';
 
 class LeaderboardScreen extends ConsumerWidget {
@@ -17,53 +18,113 @@ class LeaderboardScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-          child: Column(
-            children: [
-              const _LeaderboardTopBar(),
-              const SizedBox(height: 50),
-              const Text(
-                'LAB RANKINGS',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final sidePadding = constraints.maxWidth < 380 ? 12.0 : 18.0;
+
+              return Padding(
+                padding: EdgeInsets.fromLTRB(sidePadding, 10, sidePadding, 8),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Column(
+                      children: [
+                        const _LeaderboardTopBar(),
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const _LeaderboardHeader(),
+                                const SizedBox(height: 14),
+                                _SyncStatusBadge(syncStatus: syncStatus),
+                                const SizedBox(height: 10),
+                                leaderboard.when(
+                                  data: (entries) =>
+                                      _LeaderboardContent(entries: entries),
+                                  loading: () => const _LeaderboardStatus(
+                                    icon: Icons.sync,
+                                    title: 'SYNCING LAB DATA',
+                                    message: 'Preparing scientist rankings...',
+                                  ),
+                                  error: (_, _) => const _LeaderboardStatus(
+                                    icon: Icons.warning_amber_outlined,
+                                    title: 'RANKINGS UNAVAILABLE',
+                                    message:
+                                        'Leaderboard data could not be loaded.',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'LOCAL EXPEDITION STANDINGS',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.teal,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                ),
-              ),
-              const SizedBox(height: 14),
-              _SyncStatusBadge(syncStatus: syncStatus),
-              const SizedBox(height: 34),
-              leaderboard.when(
-                data: (entries) => _LeaderboardContent(entries: entries),
-                loading: () => const _LeaderboardStatus(
-                  icon: Icons.sync,
-                  title: 'SYNCING LAB DATA',
-                  message: 'Preparing scientist rankings...',
-                ),
-                error: (_, _) => const _LeaderboardStatus(
-                  icon: Icons.warning_amber_outlined,
-                  title: 'RANKINGS UNAVAILABLE',
-                  message: 'Leaderboard data could not be loaded.',
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LeaderboardTopBar extends StatelessWidget {
+  const _LeaderboardTopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 12, 4),
+      child: Row(
+        children: [
+          MissionBackButton(
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+                return;
+              }
+              context.go(AppRoutes.menu);
+            },
+          ),
+          const Spacer(),
+          const Expanded(
+            flex: 8,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _LavaHeading('LEADERBOARDS', size: 24),
+            ),
+          ),
+          const Spacer(),
+          _SettingsButton(onPressed: () => context.push(AppRoutes.settings)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardHeader extends StatelessWidget {
+  const _LeaderboardHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Manual crop/size: tune width to resize the exported LAB RANKINGS art.
+        const _LeaderboardCroppedAsset(
+          assetPath: Assets.header,
+          crop: _headerCrop,
+          width: 300,
+        ),
+        const SizedBox(height: 12),
+        _lavaDivider(),
+      ],
     );
   }
 }
@@ -76,60 +137,20 @@ class _SyncStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = switch (syncStatus.state) {
-      LeaderboardSyncStatus.syncing => (
-        Icons.sync,
-        'SYNCING ONLINE DATA',
-        AppColors.teal,
-      ),
-      LeaderboardSyncStatus.synced => (
-        Icons.cloud_done_outlined,
-        'ONLINE DATA SYNCED',
-        AppColors.teal,
-      ),
-      LeaderboardSyncStatus.offline => (
-        Icons.cloud_off_outlined,
-        'OFFLINE CACHE ACTIVE',
-        AppColors.textMuted,
-      ),
-      LeaderboardSyncStatus.error => (
-        Icons.warning_amber_outlined,
-        'SYNC FAILED - SHOWING CACHE',
-        AppColors.textMuted,
-      ),
-      LeaderboardSyncStatus.unavailable => (
-        Icons.storage_outlined,
-        'LOCAL CACHE ACTIVE',
-        AppColors.textMuted,
-      ),
-      LeaderboardSyncStatus.unknown => (
-        Icons.storage_outlined,
-        'LOCAL CACHE ACTIVE',
-        AppColors.textMuted,
-      ),
+      LeaderboardSyncStatus.syncing => 'SYNCING ONLINE DATA',
+      LeaderboardSyncStatus.synced => 'ONLINE DATA SYNCED',
+      LeaderboardSyncStatus.offline => 'OFFLINE CACHE ACTIVE',
+      LeaderboardSyncStatus.error => 'SYNC FAILED - SHOWING CACHE',
+      LeaderboardSyncStatus.unavailable => 'LOCAL CACHE ACTIVE',
+      LeaderboardSyncStatus.unknown => 'LOCAL CACHE ACTIVE',
     };
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderAlt, width: 0.5),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(content.$1, color: content.$3, size: 14),
-          const SizedBox(width: 8),
-          Text(
-            content.$2,
-            style: TextStyle(
-              color: content.$3,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
+    return Center(
+      child: _FramedBadge(
+        assetPath: Assets.stats,
+        crop: _statsCrop,
+        icon: Icons.cloud_done_outlined,
+        label: content,
       ),
     );
   }
@@ -151,11 +172,12 @@ class _LeaderboardContent extends StatelessWidget {
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ScientistCount(totalScientists: entries.length),
-        const SizedBox(height: 24),
+        Center(child: _ScientistCount(totalScientists: entries.length)),
+        const SizedBox(height: 18),
         _Podium(leaders: entries.take(3).toList()),
-        const SizedBox(height: 44),
+        const SizedBox(height: 20),
         _RankingTable(rankings: entries),
       ],
     );
@@ -171,73 +193,11 @@ class _ScientistCount extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = totalScientists == 1 ? 'SCIENTIST' : 'SCIENTISTS';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderAlt, width: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.groups_2_outlined, color: AppColors.teal, size: 15),
-          const SizedBox(width: 8),
-          Text(
-            '$totalScientists $label TRACKED',
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LeaderboardTopBar extends StatelessWidget {
-  const _LeaderboardTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-              return;
-            }
-            context.go(AppRoutes.menu);
-          },
-        ),
-        const Spacer(),
-        const Text(
-          'Leaderboards',
-          style: TextStyle(
-            color: AppColors.teal,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const Spacer(),
-        IconButton(
-          icon: const Icon(
-            Icons.settings_outlined,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
-          onPressed: () => context.push(AppRoutes.settings),
-        ),
-      ],
+    return _FramedBadge(
+      assetPath: Assets.trackContainer,
+      crop: _trackCrop,
+      icon: Icons.groups_2_outlined,
+      label: '$totalScientists $label TRACKED',
     );
   }
 }
@@ -249,149 +209,124 @@ class _Podium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leftScientist = leaders.length > 1 ? leaders[1] : null;
-    final centerScientist = leaders.first;
-    final rightScientist = leaders.length > 2 ? leaders[2] : null;
+    final second = leaders.length > 1 ? leaders[1] : null;
+    final first = leaders.first;
+    final third = leaders.length > 2 ? leaders[2] : null;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(child: _PodiumSlot(scientist: leftScientist)),
-        const SizedBox(width: 10),
-        Expanded(child: _PodiumSlot(scientist: centerScientist)),
-        const SizedBox(width: 10),
-        Expanded(child: _PodiumSlot(scientist: rightScientist)),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final sideWidth = constraints.maxWidth * 0.27;
+        final championWidth = constraints.maxWidth * 0.36;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: second == null
+                    ? const SizedBox.shrink()
+                    : _PodiumCard(width: sideWidth, scientist: second),
+              ),
+            ),
+            _PodiumCard(
+              width: championWidth,
+              scientist: first,
+              isChampion: true,
+            ),
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: third == null
+                    ? const SizedBox.shrink()
+                    : _PodiumCard(width: sideWidth, scientist: third),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-class _PodiumSlot extends StatelessWidget {
-  final LeaderboardEntry? scientist;
-
-  const _PodiumSlot({required this.scientist});
-
-  @override
-  Widget build(BuildContext context) {
-    final scientist = this.scientist;
-    if (scientist == null) {
-      return const SizedBox.shrink();
-    }
-
-    return _PodiumScientist(scientist: scientist);
-  }
-}
-
-class _PodiumScientist extends StatelessWidget {
+class _PodiumCard extends StatelessWidget {
+  final double width;
   final LeaderboardEntry scientist;
+  final bool isChampion;
 
-  const _PodiumScientist({required this.scientist});
+  const _PodiumCard({
+    required this.width,
+    required this.scientist,
+    this.isChampion = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isChampion = scientist.rank == 1;
-    final badgeSize = isChampion ? 74.0 : 56.0;
+    final crop = isChampion ? _championCrop : _podiumCrop;
+    final height = width * crop.height / crop.width;
+    final avatarSize = width * (isChampion ? 0.5 : 0.46);
 
-    return Column(
-      children: [
-        SizedBox(
-          height: isChampion ? 16 : 0,
-          child: isChampion
-              ? const Icon(
-                  Icons.workspace_premium,
-                  color: AppColors.teal,
-                  size: 16,
-                )
-              : null,
-        ),
-        Container(
-          width: badgeSize,
-          height: badgeSize,
-          decoration: BoxDecoration(
-            color: isChampion
-                ? AppColors.teal.withValues(alpha: 0.14)
-                : AppColors.surface,
-            border: Border.all(
-              color: isChampion ? AppColors.teal : AppColors.borderAlt,
-              width: isChampion ? 1.5 : 1,
-            ),
-            borderRadius: BorderRadius.circular(7),
-            boxShadow: isChampion
-                ? [
-                    BoxShadow(
-                      color: AppColors.teal.withValues(alpha: 0.32),
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          _LeaderboardCroppedAsset(
+            assetPath: isChampion
+                ? Assets.no1Container
+                : Assets.rankingContainer,
+            crop: crop,
+            width: width,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(2),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5),
-              child: Image.asset(
-                _avatarAssetPath(scientist.avatarIndex),
-                fit: BoxFit.cover,
+          if (!isChampion)
+            Positioned(
+              top: height * 0.04,
+              child: Text(
+                '${scientist.rank}',
+                style: TextStyle(
+                  color: scientist.rank == 2
+                      ? AppColors.textSecondary
+                      : AppColors.teal,
+                  fontSize: width * 0.18,
+                  fontWeight: FontWeight.w900,
+                  shadows: const [
+                    Shadow(color: Colors.black, offset: Offset(2, 2)),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
-        Transform.translate(
-          offset: const Offset(0, -10),
-          child: Container(
-            width: isChampion ? 30 : 22,
-            height: isChampion ? 30 : 22,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: isChampion ? AppColors.teal : AppColors.borderAlt,
-              shape: BoxShape.circle,
-            ),
-            child: Text(
-              '${scientist.rank}',
-              style: TextStyle(
-                color: isChampion
-                    ? AppColors.background
-                    : AppColors.textPrimary,
-                fontSize: isChampion ? 12 : 10,
-                fontWeight: FontWeight.w700,
-              ),
+          Positioned(
+            top: height * (isChampion ? 0.34 : 0.32),
+            child: _AvatarImage(
+              avatarIndex: scientist.avatarIndex,
+              size: avatarSize,
+              borderRadius: width * 0.08,
             ),
           ),
-        ),
-        Transform.translate(
-          offset: const Offset(0, -6),
-          child: Column(
-            children: [
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
+          Positioned(
+            left: width * 0.12,
+            right: width * 0.12,
+            bottom: height * (isChampion ? 0.19 : 0.18),
+            child: Column(
+              children: [
+                _FittedLabel(
                   scientist.name,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  color: AppColors.textPrimary,
+                  fontSize: isChampion ? 17 : 13,
                 ),
-              ),
-              const SizedBox(height: 3),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
+                SizedBox(height: height * 0.015),
+                _FittedLabel(
                   '${_formatNumber(scientist.totalXP)} XP',
-                  maxLines: 1,
-                  style: const TextStyle(
-                    color: AppColors.teal,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  color: AppColors.teal,
+                  fontSize: isChampion ? 11 : 9,
+                  letterSpacing: 0.6,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -403,38 +338,15 @@ class _RankingTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderAlt, width: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
+    return _LabPanel(
       child: Column(
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(18, 15, 18, 14),
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'SCIENTIST',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ),
-                Text(
-                  'TOTAL XP',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
-                ),
+                Expanded(child: _PanelHeaderLabel('SCIENTIST')),
+                _PanelHeaderLabel('TOTAL XP'),
               ],
             ),
           ),
@@ -453,54 +365,44 @@ class _RankingRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: ranking.isCurrentPlayer
-          ? AppColors.teal.withValues(alpha: 0.09)
-          : Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+      height: 56,
+      decoration: BoxDecoration(
+        color: ranking.isCurrentPlayer
+            ? const Color(0xFF7A2A12).withValues(alpha: 0.72)
+            : Colors.transparent,
+        border: ranking.isCurrentPlayer
+            ? Border.all(color: AppColors.tealDim, width: 0.7)
+            : const Border(
+                top: BorderSide(color: Color(0x443B3028), width: 0.7),
+              ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
         children: [
           SizedBox(
-            width: 20,
+            width: 26,
             child: Text(
               '${ranking.rank}',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: ranking.isCurrentPlayer
                     ? AppColors.teal
-                    : AppColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+                    : AppColors.textSecondary,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                shadows: const [
+                  Shadow(color: Colors.black, offset: Offset(1, 1)),
+                ],
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: ranking.isCurrentPlayer
-                  ? AppColors.teal.withValues(alpha: 0.25)
-                  : AppColors.borderAlt,
-              border: Border.all(
-                color: ranking.isCurrentPlayer
-                    ? AppColors.teal
-                    : AppColors.borderAlt,
-                width: 1,
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(1),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: Image.asset(
-                  _avatarAssetPath(ranking.avatarIndex),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+          const SizedBox(width: 12),
+          _AvatarImage(
+            avatarIndex: ranking.avatarIndex,
+            size: 38,
+            borderRadius: 6,
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               ranking.name,
@@ -508,22 +410,29 @@ class _RankingRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: ranking.isCurrentPlayer
-                    ? AppColors.teal
-                    : AppColors.textPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                shadows: const [
+                  Shadow(color: Colors.black, offset: Offset(1, 1)),
+                ],
               ),
             ),
           ),
           const SizedBox(width: 10),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              _formatNumber(ranking.totalXP),
-              style: const TextStyle(
-                color: AppColors.teal,
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 76),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _formatNumber(ranking.totalXP),
+                style: const TextStyle(
+                  color: AppColors.teal,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  shadows: [Shadow(color: Colors.black, offset: Offset(2, 2))],
+                ),
               ),
             ),
           ),
@@ -546,36 +455,84 @@ class _LeaderboardStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.borderAlt, width: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.teal, size: 28),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
+    return _LabPanel(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.teal, size: 30),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+                shadows: [Shadow(color: Colors.black, offset: Offset(1, 1))],
+              ),
             ),
+            const SizedBox(height: 7),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FramedBadge extends StatelessWidget {
+  final String assetPath;
+  final Rect crop;
+  final IconData icon;
+  final String label;
+
+  const _FramedBadge({
+    required this.assetPath,
+    required this.crop,
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Manual crop/size: edit this widget width or crop below to align art.
+          _LeaderboardCroppedAsset(
+            assetPath: assetPath,
+            crop: crop,
+            width: 220,
           ),
-          const SizedBox(height: 6),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 11,
-              height: 1.4,
+          Padding(
+            padding: const EdgeInsets.only(left: 30, right: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: AppColors.teal, size: 15),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _FittedLabel(
+                    label,
+                    color: AppColors.textPrimary,
+                    fontSize: 11,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -583,6 +540,248 @@ class _LeaderboardStatus extends StatelessWidget {
     );
   }
 }
+
+class _LabPanel extends StatelessWidget {
+  final Widget child;
+
+  const _LabPanel({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 24, 24, 24).withValues(alpha: 0.9),
+        border: Border.all(color: const Color(0xFF8E4526), width: 2),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(color: Color(0x66000000), blurRadius: 10),
+          BoxShadow(color: Color(0x33FF5C00), blurRadius: 5),
+        ],
+      ),
+      child: ClipRRect(borderRadius: BorderRadius.circular(8), child: child),
+    );
+  }
+}
+
+class _SettingsButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _SettingsButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Settings',
+      child: Semantics(
+        button: true,
+        label: 'Settings',
+        child: InkResponse(
+          onTap: onPressed,
+          radius: 28,
+          splashColor: AppColors.teal.withValues(alpha: 0.08),
+          highlightColor: AppColors.teal.withValues(alpha: 0.04),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border.all(color: AppColors.borderAlt, width: 0.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.settings_outlined,
+              color: AppColors.teal,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LavaHeading extends StatelessWidget {
+  final String text;
+  final double size;
+
+  const _LavaHeading(this.text, {required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      style: TextStyle(
+        fontSize: size,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 2,
+        foreground: Paint()
+          ..shader = const LinearGradient(
+            colors: [Color(0xFFFFB13A), Color(0xFFFF6416), Color(0xFFC43110)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(Rect.fromLTWH(0, 0, 420, 90)),
+        shadows: const [
+          Shadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0),
+          Shadow(color: Color(0xFF6C2500), offset: Offset(2, 2)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PanelHeaderLabel extends StatelessWidget {
+  final String text;
+
+  const _PanelHeaderLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.teal,
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.2,
+        shadows: [Shadow(color: Colors.black, offset: Offset(1, 1))],
+      ),
+    );
+  }
+}
+
+class _AvatarImage extends StatelessWidget {
+  final int avatarIndex;
+  final double size;
+  final double borderRadius;
+
+  const _AvatarImage({
+    required this.avatarIndex,
+    required this.size,
+    required this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(1.5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF180D08),
+        border: Border.all(color: AppColors.textSecondary, width: 1),
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: const [BoxShadow(color: Colors.black, blurRadius: 5)],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular((borderRadius - 2).clamp(0, 999)),
+        child: Image.asset(_avatarAssetPath(avatarIndex), fit: BoxFit.cover),
+      ),
+    );
+  }
+}
+
+class _FittedLabel extends StatelessWidget {
+  final String text;
+  final Color color;
+  final double fontSize;
+  final double letterSpacing;
+
+  const _FittedLabel(
+    this.text, {
+    required this.color,
+    required this.fontSize,
+    this.letterSpacing = 0,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: color,
+          fontSize: fontSize,
+          fontWeight: FontWeight.w900,
+          letterSpacing: letterSpacing,
+          shadows: const [Shadow(color: Colors.black, offset: Offset(1, 1))],
+        ),
+      ),
+    );
+  }
+}
+
+class _LeaderboardCroppedAsset extends StatelessWidget {
+  final String assetPath;
+  final Rect crop;
+  final double width;
+
+  const _LeaderboardCroppedAsset({
+    required this.assetPath,
+    required this.crop,
+    required this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = width / crop.width;
+    final height = crop.height * scale;
+
+    return ClipRect(
+      child: SizedBox(
+        width: width,
+        height: height,
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: _leaderboardAssetSize.width * scale,
+          maxWidth: _leaderboardAssetSize.width * scale,
+          minHeight: _leaderboardAssetSize.height * scale,
+          maxHeight: _leaderboardAssetSize.height * scale,
+          child: Transform.translate(
+            offset: Offset(-crop.left * scale, -crop.top * scale),
+            child: Image.asset(
+              assetPath,
+              width: _leaderboardAssetSize.width * scale,
+              height: _leaderboardAssetSize.height * scale,
+              fit: BoxFit.fill,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Widget _lavaDivider() {
+  return Container(
+    height: 2,
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Colors.transparent,
+          Color(0xFF4D2A1B),
+          Color(0xFFFF7A14),
+          Color(0xFF4D2A1B),
+          Colors.transparent,
+        ],
+      ),
+    ),
+  );
+}
+
+const _leaderboardAssetSize = Size(322, 502);
+
+// Manual crop knobs for leaderboard atlas-style PNGs.
+const _headerCrop = Rect.fromLTWH(74, 228, 177, 46);
+const _statsCrop = Rect.fromLTWH(80, 233, 165, 36);
+const _trackCrop = Rect.fromLTWH(77, 233, 168, 36);
+const _championCrop = Rect.fromLTWH(0, 7, 320, 470);
+const _podiumCrop = Rect.fromLTWH(90, 135, 139, 234);
 
 String _avatarAssetPath(int avatarIndex) {
   return Assets
