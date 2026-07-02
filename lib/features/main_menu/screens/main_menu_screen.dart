@@ -795,20 +795,68 @@ class _MissionStartDialog extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  context.push(node.route);
-                },
-                icon: Icon(
-                  node.isReplay
-                      ? Icons.replay_outlined
-                      : Icons.play_arrow_outlined,
-                  size: 18,
+            _MenuLevelImageButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.push(node.route);
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    node.isReplay
+                        ? Icons.replay_outlined
+                        : Icons.play_arrow_outlined,
+                    color: AppColors.textPrimary,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(node.isReplay ? 'REPLAY' : 'START'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuLevelImageButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Widget child;
+
+  const _MenuLevelImageButton({required this.onPressed, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onPressed != null;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Opacity(
+        opacity: isEnabled ? 1 : 0.55,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(Assets.missionOneButtonContainer, fit: BoxFit.fill),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onPressed,
+                child: Center(
+                  child: DefaultTextStyle(
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                    child: child,
+                  ),
                 ),
-                label: Text(node.isReplay ? 'REPLAY' : 'START'),
               ),
             ),
           ],

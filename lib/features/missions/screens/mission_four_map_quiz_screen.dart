@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
@@ -38,8 +39,7 @@ class _MissionFourMapQuizScreenState
       id: AppConstants.missionFourVolcanoIds[0],
       name: 'Mayon Volcano',
       tag: 'ALBAY, LUZON',
-      mapX: 0.57,
-      mapY: 0.31,
+      normalizedPosition: Offset(0.56, 0.30),
       facts: const [
         'Active volcano',
         'Located in Albay, Luzon',
@@ -57,8 +57,7 @@ class _MissionFourMapQuizScreenState
       id: AppConstants.missionFourVolcanoIds[1],
       name: 'Mount Apo',
       tag: 'MINDANAO',
-      mapX: 0.63,
-      mapY: 0.78,
+      normalizedPosition: Offset(0.62, 0.74),
       facts: const [
         'Highest mountain in the Philippines',
         'Located in Mindanao',
@@ -72,8 +71,7 @@ class _MissionFourMapQuizScreenState
       id: AppConstants.missionFourVolcanoIds[2],
       name: 'Mount Makiling',
       tag: 'LAGUNA',
-      mapX: 0.47,
-      mapY: 0.25,
+      normalizedPosition: Offset(0.45, 0.24),
       facts: const ['Inactive volcano', 'Located in Laguna', 'Has hot springs'],
       question: 'Is Mount Makiling active or inactive?',
       options: const ['Active', 'Inactive', 'Extinct'],
@@ -83,8 +81,7 @@ class _MissionFourMapQuizScreenState
       id: AppConstants.missionFourVolcanoIds[3],
       name: 'Taal Volcano',
       tag: 'BATANGAS',
-      mapX: 0.38,
-      mapY: 0.36,
+      normalizedPosition: Offset(0.37, 0.33),
       facts: const [
         'Located in Batangas',
         'One of the most active volcanoes',
@@ -98,8 +95,7 @@ class _MissionFourMapQuizScreenState
       id: AppConstants.missionFourVolcanoIds[4],
       name: 'Mount Pinatubo',
       tag: 'ZAMBALES AREA',
-      mapX: 0.34,
-      mapY: 0.17,
+      normalizedPosition: Offset(0.34, 0.18),
       facts: const [
         'Active stratovolcano',
         'Located in Zambales area',
@@ -320,17 +316,13 @@ class _MissionFourPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
-            minHeight: 3,
+            minHeight: 6,
             backgroundColor: AppColors.surface,
             valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
           ),
@@ -397,11 +389,11 @@ class _VolcanoMapContent extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Expanded(
-          child: _PhilippineMapPlaceholder(
+          child: PhilippinesMap(
             volcanoes: volcanoes,
             answeredIds: answeredIds,
             correctIds: correctIds,
-            onSelect: onSelect,
+            onSelect: (volcano) => onSelect(volcano as _MissionFourVolcano),
           ),
         ),
         const SizedBox(height: 12),
@@ -411,13 +403,18 @@ class _VolcanoMapContent extends StatelessWidget {
   }
 }
 
-class _PhilippineMapPlaceholder extends StatelessWidget {
-  final List<_MissionFourVolcano> volcanoes;
+class PhilippinesMap extends StatelessWidget {
+  final List<Volcano> volcanoes;
   final List<String> answeredIds;
   final List<String> correctIds;
-  final ValueChanged<_MissionFourVolcano> onSelect;
+  final ValueChanged<Volcano> onSelect;
 
-  const _PhilippineMapPlaceholder({
+  static const _mapAspectRatio = 2 / 3;
+  static const _markerWidth = 82.0;
+  static const _markerAnchor = 18.0;
+
+  const PhilippinesMap({
+    super.key,
     required this.volcanoes,
     required this.answeredIds,
     required this.correctIds,
@@ -428,61 +425,85 @@ class _PhilippineMapPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
+        final imageSize = _coverImageSize(constraints);
 
         return Container(
-          width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.92),
             border: Border.all(color: AppColors.borderAlt, width: 1),
             borderRadius: BorderRadius.circular(8),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              Positioned.fill(child: CustomPaint(painter: _MapShapePainter())),
-              const Positioned(
-                left: 14,
-                top: 12,
-                child: Text(
-                  'PHILIPPINE MAP',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: SizedBox(
+                width: imageSize.width,
+                height: imageSize.height,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Image.asset(
+                        Assets.missionFourPhilippinesMap,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                    for (final volcano in volcanoes)
+                      Positioned(
+                        left:
+                            volcano.normalizedPosition.dx * imageSize.width -
+                            _markerWidth / 2,
+                        top:
+                            volcano.normalizedPosition.dy * imageSize.height -
+                            _markerAnchor,
+                        child: VolcanoMarker(
+                          volcano: volcano,
+                          isAnswered: answeredIds.contains(_volcanoId(volcano)),
+                          isCorrect: correctIds.contains(_volcanoId(volcano)),
+                          onTap: answeredIds.contains(_volcanoId(volcano))
+                              ? null
+                              : () => onSelect(volcano),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              for (final volcano in volcanoes)
-                Positioned(
-                  left: (width * volcano.mapX - 28).clamp(6, width - 62),
-                  top: (height * volcano.mapY - 28).clamp(32, height - 70),
-                  child: _VolcanoMarker(
-                    volcano: volcano,
-                    isAnswered: answeredIds.contains(volcano.id),
-                    isCorrect: correctIds.contains(volcano.id),
-                    onTap: answeredIds.contains(volcano.id)
-                        ? null
-                        : () => onSelect(volcano),
-                  ),
-                ),
-            ],
+            ),
           ),
         );
       },
     );
   }
+
+  Size _coverImageSize(BoxConstraints constraints) {
+    final maxWidth = constraints.maxWidth;
+    final maxHeight = constraints.maxHeight;
+    final heightFromWidth = maxWidth / _mapAspectRatio;
+    final widthFromHeight = maxHeight * _mapAspectRatio;
+
+    if (heightFromWidth >= maxHeight) {
+      return Size(maxWidth, heightFromWidth);
+    }
+
+    return Size(widthFromHeight, maxHeight);
+  }
+
+  String _volcanoId(Volcano volcano) {
+    if (volcano is _MissionFourVolcano) {
+      return volcano.id;
+    }
+    return volcano.name;
+  }
 }
 
-class _VolcanoMarker extends StatelessWidget {
-  final _MissionFourVolcano volcano;
+class VolcanoMarker extends StatelessWidget {
+  final Volcano volcano;
   final bool isAnswered;
   final bool isCorrect;
   final VoidCallback? onTap;
 
-  const _VolcanoMarker({
+  const VolcanoMarker({
+    super.key,
     required this.volcano,
     required this.isAnswered,
     required this.isCorrect,
@@ -496,32 +517,22 @@ class _VolcanoMarker extends StatelessWidget {
               ? AppColors.teal
               : const Color(0xFFFFB3B3)
         : const Color(0xFFFFC857);
+    final markerKey = volcano is _MissionFourVolcano
+        ? ValueKey('mission4-volcano-${(volcano as _MissionFourVolcano).id}')
+        : ValueKey('volcano-${volcano.name}');
 
-    return InkWell(
-      key: ValueKey('mission4-volcano-${volcano.id}'),
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        width: 58,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: isAnswered ? 0.14 : 0.18),
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
+    return SizedBox(
+      width: 82,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            key: markerKey,
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              width: 52,
+              height: 36,
               child: Icon(
                 isAnswered
                     ? isCorrect
@@ -529,24 +540,38 @@ class _VolcanoMarker extends StatelessWidget {
                           : Icons.cancel_outlined
                     : Icons.terrain_outlined,
                 color: color,
-                size: 21,
+                size: 30,
+                shadows: [
+                  Shadow(
+                    color: AppColors.background.withValues(alpha: 0.95),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              volcano.name.replaceFirst(' Volcano', ''),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 8,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0,
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            volcano.name.replaceFirst(' Volcano', ''),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+              shadows: [
+                Shadow(
+                  color: AppColors.background,
+                  blurRadius: 6,
+                  offset: Offset(0, 1),
+                ),
+                Shadow(color: AppColors.background, blurRadius: 10),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1071,86 +1096,16 @@ class _MissionFourGridPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _MapShapePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final islandPaint = Paint()
-      ..color = AppColors.surfaceAlt.withValues(alpha: 0.5)
-      ..style = PaintingStyle.fill;
-    final borderPaint = Paint()
-      ..color = AppColors.tealDim.withValues(alpha: 0.45)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+class Volcano {
+  final String name;
+  final Offset normalizedPosition;
 
-    final luzon = Path()
-      ..moveTo(size.width * 0.36, size.height * 0.08)
-      ..quadraticBezierTo(
-        size.width * 0.57,
-        size.height * 0.08,
-        size.width * 0.55,
-        size.height * 0.28,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.50,
-        size.height * 0.44,
-        size.width * 0.37,
-        size.height * 0.39,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.24,
-        size.height * 0.27,
-        size.width * 0.36,
-        size.height * 0.08,
-      );
-    final visayas = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            size.width * 0.35,
-            size.height * 0.45,
-            size.width * 0.24,
-            size.height * 0.13,
-          ),
-          const Radius.circular(24),
-        ),
-      );
-    final mindanao = Path()
-      ..moveTo(size.width * 0.49, size.height * 0.66)
-      ..quadraticBezierTo(
-        size.width * 0.78,
-        size.height * 0.61,
-        size.width * 0.75,
-        size.height * 0.82,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.59,
-        size.height * 0.94,
-        size.width * 0.43,
-        size.height * 0.85,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.34,
-        size.height * 0.73,
-        size.width * 0.49,
-        size.height * 0.66,
-      );
-
-    for (final path in [luzon, visayas, mindanao]) {
-      canvas.drawPath(path, islandPaint);
-      canvas.drawPath(path, borderPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  const Volcano({required this.name, required this.normalizedPosition});
 }
 
-class _MissionFourVolcano {
+class _MissionFourVolcano extends Volcano {
   final String id;
-  final String name;
   final String tag;
-  final double mapX;
-  final double mapY;
   final List<String> facts;
   final String question;
   final List<String> options;
@@ -1158,10 +1113,9 @@ class _MissionFourVolcano {
 
   const _MissionFourVolcano({
     required this.id,
-    required this.name,
+    required super.name,
     required this.tag,
-    required this.mapX,
-    required this.mapY,
+    required super.normalizedPosition,
     required this.facts,
     required this.question,
     required this.options,

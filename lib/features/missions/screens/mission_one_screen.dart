@@ -209,41 +209,59 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: MissionScreenBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
-            child: Column(
-              children: [
-                _ResearchTopBar(
-                  xp: player.totalXP,
-                  avatarIndex: player.avatarIndex,
-                  onBack: () {
-                    if (context.canPop()) {
-                      context.pop();
-                      return;
-                    }
-                    context.go(AppRoutes.menu);
-                  },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final layout = _MissionOneLayout.fromWidth(constraints.maxWidth);
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  layout.horizontalPadding,
+                  layout.topPadding,
+                  layout.horizontalPadding,
+                  layout.bottomPadding,
                 ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: _ResearchBasePanel(
-                    missionId: widget.levelId,
-                    progress: initializedCores.length,
-                    total: _missionOrbs.length,
-                    isComplete: isComplete,
-                    animation: _floatController,
-                    cores: _cores,
-                    missionOrbs: _missionOrbs,
-                    initializedCores: initializedCores,
-                    onCoreTap: (index) {
-                      _showMissionOrbSheet(_missionOrbs[index]);
-                    },
-                  ),
+                child: Column(
+                  children: [
+                    _ResearchTopBar(
+                      xp: player.totalXP,
+                      avatarIndex: player.avatarIndex,
+                      onBack: () {
+                        if (context.canPop()) {
+                          context.pop();
+                          return;
+                        }
+                        context.go(AppRoutes.menu);
+                      },
+                    ),
+                    SizedBox(height: layout.headerGap),
+                    Expanded(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: layout.panelMaxWidth,
+                          ),
+                          child: _ResearchBasePanel(
+                            missionId: widget.levelId,
+                            progress: initializedCores.length,
+                            total: _missionOrbs.length,
+                            isComplete: isComplete,
+                            animation: _floatController,
+                            cores: _cores,
+                            missionOrbs: _missionOrbs,
+                            initializedCores: initializedCores,
+                            onCoreTap: (index) {
+                              _showMissionOrbSheet(_missionOrbs[index]);
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -310,16 +328,188 @@ class _ResearchTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MissionResearchTopBar(
-      title: 'RESEARCH BASE',
-      xp: xp,
-      avatarIndex: avatarIndex,
-      onBack: onBack,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 380;
+
+        return Row(
+          children: [
+            MissionBackButton(onPressed: onBack),
+            SizedBox(width: compact ? 8 : 12),
+            Expanded(
+              child: Text(
+                'RESEARCH BASE',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: compact ? 17 : 24,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: compact ? 1.1 : 2,
+                  foreground: Paint()
+                    ..shader = const LinearGradient(
+                      colors: [Color(0xFFFFA726), Color(0xFFE65100)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ).createShader(Rect.fromLTWH(0, 0, 300, 70)),
+                  shadows: const [
+                    Shadow(
+                      color: Colors.black,
+                      offset: Offset(3, 3),
+                      blurRadius: 0,
+                    ),
+                    Shadow(
+                      color: Color(0xFF5D2A00),
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: compact ? 8 : 12),
+            _MissionOneStatusBadge(
+              xp: xp,
+              avatarIndex: avatarIndex,
+              compact: compact,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MissionOneStatusBadge extends StatelessWidget {
+  final int xp;
+  final int avatarIndex;
+  final bool compact;
+
+  const _MissionOneStatusBadge({
+    required this.xp,
+    required this.avatarIndex,
+    required this.compact,
+  });
+
+  static const _avatarIcons = [
+    Icons.person_outline,
+    Icons.biotech_outlined,
+    Icons.rocket_launch_outlined,
+    Icons.hub_outlined,
+    Icons.science_outlined,
+    Icons.public_outlined,
+    Icons.travel_explore_outlined,
+    Icons.psychology_outlined,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final iconSize = compact ? 20.0 : 24.0;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 10,
+        vertical: compact ? 5 : 6,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2A1B14), Color(0xFF120C09)],
+        ),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFB85A12), width: 1.5),
+        boxShadow: const [BoxShadow(color: Color(0x33FF7A00), blurRadius: 6)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            compact ? '$xp' : '$xp XP',
+            style: TextStyle(
+              color: const Color(0xFFFF7A00),
+              fontSize: compact ? 9 : 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
+              shadows: const [
+                Shadow(color: Colors.black, offset: Offset(1, 1)),
+              ],
+            ),
+          ),
+          SizedBox(width: compact ? 6 : 8),
+          Container(
+            width: iconSize,
+            height: iconSize,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF2A1B14), Color(0xFF120C09)],
+              ),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFFB85A12), width: 1.5),
+            ),
+            child: Icon(
+              _avatarIcons[avatarIndex.clamp(0, _avatarIcons.length - 1)],
+              color: const Color(0xFFFF7A00),
+              size: compact ? 12 : 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionOneLayout {
+  final double horizontalPadding;
+  final double topPadding;
+  final double bottomPadding;
+  final double headerGap;
+  final double panelMaxWidth;
+
+  const _MissionOneLayout({
+    required this.horizontalPadding,
+    required this.topPadding,
+    required this.bottomPadding,
+    required this.headerGap,
+    required this.panelMaxWidth,
+  });
+
+  factory _MissionOneLayout.fromWidth(double width) {
+    if (width >= 720) {
+      return const _MissionOneLayout(
+        horizontalPadding: 32,
+        topPadding: 14,
+        bottomPadding: 24,
+        headerGap: 12,
+        panelMaxWidth: 760,
+      );
+    }
+
+    if (width < 380) {
+      return const _MissionOneLayout(
+        horizontalPadding: 12,
+        topPadding: 8,
+        bottomPadding: 12,
+        headerGap: 7,
+        panelMaxWidth: double.infinity,
+      );
+    }
+
+    return const _MissionOneLayout(
+      horizontalPadding: 20,
+      topPadding: 10,
+      bottomPadding: 15,
+      headerGap: 8,
+      panelMaxWidth: double.infinity,
     );
   }
 }
 
 class _ResearchBasePanel extends StatelessWidget {
+  static const _labBackgroundAspectRatio = 1058 / 1487;
+
   final int missionId;
   final int progress;
   final int total;
@@ -344,62 +534,104 @@ class _ResearchBasePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(Assets.missionOneLabBackground),
-          fit: BoxFit.cover,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compactHeight = constraints.maxHeight < 430;
+        final edgeInset = compactHeight ? 10.0 : 16.0;
+
+        return Center(
+          child: AspectRatio(
+            aspectRatio: _labBackgroundAspectRatio,
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(Assets.missionOneLabBackground),
+                  fit: BoxFit.fill,
+                ),
+              ),
+              child: LayoutBuilder(
+                builder: (context, panelConstraints) {
+                  return Stack(
+                    children: [
+                      const Positioned.fill(child: _LabGrid()),
+                      Positioned(
+                        top: compactHeight ? 8 : 24,
+                        left: 10,
+                        right: 10,
+                        child: _MissionPrompt(
+                          missionId: missionId,
+                          progress: progress,
+                          total: total,
+                          isComplete: isComplete,
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: AnimatedBuilder(
+                          animation: animation,
+                          builder: (context, _) {
+                            return Stack(
+                              children: [
+                                for (
+                                  var index = 0;
+                                  index < cores.length;
+                                  index++
+                                )
+                                  _FixedMagmaCore(
+                                    data: cores[index],
+                                    orb: missionOrbs[index],
+                                    size: panelConstraints.biggest,
+                                    floatProgress: animation.value,
+                                    isInitialized: initializedCores.contains(
+                                      missionOrbs[index].id,
+                                    ),
+                                    onTap: () => onCoreTap(index),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      if (isComplete)
+                        Positioned(
+                          left: edgeInset,
+                          right: edgeInset,
+                          bottom: edgeInset,
+                          child: _ProceedButton(),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MissionOneImageSheetFrame extends StatelessWidget {
+  final Widget child;
+
+  const _MissionOneImageSheetFrame({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(Assets.missionOneVolcanoTypeContainer),
+              fit: BoxFit.fill,
+            ),
+          ),
+          child: child,
         ),
-      ),
-      child: Stack(
-        children: [
-          const Positioned.fill(child: _LabGrid()),
-          Positioned(
-            top: 24,
-            left: 10,
-            right: 10,
-            child: _MissionPrompt(
-              missionId: missionId,
-              progress: progress,
-              total: total,
-              isComplete: isComplete,
-            ),
-          ),
-          Positioned.fill(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return AnimatedBuilder(
-                  animation: animation,
-                  builder: (context, _) {
-                    return Stack(
-                      children: [
-                        for (var index = 0; index < cores.length; index++)
-                          _FixedMagmaCore(
-                            data: cores[index],
-                            orb: missionOrbs[index],
-                            size: constraints.biggest,
-                            floatProgress: animation.value,
-                            isInitialized: initializedCores.contains(
-                              missionOrbs[index].id,
-                            ),
-                            onTap: () => onCoreTap(index),
-                          ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          if (isComplete)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: _ProceedButton(),
-            ),
-        ],
       ),
     );
   }
@@ -485,7 +717,8 @@ class _FixedMagmaCore extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coreSize = (size.width * data.sizeFactor)
+    final responsiveBasis = math.min(size.width, size.height);
+    final coreSize = (responsiveBasis * data.sizeFactor)
         .clamp(64.0, 104.0)
         .toDouble();
     final x = (size.width * data.x) - (coreSize / 2);
@@ -588,29 +821,36 @@ class _MissionOrbSheet extends StatelessWidget {
         minChildSize: 0.45,
         maxChildSize: 0.9,
         builder: (context, scrollController) {
-          return Container(
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(Assets.missionOneVolcanoTypeContainer),
-                fit: BoxFit.fill,
-              ),
-            ),
-            child: ListView(
-              controller: scrollController,
-              padding: const EdgeInsets.fromLTRB(38, 42, 38, 34),
-              children: [
-                _MissionOneOrbHeader(orb: orb),
-                const SizedBox(height: 26),
-                for (final fact in orb.facts) _MissionOneOrbFactRow(text: fact),
-                const SizedBox(height: 18),
-                _CompleteOrbButton(
-                  isCompleted: isCompleted,
-                  isReplay: isReplay,
-                  onComplete: onComplete,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontalPadding = constraints.maxWidth < 380
+                  ? 24.0
+                  : 38.0;
+
+              return _MissionOneImageSheetFrame(
+                child: ListView(
+                  controller: scrollController,
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    42,
+                    horizontalPadding,
+                    34,
+                  ),
+                  children: [
+                    _MissionOneOrbHeader(orb: orb),
+                    const SizedBox(height: 26),
+                    for (final fact in orb.facts)
+                      _MissionOneOrbFactRow(text: fact),
+                    const SizedBox(height: 18),
+                    _CompleteOrbButton(
+                      isCompleted: isCompleted,
+                      isReplay: isReplay,
+                      onComplete: onComplete,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
