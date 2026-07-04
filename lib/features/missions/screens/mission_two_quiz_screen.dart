@@ -6,8 +6,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_answer_container.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -678,172 +678,21 @@ class _QuizSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Transform.scale(
-        scale: 1.2,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(42, 48, 42, 42),
-          decoration: BoxDecoration(
-            color: const Color(0xFF171717),
-            border: Border.all(color: const Color(0xFFFF6A00), width: 4),
-            borderRadius: BorderRadius.circular(8),
+      child: MissionCompletePanel(
+        title: 'MISSION 2 COMPLETE!',
+        badgeName: 'Lava Investigator Badge',
+        badgeImagePath: Assets.badgeLavaInvestigator,
+        fallbackIcon: Icons.local_fire_department_outlined,
+        message:
+            'Congratulations, scientist. You earned the Lava Investigator Badge.',
+        metrics: [
+          MissionCompleteMetric(
+            label: 'SCORE',
+            value: '$correctCount/$totalQuestions',
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF5A00).withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF6A00).withValues(alpha: 0.36),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
-                child: const BadgeAwardImage(
-                  imagePath: Assets.badgeLavaInvestigator,
-                  fallbackIcon: Icons.local_fire_department_outlined,
-                  fallbackColor: Color(0xFFFFB000),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 2 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'LAVA INVESTIGATOR BADGE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFFFFB000),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'SCORE',
-                      value: '$correctCount/$totalQuestions',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: AppColors.textPrimary,
-                    shadowColor: const Color(0xFFFF5A00),
-                    elevation: 0,
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF9E2E0A),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(
-                            0xFFFF5A00,
-                          ).withValues(alpha: 0.32),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'RETURN TO MENU',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.85,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(Assets.rectangleContainer, fit: BoxFit.fill),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFFFFB000),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
         ],
+        onProceed: onProceed,
       ),
     );
   }

@@ -6,7 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/badge_award_image.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -325,10 +325,7 @@ class _WarningSignCard extends StatelessWidget {
   final _WarningSign sign;
   final bool showCorrectAlarm;
 
-  const _WarningSignCard({
-    required this.sign,
-    required this.showCorrectAlarm,
-  });
+  const _WarningSignCard({required this.sign, required this.showCorrectAlarm});
 
   @override
   Widget build(BuildContext context) {
@@ -353,10 +350,7 @@ class _WarningSignCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _WarningImage(
-                    sign: sign,
-                    showAlarm: showCorrectAlarm,
-                  ),
+                  _WarningImage(sign: sign, showAlarm: showCorrectAlarm),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -428,10 +422,7 @@ class _WarningImage extends StatelessWidget {
   final _WarningSign sign;
   final bool showAlarm;
 
-  const _WarningImage({
-    required this.sign,
-    required this.showAlarm,
-  });
+  const _WarningImage({required this.sign, required this.showAlarm});
 
   @override
   Widget build(BuildContext context) {
@@ -829,9 +820,7 @@ class _AnswerButton extends StatelessWidget {
                   top: 4,
                   right: 6,
                   child: Container(
-                    key: ValueKey(
-                      'mission8-${answer.id}-selected-indicator',
-                    ),
+                    key: ValueKey('mission8-${answer.id}-selected-indicator'),
                     width: 21,
                     height: 21,
                     decoration: BoxDecoration(
@@ -843,9 +832,7 @@ class _AnswerButton extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(
-                            0xFF42D77D,
-                          ).withValues(alpha: 0.7),
+                          color: const Color(0xFF42D77D).withValues(alpha: 0.7),
                           blurRadius: 8,
                         ),
                       ],
@@ -884,88 +871,26 @@ class _MissionEightSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.teal, width: 1),
-                ),
-                child: isPerfect
-                    ? const BadgeAwardImage(
-                        imagePath: Assets.badgeEruptionWarningSpecialist,
-                        fallbackIcon: Icons.workspace_premium_outlined,
-                      )
-                    : const Icon(
-                        Icons.fact_check_outlined,
-                        color: AppColors.teal,
-                        size: 28,
-                      ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 8 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isPerfect
-                    ? 'ERUPTION WARNING SPECIALIST BADGE'
-                    : 'WARNING LAB REVIEW COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isPerfect ? AppColors.teal : const Color(0xFFFFC857),
-                  fontSize: isPerfect ? 10 : 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'SCORE',
-                      value: '$correctCount/$totalSigns',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
-                ),
-              ),
-            ],
-          ),
+        child: MissionCompletePanel(
+          title: 'MISSION 8 COMPLETE!',
+          badgeName: isPerfect
+              ? 'Eruption Warning Specialist Badge'
+              : 'Warning Lab Review Complete',
+          badgeImagePath: isPerfect
+              ? Assets.badgeEruptionWarningSpecialist
+              : null,
+          fallbackIcon: Icons.fact_check_outlined,
+          message: isPerfect
+              ? 'Congratulations, scientist. You earned the Eruption Warning Specialist Badge.'
+              : 'Warning lab review complete. No special badge earned this run.',
+          metrics: [
+            MissionCompleteMetric(
+              label: 'SCORE',
+              value: '$correctCount/$totalSigns',
+            ),
+            MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
+          ],
+          onProceed: onProceed,
         ),
       ),
     );
@@ -1111,48 +1036,6 @@ class _TelemetryCell extends StatelessWidget {
               fontSize: 8,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
             ),
           ),
         ],

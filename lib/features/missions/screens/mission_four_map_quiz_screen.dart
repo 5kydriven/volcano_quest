@@ -6,21 +6,18 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_answer_container.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
 class _MissionFourPalette {
   static const obsidian = Color(0xFF120D0A);
   static const basalt = Color(0xFF211712);
-  static const basaltAlt = Color(0xFF332016);
-  static const ember = Color(0xFFE45B19);
   static const magma = Color(0xFFFF8A24);
   static const sulfur = Color(0xFFFFC857);
   static const parchment = Color(0xFFFFE8C2);
   static const ash = Color(0xFFD8B493);
-  static const smoke = Color(0xFF8D6D56);
   static const fault = Color(0xFF7B3B1E);
   static const danger = Color(0xFFFF7A7A);
 }
@@ -1029,117 +1026,27 @@ class _MissionFourSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: _MissionFourPalette.basalt.withValues(alpha: 0.96),
-            border: Border.all(color: _MissionFourPalette.ember, width: 1.4),
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x771A0802),
-                offset: Offset(0, 10),
-                blurRadius: 18,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: isPerfect ? 112 : 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: _MissionFourPalette.ember.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(isPerfect ? 27 : 54),
-                  border: Border.all(
-                    color: _MissionFourPalette.magma,
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const BadgeAwardImage(
-                      imagePath: Assets.badgePhilippineVolcanoExplorer,
-                      fallbackIcon: Icons.public_outlined,
-                      fallbackColor: _MissionFourPalette.sulfur,
-                    ),
-                    if (isPerfect) ...[
-                      const SizedBox(width: 8),
-                      const BadgeAwardImage(
-                        imagePath: Assets.badgeVolcanoExplorerChampion,
-                        fallbackIcon: Icons.workspace_premium_outlined,
-                        fallbackColor: Color(0xFFFFC857),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 4 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _MissionFourPalette.parchment,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'PHILIPPINE VOLCANO EXPLORER',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _MissionFourPalette.sulfur,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              if (isPerfect) ...[
-                const SizedBox(height: 6),
-                const Text(
-                  'VOLCANO EXPLORER CHAMPION',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFFFC857),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'SCORE',
-                      value: '$correctCount/$totalVolcanoes',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
-                ),
-              ),
-            ],
-          ),
+        child: MissionCompletePanel(
+          title: 'MISSION 4 COMPLETE!',
+          badgeName: isPerfect
+              ? 'Philippine Volcano Explorer + Champion'
+              : 'Philippine Volcano Explorer Badge',
+          badgeImagePath: Assets.badgePhilippineVolcanoExplorer,
+          secondaryBadgeImagePath: isPerfect
+              ? Assets.badgeVolcanoExplorerChampion
+              : null,
+          fallbackIcon: Icons.public_outlined,
+          message: isPerfect
+              ? 'Congratulations, scientist. You earned the Philippine Volcano Explorer Badge and Volcano Explorer Champion Badge.'
+              : 'Congratulations, scientist. You earned the Philippine Volcano Explorer Badge.',
+          metrics: [
+            MissionCompleteMetric(
+              label: 'SCORE',
+              value: '$correctCount/$totalVolcanoes',
+            ),
+            MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
+          ],
+          onProceed: onProceed,
         ),
       ),
     );
@@ -1203,47 +1110,6 @@ class _FactBullet extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: _MissionFourPalette.obsidian,
-        border: Border.all(color: _MissionFourPalette.fault, width: 0.8),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: _MissionFourPalette.parchment,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: _MissionFourPalette.sulfur,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

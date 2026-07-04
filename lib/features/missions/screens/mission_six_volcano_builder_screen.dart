@@ -6,8 +6,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_answer_container.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -733,77 +733,18 @@ class _BuilderSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.teal, width: 1),
-                ),
-                child: const BadgeAwardImage(
-                  imagePath: Assets.badgeVolcanoArchitect,
-                  fallbackIcon: Icons.construction_outlined,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 6 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'VOLCANO ARCHITECT BADGE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.teal,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  const Expanded(
-                    child: _SummaryMetric(label: 'TILES', value: '5/5'),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
-                ),
-              ),
-            ],
-          ),
+        child: MissionCompletePanel(
+          title: 'MISSION 6 COMPLETE!',
+          badgeName: 'Volcano Architect Badge',
+          badgeImagePath: Assets.badgeVolcanoArchitect,
+          fallbackIcon: Icons.construction_outlined,
+          message:
+              'Congratulations, scientist. You earned the Volcano Architect Badge.',
+          metrics: [
+            const MissionCompleteMetric(label: 'TILES', value: '5/5'),
+            MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
+          ],
+          onProceed: onProceed,
         ),
       ),
     );
@@ -913,48 +854,6 @@ class _ScannerLabel extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
