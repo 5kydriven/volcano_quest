@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_answer_container.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -919,61 +918,30 @@ class _AnswerOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final containerIndex = optionIndex
-        .clamp(0, Assets.missionTwoAnswerContainers.length - 1)
-        .toInt();
-    final containerAsset = Assets.missionTwoAnswerContainers[containerIndex];
-    final imageOffsetY = switch (containerIndex) {
-      0 => -12.0,
-      3 => 7.0,
-      _ => 0.0,
-    };
-
     final showCorrect = isSubmitted && isCorrect;
     final showWrong = isSubmitted && isSelected && !isCorrect;
-    final overlayColor = showCorrect
-        ? _MissionFourPalette.sulfur.withValues(alpha: 0.18)
-        : showWrong
-        ? _MissionFourPalette.danger.withValues(alpha: 0.14)
-        : Colors.transparent;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.zero,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
         height: 50,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-        clipBehavior: Clip.antiAlias,
+        clipBehavior: Clip.none,
         child: Stack(
           fit: StackFit.expand,
+          clipBehavior: Clip.none,
           children: [
-            if (isSelected && !isSubmitted)
-              Transform.translate(
-                offset: Offset(0, imageOffsetY),
-                child: Transform.scale(
-                  scaleY: 6,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 4.2, sigmaY: 4.2),
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        const Color(0xFFFF5A00).withValues(alpha: 1),
-                        BlendMode.srcATop,
-                      ),
-                      child: Image.asset(containerAsset, fit: BoxFit.fill),
-                    ),
-                  ),
-                ),
-              ),
-            Transform.translate(
-              offset: Offset(0, imageOffsetY),
-              child: Transform.scale(
-                scaleY: 6,
-                child: Image.asset(containerAsset, fit: BoxFit.fill),
-              ),
+            MissionAnswerContainer(
+              letter: String.fromCharCode(65 + optionIndex),
+              isSelected: isSelected && !isSubmitted,
+              feedback: showCorrect
+                  ? MissionAnswerFeedback.correct
+                  : showWrong
+                  ? MissionAnswerFeedback.wrong
+                  : MissionAnswerFeedback.none,
             ),
-            ColoredBox(color: overlayColor),
             Positioned(
               left: 92,
               right: showCorrect || showWrong ? 48 : 22,

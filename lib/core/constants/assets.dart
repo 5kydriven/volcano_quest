@@ -129,12 +129,6 @@ class Assets {
       'assets/missions/mission_eight/magma_classification.png';
   static const String missionEightWhyLiveNearVolcanoes =
       'assets/missions/mission_eight/why_live_near_volcanoes.png';
-  static const missionTwoAnswerContainers = [
-    'assets/missions/ABCD_container/A_container.png',
-    'assets/missions/ABCD_container/B_container.png',
-    'assets/missions/ABCD_container/C_container.png',
-    'assets/missions/ABCD_container/D_container.png',
-  ];
   static const String missionSubmitAnswerButton =
       'assets/missions/buttons/submit_answer_button.png';
   static const String missionNextQuestionButton =

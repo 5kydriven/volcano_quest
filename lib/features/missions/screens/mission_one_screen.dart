@@ -552,11 +552,15 @@ class _ResearchBasePanel extends StatelessWidget {
               ),
               child: LayoutBuilder(
                 builder: (context, panelConstraints) {
+                  final promptTop = (panelConstraints.maxHeight * 0.035)
+                      .clamp(12.0, 20.0)
+                      .toDouble();
+
                   return Stack(
                     children: [
                       const Positioned.fill(child: _LabGrid()),
                       Positioned(
-                        top: compactHeight ? 8 : 24,
+                        top: promptTop,
                         left: 10,
                         right: 10,
                         child: _MissionPrompt(

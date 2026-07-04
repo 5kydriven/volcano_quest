@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_answer_container.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -320,11 +319,7 @@ class _BuilderContent extends StatelessWidget {
               const SizedBox(height: 14),
               for (var index = 0; index < answerOptions.length; index++) ...[
                 _BuilderAnswerTile(
-                  assetPath: Assets.missionTwoAnswerContainers[index],
-                  imageOffsetY: switch (index) {
-                    0 => -9.5,
-                    _ => 0.0,
-                  },
+                  optionIndex: index,
                   text: answerOptions[index],
                   isSelected: selectedOptionIndex == index,
                   onTap: onSelect == null ? null : () => onSelect!(index),
@@ -651,15 +646,13 @@ class _CrackedTilePainter extends CustomPainter {
 }
 
 class _BuilderAnswerTile extends StatelessWidget {
-  final String assetPath;
-  final double imageOffsetY;
+  final int optionIndex;
   final String text;
   final bool isSelected;
   final VoidCallback? onTap;
 
   const _BuilderAnswerTile({
-    required this.assetPath,
-    required this.imageOffsetY,
+    required this.optionIndex,
     required this.text,
     required this.isSelected,
     required this.onTap,
@@ -678,30 +671,11 @@ class _BuilderAnswerTile extends StatelessWidget {
         clipBehavior: Clip.none,
         child: Stack(
           fit: StackFit.expand,
+          clipBehavior: Clip.none,
           children: [
-            if (isSelected)
-              Transform.translate(
-                offset: Offset(0, imageOffsetY),
-                child: Transform.scale(
-                  scaleY: 6,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        const Color(0xFFFF5A00).withValues(alpha: 0.38),
-                        BlendMode.srcATop,
-                      ),
-                      child: Image.asset(assetPath, fit: BoxFit.fill),
-                    ),
-                  ),
-                ),
-              ),
-            Transform.translate(
-              offset: Offset(0, imageOffsetY),
-              child: Transform.scale(
-                scaleY: 6,
-                child: Image.asset(assetPath, fit: BoxFit.fill),
-              ),
+            MissionAnswerContainer(
+              letter: String.fromCharCode(65 + optionIndex),
+              isSelected: isSelected,
             ),
             Positioned(
               left: 92,
