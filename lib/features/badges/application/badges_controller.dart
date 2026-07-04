@@ -1,15 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/assets.dart';
 import '../../player/application/player_controller.dart';
 
 class BadgeCollectionItem {
   final String name;
-  final String avatar;
+  final String imagePath;
   final int exp;
 
   const BadgeCollectionItem({
     required this.name,
-    required this.avatar,
+    required this.imagePath,
     required this.exp,
   });
 }
@@ -22,61 +23,61 @@ final badgesProvider = Provider<List<BadgeCollectionItem>>((ref) {
       if (badge == PlayerNotifier.volcanoExplorerBadge)
         const BadgeCollectionItem(
           name: 'Volcano Explorer',
-          avatar: 'volcano',
+          imagePath: Assets.badgeVolcanoExplorer,
           exp: 30,
         ),
       if (badge == PlayerNotifier.lavaInvestigatorBadge)
         const BadgeCollectionItem(
           name: 'Lava Investigator',
-          avatar: 'magma',
+          imagePath: Assets.badgeLavaInvestigator,
           exp: 75,
         ),
       if (badge == PlayerNotifier.volcanoVocabularyBadge)
         const BadgeCollectionItem(
           name: 'Volcano Vocabulary',
-          avatar: 'vocabulary',
+          imagePath: Assets.badgeVolcanoVocabulary,
           exp: 80,
         ),
       if (badge == PlayerNotifier.philippineVolcanoExplorerBadge)
         const BadgeCollectionItem(
           name: 'Philippine Volcano Explorer',
-          avatar: 'map',
+          imagePath: Assets.badgePhilippineVolcanoExplorer,
           exp: 150,
         ),
       if (badge == PlayerNotifier.volcanoExplorerChampionBadge)
         const BadgeCollectionItem(
           name: 'Volcano Explorer Champion',
-          avatar: 'champion',
+          imagePath: Assets.badgeVolcanoExplorerChampion,
           exp: 150,
         ),
       if (badge == PlayerNotifier.magmaAnalystBadge)
         const BadgeCollectionItem(
           name: 'Magma Analyst',
-          avatar: 'magma_analyst',
+          imagePath: Assets.badgeMagmaAnalyst,
           exp: 40,
         ),
       if (badge == PlayerNotifier.volcanoArchitectBadge)
         const BadgeCollectionItem(
           name: 'Volcano Architect',
-          avatar: 'volcano_architect',
+          imagePath: Assets.badgeVolcanoArchitect,
           exp: 250,
         ),
       if (badge == PlayerNotifier.lavaBridgeChampionBadge)
         const BadgeCollectionItem(
           name: 'Lava Bridge Champion',
-          avatar: 'lava_bridge',
+          imagePath: Assets.badgeLavaBridgeChampion,
           exp: 60,
         ),
       if (badge == PlayerNotifier.eruptionWarningSpecialistBadge)
         const BadgeCollectionItem(
           name: 'Eruption Warning Specialist',
-          avatar: 'eruption_warning',
+          imagePath: Assets.badgeEruptionWarningSpecialist,
           exp: 70,
         ),
       if (badge == PlayerNotifier.volcanoMasterBadge)
         const BadgeCollectionItem(
           name: 'Volcano Master',
-          avatar: 'volcano_master',
+          imagePath: Assets.badgeVolcanoMaster,
           exp: 100,
         ),
     ],

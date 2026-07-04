@@ -166,27 +166,25 @@ class _BadgeTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.teal, width: 0.8),
-            ),
-            child: _BadgeAvatar(avatar: badge.avatar),
+          SizedBox(
+            width: 72,
+            height: 72,
+            child: _BadgeAvatar(imagePath: badge.imagePath),
           ),
-          const SizedBox(height: 14),
-          FittedBox(
-            fit: BoxFit.scaleDown,
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 28,
             child: Text(
               badge.name.toUpperCase(),
-              maxLines: 1,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.9,
+                height: 1.25,
               ),
             ),
           ),
@@ -207,25 +205,23 @@ class _BadgeTile extends StatelessWidget {
 }
 
 class _BadgeAvatar extends StatelessWidget {
-  final String avatar;
+  final String imagePath;
 
-  const _BadgeAvatar({required this.avatar});
+  const _BadgeAvatar({required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (avatar) {
-      'volcano' => Icons.terrain_outlined,
-      'magma' => Icons.local_fire_department_outlined,
-      'vocabulary' => Icons.abc_outlined,
-      'map' => Icons.public_outlined,
-      'champion' => Icons.workspace_premium_outlined,
-      'seismic' => Icons.keyboard_voice_outlined,
-      'crystal' => Icons.diamond_outlined,
-      'lava_bridge' => Icons.workspace_premium_outlined,
-      'eruption_warning' => Icons.sensors_outlined,
-      _ => Icons.military_tech_outlined,
-    };
-
-    return Icon(icon, color: AppColors.teal, size: 22);
+    return Image.asset(
+      imagePath,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
+      errorBuilder: (context, error, stackTrace) {
+        return const Icon(
+          Icons.military_tech_outlined,
+          color: AppColors.teal,
+          size: 34,
+        );
+      },
+    );
   }
 }

@@ -67,6 +67,7 @@ flutter:
     - assets/menu_screen/
     - assets/audios/
     - assets/leaderboard/
+    - assets/badges/
 
 flutter_launcher_icons:
   android: 'launcher_icon'
