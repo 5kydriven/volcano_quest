@@ -1,0 +1,29 @@
+class Audios {
+  static const String bgGame1 = 'assets/audios/bg_game_1.mp3';
+  static const String bgGame2 = 'assets/audios/bg_game_2.mp3';
+  static const String bgGameMenu1 = 'assets/audios/bg_game_menu_1.mp3';
+  static const String bgGameMenu2 = 'assets/audios/bg_game_menu_2.mp3';
+  static const String bgGameMenu3 = 'assets/audios/bg_game_menu_3.mp3';
+  static const String bgMenu1 = 'assets/audios/bg_menu_1.mp3';
+  static const String bgMenu2 = 'assets/audios/bg_menu_2.mp3';
+  static const String bgMenu3 = 'assets/audios/bg_menu_3.mp3';
+  static const String sfxAchievement1 = 'assets/audios/sfx_achievement_1.mp3';
+  static const String sfxAchievement2 = 'assets/audios/sfx_achievement_2.mp3';
+  static const String sfxBtn1 = 'assets/audios/sfx_btn_1.mp3';
+  static const String sfxBtn2 = 'assets/audios/sfx_btn_2.mp3';
+  static const String sfxBtn3 = 'assets/audios/sfx_btn_3.mp3';
+  static const String sfxBtn4 = 'assets/audios/sfx_btn_4.mp3';
+  static const String sfxBtn5 = 'assets/audios/sfx_btn_5.mp3';
+  static const String sfxCorrect1 = 'assets/audios/sfx_correct_1.mp3';
+  static const String sfxCorrect2 = 'assets/audios/sfx_correct_2.mp3';
+  static const String sfxCorrect3 = 'assets/audios/sfx_correct_3.mp3';
+  static const String sfxCorrect4 = 'assets/audios/sfx_correct_4.mp3';
+  static const String sfxErupt1 = 'assets/audios/sfx_erupt_1.mp3';
+  static const String sfxErupt2 = 'assets/audios/sfx_erupt_2.mp3';
+  static const String sfxErupt3 = 'assets/audios/sfx_erupt_3.mp3';
+  static const String sfxFalling1 = 'assets/audios/sfx_falling_1.mp3';
+  static const String sfxFalling2 = 'assets/audios/sfx_falling_2.mp3';
+  static const String sfxFalling3 = 'assets/audios/sfx_falling_3.mp3';
+  static const String sfxGame1 = 'assets/audios/sfx_game_1.mp3';
+  static const String sfxWrong1 = 'assets/audios/sfx_wrong_1.mp3';
+}

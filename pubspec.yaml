@@ -65,6 +65,8 @@ flutter:
     - assets/onboarding_screen/
     - assets/setting_screen/
     - assets/menu_screen/
+    - assets/audios/
+    - assets/leaderboard/
 
 flutter_launcher_icons:
   android: 'launcher_icon'
