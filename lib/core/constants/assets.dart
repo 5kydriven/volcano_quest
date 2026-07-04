@@ -176,4 +176,22 @@ class Assets {
       'assets/leaderboard/ranking_container.png';
   static const String stats = 'assets/leaderboard/stats.png';
   static const String trackContainer = 'assets/leaderboard/track_container.png';
+  static const String badgeVolcanoVocabulary =
+      'assets/badges/volcano_vocabulary.png';
+  static const String badgeVolcanoMaster = 'assets/badges/volcano_master.png';
+  static const String badgeVolcanoExplorerChampion =
+      'assets/badges/volcano_explorer_champion.png';
+  static const String badgeVolcanoExplorer =
+      'assets/badges/volcano_explorer.png';
+  static const String badgeVolcanoArchitect =
+      'assets/badges/volcano_architect.png';
+  static const String badgePhilippineVolcanoExplorer =
+      'assets/badges/philippine_volcano_explorer.png';
+  static const String badgeMagmaAnalyst = 'assets/badges/magma_analyst.png';
+  static const String badgeLavaInvestigator =
+      'assets/badges/lava_investigator.png';
+  static const String badgeLavaBridgeChampion =
+      'assets/badges/lava_bridge_champion.png';
+  static const String badgeEruptionWarningSpecialist =
+      'assets/badges/eruption_warning_specialist.png';
 }
