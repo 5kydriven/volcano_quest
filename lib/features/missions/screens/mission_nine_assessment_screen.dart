@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_answer_container.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
@@ -677,10 +678,10 @@ class _AssessmentSummary extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.local_fire_department_outlined,
-                    color: Color(0xFFFFB000),
-                    size: 30,
+                  child: const BadgeAwardImage(
+                    imagePath: Assets.badgeVolcanoMaster,
+                    fallbackIcon: Icons.local_fire_department_outlined,
+                    fallbackColor: Color(0xFFFFB000),
                   ),
                 ),
                 const SizedBox(height: 16),

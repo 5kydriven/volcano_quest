@@ -7,6 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -726,10 +727,9 @@ class _MissionFiveSummary extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.teal, width: 1),
                 ),
-                child: const Icon(
-                  Icons.account_tree_outlined,
-                  color: AppColors.teal,
-                  size: 28,
+                child: const BadgeAwardImage(
+                  imagePath: Assets.badgeMagmaAnalyst,
+                  fallbackIcon: Icons.account_tree_outlined,
                 ),
               ),
               const SizedBox(height: 16),

@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_answer_container.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
@@ -1047,20 +1048,33 @@ class _MissionFourSummary extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 54,
+                width: isPerfect ? 112 : 54,
                 height: 54,
                 decoration: BoxDecoration(
                   color: _MissionFourPalette.ember.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(isPerfect ? 27 : 54),
                   border: Border.all(
                     color: _MissionFourPalette.magma,
                     width: 1,
                   ),
                 ),
-                child: const Icon(
-                  Icons.public_outlined,
-                  color: _MissionFourPalette.sulfur,
-                  size: 28,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const BadgeAwardImage(
+                      imagePath: Assets.badgePhilippineVolcanoExplorer,
+                      fallbackIcon: Icons.public_outlined,
+                      fallbackColor: _MissionFourPalette.sulfur,
+                    ),
+                    if (isPerfect) ...[
+                      const SizedBox(width: 8),
+                      const BadgeAwardImage(
+                        imagePath: Assets.badgeVolcanoExplorerChampion,
+                        fallbackIcon: Icons.workspace_premium_outlined,
+                        fallbackColor: Color(0xFFFFC857),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 16),

@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/badge_award_image.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -902,13 +903,16 @@ class _MissionEightSummary extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.teal, width: 1),
                 ),
-                child: Icon(
-                  isPerfect
-                      ? Icons.workspace_premium_outlined
-                      : Icons.fact_check_outlined,
-                  color: AppColors.teal,
-                  size: 28,
-                ),
+                child: isPerfect
+                    ? const BadgeAwardImage(
+                        imagePath: Assets.badgeEruptionWarningSpecialist,
+                        fallbackIcon: Icons.workspace_premium_outlined,
+                      )
+                    : const Icon(
+                        Icons.fact_check_outlined,
+                        color: AppColors.teal,
+                        size: 28,
+                      ),
               ),
               const SizedBox(height: 16),
               const Text(
