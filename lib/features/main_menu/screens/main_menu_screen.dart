@@ -467,6 +467,9 @@ class _MissionMap extends StatelessWidget {
             rewardLabel:
                 '+${AppConstants.sideQuestVolcanoStructureXp.fold<int>(0, (sum, xp) => sum + xp)} XP',
             numberLabel: 'SQ',
+            kind: _MissionKind.sideQuest,
+            objective:
+                'Review volcano parts before entering the explorer route.',
             status: sideQuestComplete
                 ? _MissionNodeStatus.complete
                 : sideQuestAvailable
@@ -491,6 +494,9 @@ class _MissionMap extends StatelessWidget {
             kindIcon: Icons.science_outlined,
             rewardLabel: 'LESSON',
             numberLabel: 'L8',
+            kind: _MissionKind.fieldLesson,
+            objective:
+                'Study response steps before the final assessment mission.',
             status: levelEightLessonComplete
                 ? _MissionNodeStatus.complete
                 : fieldLessonAvailable
@@ -516,6 +522,8 @@ class _MissionMap extends StatelessWidget {
           kindIcon: Icons.terrain_outlined,
           rewardLabel: '${AppConstants.levelXP[level - 1]} XP',
           numberLabel: '$level',
+          kind: _missionKindForLevel(level),
+          objective: _missionObjectiveForLevel(level),
           status: isComplete
               ? _MissionNodeStatus.complete
               : isUnlocked &&
@@ -530,6 +538,32 @@ class _MissionMap extends StatelessWidget {
     }
 
     return nodes;
+  }
+
+  _MissionKind _missionKindForLevel(int level) {
+    return switch (level) {
+      1 => _MissionKind.research,
+      2 || 4 || 7 || 8 || 9 => _MissionKind.quiz,
+      3 => _MissionKind.wordBuilder,
+      5 => _MissionKind.lab,
+      6 => _MissionKind.builder,
+      _ => _MissionKind.research,
+    };
+  }
+
+  String _missionObjectiveForLevel(int level) {
+    return switch (level) {
+      1 => 'Collect the core research orbs inside the volcano base.',
+      2 => 'Scan each question and confirm the correct volcano fact.',
+      3 => 'Build volcano vocabulary from the active letter tiles.',
+      4 => 'Identify Philippine volcanoes and map their key traits.',
+      5 => 'Place each anatomy label on the correct volcano structure.',
+      6 => 'Assemble the volcano model one stable layer at a time.',
+      7 => 'Investigate real volcano profiles and classify your evidence.',
+      8 => 'Read warning signs and choose the safest response.',
+      9 => 'Complete the final assessment across the full mission file.',
+      _ => 'Open the mission file and continue the volcano quest.',
+    };
   }
 
   bool _isMissionThreeComplete(PlayerModel player) {
@@ -576,6 +610,16 @@ class _MissionMap extends StatelessWidget {
 
 enum _MissionNodeStatus { locked, current, complete }
 
+enum _MissionKind {
+  research,
+  quiz,
+  wordBuilder,
+  sideQuest,
+  lab,
+  builder,
+  fieldLesson,
+}
+
 class _MissionMapNode {
   final String title;
   final String eyebrow;
@@ -584,6 +628,8 @@ class _MissionMapNode {
   final IconData kindIcon;
   final String rewardLabel;
   final String numberLabel;
+  final _MissionKind kind;
+  final String objective;
   final _MissionNodeStatus status;
   final bool isComplete;
 
@@ -595,6 +641,8 @@ class _MissionMapNode {
     required this.kindIcon,
     required this.rewardLabel,
     required this.numberLabel,
+    required this.kind,
+    required this.objective,
     required this.status,
     required this.isComplete,
   });
@@ -715,111 +763,571 @@ class _MissionStartDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = _MissionBriefingStyle.fromKind(node.kind);
+
     return Dialog(
-      backgroundColor: AppColors.surface,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.teal, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceAlt,
-                    border: Border.all(color: AppColors.teal, width: 0.5),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    node.primaryIcon,
-                    color: AppColors.teal,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        node.eyebrow,
-                        style: const TextStyle(
-                          color: AppColors.teal,
-                          fontSize: 11,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      Text(
-                        node.title,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Close',
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(
-                    Icons.close,
-                    color: AppColors.textMuted,
-                    size: 18,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                _MissionDialogBadge(
-                  icon: Icons.bolt_outlined,
-                  value: node.rewardLabel,
-                ),
-                const SizedBox(width: 8),
-                _MissionDialogBadge(icon: node.kindIcon, value: 'VOLCANO'),
-                const SizedBox(width: 8),
-                const _MissionDialogBadge(
-                  icon: Icons.science_outlined,
-                  value: 'LAB',
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _MenuLevelImageButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.push(node.route);
-              },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 22),
+      child: CustomPaint(
+        painter: _MissionStartDialogPainter(style: style),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    node.isReplay
-                        ? Icons.replay_outlined
-                        : Icons.play_arrow_outlined,
-                    color: AppColors.textPrimary,
-                    size: 18,
+                  _MissionBriefingSeal(node: node, style: style),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            node.eyebrow,
+                            style: TextStyle(
+                              color: style.accent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.6,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            node.title,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            style.kindLabel.toUpperCase(),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(node.isReplay ? 'REPLAY' : 'START'),
+                  _MissionDialogCloseButton(style: style),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              _MissionBriefingObjective(
+                icon: style.objectiveIcon,
+                label: style.objectiveLabel,
+                value: node.objective,
+                style: style,
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  _MissionDialogBadge(
+                    icon: Icons.bolt_outlined,
+                    label: 'REWARD',
+                    value: node.rewardLabel,
+                    style: style,
+                  ),
+                  const SizedBox(width: 8),
+                  _MissionDialogBadge(
+                    icon: style.kindIcon,
+                    label: 'MISSION',
+                    value: style.shortLabel,
+                    style: style,
+                  ),
+                  const SizedBox(width: 8),
+                  _MissionDialogBadge(
+                    icon: node.isReplay
+                        ? Icons.history_outlined
+                        : Icons.play_circle_outline,
+                    label: 'MODE',
+                    value: node.isReplay ? 'REVIEW' : 'ACTIVE',
+                    style: style,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _MenuLevelImageButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push(node.route);
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      node.isReplay
+                          ? Icons.replay_outlined
+                          : Icons.play_arrow_outlined,
+                      color: AppColors.textPrimary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(node.isReplay ? 'REPLAY' : 'START'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+}
+
+class _MissionBriefingStyle {
+  final Color accent;
+  final Color deep;
+  final IconData kindIcon;
+  final IconData objectiveIcon;
+  final String kindLabel;
+  final String shortLabel;
+  final String objectiveLabel;
+
+  const _MissionBriefingStyle({
+    required this.accent,
+    required this.deep,
+    required this.kindIcon,
+    required this.objectiveIcon,
+    required this.kindLabel,
+    required this.shortLabel,
+    required this.objectiveLabel,
+  });
+
+  factory _MissionBriefingStyle.fromKind(_MissionKind kind) {
+    return switch (kind) {
+      _MissionKind.research => const _MissionBriefingStyle(
+        accent: Color(0xFFFFB45F),
+        deep: Color(0xFF3A1A10),
+        kindIcon: Icons.travel_explore_outlined,
+        objectiveIcon: Icons.radar_outlined,
+        kindLabel: 'Research briefing',
+        shortLabel: 'RESEARCH',
+        objectiveLabel: 'Field objective',
+      ),
+      _MissionKind.quiz => const _MissionBriefingStyle(
+        accent: Color(0xFFFF7A1A),
+        deep: Color(0xFF3A1A10),
+        kindIcon: Icons.fact_check_outlined,
+        objectiveIcon: Icons.quiz_outlined,
+        kindLabel: 'Knowledge scan',
+        shortLabel: 'SCAN',
+        objectiveLabel: 'Answer target',
+      ),
+      _MissionKind.wordBuilder => const _MissionBriefingStyle(
+        accent: Color(0xFFFFC66D),
+        deep: Color(0xFF332010),
+        kindIcon: Icons.abc_outlined,
+        objectiveIcon: Icons.grid_view_outlined,
+        kindLabel: 'Word builder',
+        shortLabel: 'WORDS',
+        objectiveLabel: 'Build target',
+      ),
+      _MissionKind.sideQuest => const _MissionBriefingStyle(
+        accent: Color(0xFFFFD184),
+        deep: Color(0xFF2E1D0C),
+        kindIcon: Icons.route_outlined,
+        objectiveIcon: Icons.school_outlined,
+        kindLabel: 'Side quest file',
+        shortLabel: 'SIDE',
+        objectiveLabel: 'Unlock target',
+      ),
+      _MissionKind.lab => const _MissionBriefingStyle(
+        accent: Color(0xFFFF9B45),
+        deep: Color(0xFF351408),
+        kindIcon: Icons.science_outlined,
+        objectiveIcon: Icons.biotech_outlined,
+        kindLabel: 'Lab operation',
+        shortLabel: 'LAB',
+        objectiveLabel: 'Lab objective',
+      ),
+      _MissionKind.builder => const _MissionBriefingStyle(
+        accent: Color(0xFFFFA85A),
+        deep: Color(0xFF2F170B),
+        kindIcon: Icons.construction_outlined,
+        objectiveIcon: Icons.architecture_outlined,
+        kindLabel: 'Builder mission',
+        shortLabel: 'BUILD',
+        objectiveLabel: 'Assembly target',
+      ),
+      _MissionKind.fieldLesson => const _MissionBriefingStyle(
+        accent: Color(0xFFFFC06A),
+        deep: Color(0xFF2B180E),
+        kindIcon: Icons.menu_book_outlined,
+        objectiveIcon: Icons.local_fire_department_outlined,
+        kindLabel: 'Field lesson',
+        shortLabel: 'LESSON',
+        objectiveLabel: 'Lesson target',
+      ),
+    };
+  }
+}
+
+class _MissionBriefingSeal extends StatelessWidget {
+  final _MissionMapNode node;
+  final _MissionBriefingStyle style;
+
+  const _MissionBriefingSeal({required this.node, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 68,
+      height: 68,
+      child: CustomPaint(
+        painter: _MissionSealPainter(style: style),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(node.primaryIcon, color: style.accent, size: 26),
+              const SizedBox(height: 3),
+              Text(
+                node.numberLabel,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionDialogCloseButton extends StatelessWidget {
+  final _MissionBriefingStyle style;
+
+  const _MissionDialogCloseButton({required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Close',
+      child: InkResponse(
+        onTap: () => Navigator.of(context).pop(),
+        radius: 20,
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: CustomPaint(
+            painter: _MissionCloseButtonPainter(style: style),
+            child: Icon(Icons.close, color: style.accent, size: 18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionBriefingObjective extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final _MissionBriefingStyle style;
+
+  const _MissionBriefingObjective({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.style,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
+      decoration: BoxDecoration(
+        color: style.deep.withValues(alpha: 0.54),
+        border: Border.all(color: style.accent.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: style.accent, size: 18),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: TextStyle(
+                    color: style.accent,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionStartDialogPainter extends CustomPainter {
+  final _MissionBriefingStyle style;
+
+  const _MissionStartDialogPainter({required this.style});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final panel = RRect.fromRectAndRadius(rect, const Radius.circular(12));
+
+    canvas.drawRRect(
+      panel,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [const Color(0xF20F0E0D), style.deep.withValues(alpha: 0.96)],
+        ).createShader(rect),
+    );
+
+    canvas.drawRRect(
+      panel,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(-0.22, -0.75),
+          radius: 0.86,
+          colors: [
+            style.accent.withValues(alpha: 0.22),
+            style.deep.withValues(alpha: 0.1),
+            Colors.transparent,
+          ],
+          stops: const [0, 0.5, 1],
+        ).createShader(rect),
+    );
+
+    final ridgePath = Path()
+      ..moveTo(0, size.height * 0.77)
+      ..lineTo(size.width * 0.16, size.height * 0.68)
+      ..lineTo(size.width * 0.31, size.height * 0.73)
+      ..lineTo(size.width * 0.48, size.height * 0.6)
+      ..lineTo(size.width * 0.66, size.height * 0.75)
+      ..lineTo(size.width * 0.82, size.height * 0.67)
+      ..lineTo(size.width, size.height * 0.75)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(
+      ridgePath,
+      Paint()..color = const Color(0xFF160A05).withValues(alpha: 0.68),
+    );
+
+    final fissurePath = Path()
+      ..moveTo(size.width * 0.48, size.height * 0.59)
+      ..lineTo(size.width * 0.53, size.height * 0.69)
+      ..lineTo(size.width * 0.5, size.height * 0.8)
+      ..lineTo(size.width * 0.56, size.height * 0.94)
+      ..lineTo(size.width * 0.54, size.height)
+      ..lineTo(size.width * 0.61, size.height)
+      ..lineTo(size.width * 0.63, size.height * 0.91)
+      ..lineTo(size.width * 0.56, size.height * 0.78)
+      ..lineTo(size.width * 0.59, size.height * 0.68)
+      ..lineTo(size.width * 0.52, size.height * 0.58)
+      ..close();
+    canvas.drawPath(
+      fissurePath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            style.accent.withValues(alpha: 0.34),
+            style.accent.withValues(alpha: 0),
+          ],
+        ).createShader(rect),
+    );
+
+    final scanPaint = Paint()
+      ..color = style.accent.withValues(alpha: 0.05)
+      ..strokeWidth = 1;
+    for (var y = 14.0; y < size.height; y += 15) {
+      canvas.drawLine(Offset(14, y), Offset(size.width - 14, y), scanPaint);
+    }
+
+    canvas.drawRRect(
+      panel.deflate(0.5),
+      Paint()
+        ..color = style.accent.withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    final cornerPaint = Paint()
+      ..color = style.accent.withValues(alpha: 0.7)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.square;
+    const inset = 13.0;
+    const corner = 28.0;
+    canvas
+      ..drawLine(
+        const Offset(inset, inset),
+        const Offset(inset + corner, inset),
+        cornerPaint,
+      )
+      ..drawLine(
+        const Offset(inset, inset),
+        const Offset(inset, inset + corner),
+        cornerPaint,
+      )
+      ..drawLine(
+        Offset(size.width - inset - corner, inset),
+        Offset(size.width - inset, inset),
+        cornerPaint,
+      )
+      ..drawLine(
+        Offset(size.width - inset, inset),
+        Offset(size.width - inset, inset + corner),
+        cornerPaint,
+      )
+      ..drawLine(
+        Offset(inset, size.height - inset - corner),
+        Offset(inset, size.height - inset),
+        cornerPaint,
+      )
+      ..drawLine(
+        Offset(inset, size.height - inset),
+        Offset(inset + corner, size.height - inset),
+        cornerPaint,
+      )
+      ..drawLine(
+        Offset(size.width - inset - corner, size.height - inset),
+        Offset(size.width - inset, size.height - inset),
+        cornerPaint,
+      )
+      ..drawLine(
+        Offset(size.width - inset, size.height - inset - corner),
+        Offset(size.width - inset, size.height - inset),
+        cornerPaint,
+      );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionStartDialogPainter oldDelegate) {
+    return oldDelegate.style != style;
+  }
+}
+
+class _MissionSealPainter extends CustomPainter {
+  final _MissionBriefingStyle style;
+
+  const _MissionSealPainter({required this.style});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = math.min(size.width, size.height) / 2;
+    final outer = Rect.fromCircle(center: center, radius: radius - 1);
+
+    canvas.drawCircle(
+      center,
+      radius - 1,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            style.accent.withValues(alpha: 0.24),
+            style.deep.withValues(alpha: 0.92),
+          ],
+        ).createShader(outer),
+    );
+    canvas.drawCircle(
+      center,
+      radius - 1,
+      Paint()
+        ..color = style.accent.withValues(alpha: 0.66)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    canvas.drawCircle(
+      center,
+      radius - 8,
+      Paint()
+        ..color = style.accent.withValues(alpha: 0.2)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+
+    final tickPaint = Paint()
+      ..color = style.accent.withValues(alpha: 0.44)
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+    for (var index = 0; index < 10; index++) {
+      final angle = math.pi * 2 * index / 10;
+      final start = Offset(
+        center.dx + math.cos(angle) * (radius - 5),
+        center.dy + math.sin(angle) * (radius - 5),
+      );
+      final end = Offset(
+        center.dx + math.cos(angle) * (radius - 1),
+        center.dy + math.sin(angle) * (radius - 1),
+      );
+      canvas.drawLine(start, end, tickPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionSealPainter oldDelegate) {
+    return oldDelegate.style != style;
+  }
+}
+
+class _MissionCloseButtonPainter extends CustomPainter {
+  final _MissionBriefingStyle style;
+
+  const _MissionCloseButtonPainter({required this.style});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
+    canvas.drawRRect(rrect, Paint()..color = style.deep.withValues(alpha: 0.5));
+    canvas.drawRRect(
+      rrect.deflate(0.5),
+      Paint()
+        ..color = style.accent.withValues(alpha: 0.42)
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionCloseButtonPainter oldDelegate) {
+    return oldDelegate.style != style;
   }
 }
 
@@ -868,9 +1376,16 @@ class _MenuLevelImageButton extends StatelessWidget {
 
 class _MissionDialogBadge extends StatelessWidget {
   final IconData icon;
+  final String label;
   final String value;
+  final _MissionBriefingStyle style;
 
-  const _MissionDialogBadge({required this.icon, required this.value});
+  const _MissionDialogBadge({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.style,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -878,20 +1393,37 @@ class _MissionDialogBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.tealDark,
-          border: Border.all(color: AppColors.borderAlt, width: 0.5),
+          color: style.deep.withValues(alpha: 0.62),
+          border: Border.all(
+            color: style.accent.withValues(alpha: 0.32),
+            width: 0.7,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.teal, size: 17),
+            Icon(icon, color: style.accent, size: 17),
             const SizedBox(height: 4),
             Text(
+              label,
+              maxLines: 1,
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 8,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
               value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 9,
-                letterSpacing: 0.8,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
               ),
             ),
           ],
