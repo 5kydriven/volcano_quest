@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_answer_container.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -406,82 +406,35 @@ class _QuizContent extends StatelessWidget {
               for (var index = 0; index < question.options.length; index++) ...[
                 Builder(
                   builder: (context) {
-                    final containerIndex = index
-                        .clamp(0, Assets.missionTwoAnswerContainers.length - 1)
-                        .toInt();
-
-                    final containerAsset =
-                        Assets.missionTwoAnswerContainers[containerIndex];
-                    final imageOffsetY = switch (containerIndex) {
-                      0 => -12.0,
-                      3 => 7.0,
-                      _ => 0.0,
-                    };
-
                     final isSelected = selectedOptionIndex == index;
                     final isCorrect = question.correctOptionIndex == index;
 
                     final showCorrect = submitted && isCorrect;
                     final showWrong = submitted && isSelected && !isCorrect;
 
-                    final overlayColor = showCorrect
-                        ? AppColors.teal.withValues(alpha: 0.16)
-                        : showWrong
-                        ? const Color(0xFFFF7A7A).withValues(alpha: 0.14)
-                        : Colors.transparent;
-
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
                         onTap: onSelect == null ? null : () => onSelect!(index),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.zero,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 160),
                           width: double.infinity,
                           height: 50,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          clipBehavior: Clip.antiAlias,
+                          clipBehavior: Clip.none,
                           child: Stack(
                             fit: StackFit.expand,
+                            clipBehavior: Clip.none,
                             children: [
-                              if (isSelected && !submitted)
-                                Transform.translate(
-                                  offset: Offset(0, imageOffsetY),
-                                  child: Transform.scale(
-                                    scaleY: 6,
-                                    child: ImageFiltered(
-                                      imageFilter: ImageFilter.blur(
-                                        sigmaX: 4.2,
-                                        sigmaY: 4.2,
-                                      ),
-                                      child: ColorFiltered(
-                                        colorFilter: ColorFilter.mode(
-                                          const Color(
-                                            0xFFFF5A00,
-                                          ).withValues(alpha: 1),
-                                          BlendMode.srcATop,
-                                        ),
-                                        child: Image.asset(
-                                          containerAsset,
-                                          fit: BoxFit.fill,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              Transform.translate(
-                                offset: Offset(0, imageOffsetY),
-                                child: Transform.scale(
-                                  scaleY: 6,
-                                  child: Image.asset(
-                                    containerAsset,
-                                    fit: BoxFit.fill,
-                                  ),
-                                ),
+                              MissionAnswerContainer(
+                                letter: String.fromCharCode(65 + index),
+                                isSelected: isSelected && !submitted,
+                                feedback: showCorrect
+                                    ? MissionAnswerFeedback.correct
+                                    : showWrong
+                                    ? MissionAnswerFeedback.wrong
+                                    : MissionAnswerFeedback.none,
                               ),
-                              ColoredBox(color: overlayColor),
                               Positioned(
                                 left: 92,
                                 right: showCorrect || showWrong ? 48 : 22,
@@ -725,172 +678,21 @@ class _QuizSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Transform.scale(
-        scale: 1.2,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(42, 48, 42, 42),
-          decoration: BoxDecoration(
-            color: const Color(0xFF171717),
-            border: Border.all(color: const Color(0xFFFF6A00), width: 4),
-            borderRadius: BorderRadius.circular(8),
+      child: MissionCompletePanel(
+        title: 'MISSION 2 COMPLETE!',
+        badgeName: 'Lava Investigator Badge',
+        badgeImagePath: Assets.badgeLavaInvestigator,
+        fallbackIcon: Icons.local_fire_department_outlined,
+        message:
+            'Congratulations, scientist. You earned the Lava Investigator Badge.',
+        metrics: [
+          MissionCompleteMetric(
+            label: 'SCORE',
+            value: '$correctCount/$totalQuestions',
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF5A00).withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF6A00).withValues(alpha: 0.36),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.local_fire_department_outlined,
-                  color: Color(0xFFFFB000),
-                  size: 30,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 2 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'LAVA INVESTIGATOR BADGE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFFFFB000),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'SCORE',
-                      value: '$correctCount/$totalQuestions',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: AppColors.textPrimary,
-                    shadowColor: const Color(0xFFFF5A00),
-                    elevation: 0,
-                    side: BorderSide.none,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF9E2E0A),
-                      borderRadius: BorderRadius.circular(6),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(
-                            0xFFFF5A00,
-                          ).withValues(alpha: 0.32),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'RETURN TO MENU',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.85,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(Assets.rectangleContainer, fit: BoxFit.fill),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Color(0xFFFFB000),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
         ],
+        onProceed: onProceed,
       ),
     );
   }

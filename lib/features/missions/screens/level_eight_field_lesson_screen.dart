@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +8,6 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/lab_widgets.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -23,6 +24,8 @@ class LevelEightFieldLessonScreen extends ConsumerStatefulWidget {
 class _LevelEightFieldLessonScreenState
     extends ConsumerState<LevelEightFieldLessonScreen> {
   var _isSaving = false;
+  var _pageIndex = 0;
+  var _turningForward = true;
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +36,7 @@ class _LevelEightFieldLessonScreenState
               AppConstants.levelEightLessonCompleteId,
             ) ??
             false);
+    final pages = _lessonPages(isComplete);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -51,144 +55,25 @@ class _LevelEightFieldLessonScreenState
                 },
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-                  children: [
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 760),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const _DebriefHero(),
-                            const SizedBox(height: 20),
-                            const _LessonSection(
-                              sequence: '01',
-                              icon: Icons.public_outlined,
-                              title: "What's New",
-                              subtitle: 'Facts About Volcanoes',
-                              bullets: [
-                                'More than 80% of the Earth surface is volcanic in origin.',
-                                'Mountains and seafloors were formed by volcanic eruptions.',
-                                'Volcanic gas emissions helped form the Earth atmosphere.',
-                                'A volcano danger zone can cover about a 32.187 km radius.',
-                                'Volcanic lightning is caused by friction between ash particles moving rapidly to the surface.',
-                                'Volcanic eruptions can trigger earthquakes, mudflows, rockfalls, flash floods, and tsunamis.',
-                                'Volcanic ash is made of rock fragments, glass particles, and minerals. It is acidic and has sharp edges.',
-                              ],
-                            ),
-                            const _LessonSection(
-                              sequence: '02',
-                              icon: Icons.location_on_outlined,
-                              title: 'Taal Volcano Eruption',
-                              subtitle: '2020 field reference',
-                              facts: [
-                                _Fact(
-                                  label: 'Location',
-                                  value: 'Batangas, Taal',
-                                ),
-                                _Fact(
-                                  label: 'Status',
-                                  value:
-                                      'Second most active volcano in the Philippines',
-                                ),
-                                _Fact(
-                                  label: 'Feature',
-                                  value:
-                                      'Caldera with water, often described as a lake within a lake',
-                                ),
-                                _Fact(
-                                  label: 'Eruption period',
-                                  value:
-                                      'January 12, 2020 to January 22, 2020',
-                                ),
-                                _Fact(
-                                  label: 'Previous eruption',
-                                  value: '1977',
-                                ),
-                                _Fact(
-                                  label: 'Eruption type',
-                                  value:
-                                      'Phreatomagmatic eruption from the main crater',
-                                ),
-                              ],
-                            ),
-                            const _LessonSection(
-                              sequence: '03',
-                              icon: Icons.science_outlined,
-                              title: 'Magma and Its Composition',
-                              paragraphs: [
-                                'Magma is molten rock found beneath volcanoes. It forms at destructive plate boundaries and contains silica-rich materials.',
-                                'As magma cools, minerals begin to crystallize. High-temperature minerals form first, followed by low-temperature minerals.',
-                                'Viscosity is the resistance of magma to flow. Low-silica magma flows easily, while high-silica magma is thicker and more viscous.',
-                                'Temperature also affects viscosity. Hot magma flows faster, while cooler magma flows slowly.',
-                                'Magma contains dissolved gases such as water vapor, carbon dioxide, and sulfur dioxide. When pressure decreases, gases form bubbles. In thick magma, trapped gases build pressure and can cause explosive eruptions.',
-                              ],
-                            ),
-                            const _MagmaTableSection(),
-                            const _LessonSection(
-                              sequence: '05',
-                              icon: Icons.auto_graph_outlined,
-                              title: 'Process of Volcanic Eruption',
-                              paragraphs: [
-                                'High temperature inside the Earth melts solid rocks in the mantle and turns them into magma. The continuous melting and accumulation of magma push it into the magma chamber of a volcano.',
-                                'As gases are released from magma, bubbles form through vesiculation. This can happen by decompression or crystallization.',
-                                'Decompression happens when pressure lowers as magma rises, similar to opening a soda bottle. Crystallization can also increase vapor pressure and lead to vesiculation.',
-                                'Both decompression and crystallization can trigger an explosive eruption. As magma reaches the Earth surface, it can explode because of dissolved gases. The explosion type depends on magma composition.',
-                              ],
-                            ),
-                            const _LessonSection(
-                              sequence: '06',
-                              icon: Icons.warning_amber_outlined,
-                              title: 'Volcanic Hazards',
-                              paragraphs: [
-                                'Volcanic hazards are phenomena from volcanic activity that pose potential threats to people and property.',
-                                'During major explosive eruptions, large amounts of volcanic gas, aerosol droplets, and ash are injected into the atmosphere.',
-                                'Tephra, or fragmented volcanic debris, can be violently ejected and extend tens of kilometers above the volcano.',
-                                'Carbon dioxide can contribute to global warming, while sulfur dioxide can cause global cooling, ozone destruction, and air pollution.',
-                              ],
-                              facts: [
-                                _Fact(
-                                  label: 'Ash fall',
-                                  value:
-                                      'Pulverized rocks, sand, and gritty glass particles ejected into the air.',
-                                ),
-                                _Fact(
-                                  label: 'Mudflow',
-                                  value:
-                                      'Water, volcanic material, and debris flowing down the volcano. Also called lahar.',
-                                ),
-                                _Fact(
-                                  label: 'Lava flow',
-                                  value:
-                                      'Streams of molten rock and fragmented materials emitted by an eruption.',
-                                ),
-                                _Fact(
-                                  label: 'Pyroclastic flow',
-                                  value:
-                                      'Fast-moving hot mixtures of gas, ash, and molten rocks moving away from the volcano.',
-                                ),
-                              ],
-                            ),
-                            const _PeopleNearVolcanoesSection(),
-                            const _PrecautionSection(),
-                            const SizedBox(height: 4),
-                            _CompletionConsole(
-                              label: isComplete
-                                  ? 'RETURN TO MENU'
-                                  : widget.isReplay
-                                  ? 'COMPLETE PRACTICE'
-                                  : 'COMPLETE LESSON',
-                              isLoading: _isSaving,
-                              onTap: isComplete
-                                  ? _continueToLevelNine
-                                  : _completeLesson,
-                            ),
-                          ],
-                        ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: _LessonBook(
+                        pageIndex: _pageIndex,
+                        pageCount: pages.length,
+                        turningForward: _turningForward,
+                        page: pages[_pageIndex],
+                        onPrevious: _pageIndex == 0 || _isSaving
+                            ? null
+                            : () => _goToPage(_pageIndex - 1),
+                        onNext: _pageIndex == pages.length - 1 || _isSaving
+                            ? null
+                            : () => _goToPage(_pageIndex + 1),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -196,6 +81,150 @@ class _LevelEightFieldLessonScreenState
         ),
       ),
     );
+  }
+
+  List<Widget> _lessonPages(bool isComplete) {
+    return [
+      const _DebriefHero(),
+      const _LessonSection(
+        icon: Icons.public_outlined,
+        title: "What's New",
+        subtitle: 'Facts About Volcanoes',
+        bullets: [
+          'More than 80% of the Earth surface is volcanic in origin.',
+          'Mountains and seafloors were formed by volcanic eruptions.',
+          'Volcanic gas emissions helped form the Earth atmosphere.',
+          'A volcano danger zone can cover about a 32.187 km radius.',
+        ],
+      ),
+      const _LessonSection(
+        icon: Icons.public_outlined,
+        title: "What's New",
+        subtitle: 'More field notes',
+        bullets: [
+          'Volcanic lightning is caused by friction between ash particles moving rapidly to the surface.',
+          'Volcanic eruptions can trigger earthquakes, mudflows, rockfalls, flash floods, and tsunamis.',
+          'Volcanic ash is made of rock fragments, glass particles, and minerals. It is acidic and has sharp edges.',
+        ],
+      ),
+      const _LessonSection(
+        icon: Icons.location_on_outlined,
+        title: 'Taal Volcano Eruption',
+        subtitle: '2020 field reference',
+        facts: [
+          _Fact(label: 'Location', value: 'Batangas, Taal'),
+          _Fact(
+            label: 'Status',
+            value: 'Second most active volcano in the Philippines',
+          ),
+          _Fact(
+            label: 'Feature',
+            value: 'Caldera with water, often described as a lake within a lake',
+          ),
+          _Fact(
+            label: 'Eruption period',
+            value: 'January 12, 2020 to January 22, 2020',
+          ),
+          _Fact(label: 'Previous eruption', value: '1977'),
+          _Fact(
+            label: 'Eruption type',
+            value: 'Phreatomagmatic eruption from the main crater',
+          ),
+        ],
+      ),
+      const _LessonSection(
+        icon: Icons.science_outlined,
+        title: 'Magma and Its Composition',
+        paragraphs: [
+          'Magma is molten rock found beneath volcanoes. It forms at destructive plate boundaries and contains silica-rich materials.',
+          'As magma cools, minerals begin to crystallize. High-temperature minerals form first, followed by low-temperature minerals.',
+          'Viscosity is the resistance of magma to flow. Low-silica magma flows easily, while high-silica magma is thicker and more viscous.',
+        ],
+      ),
+      const _LessonSection(
+        icon: Icons.science_outlined,
+        title: 'Magma Behavior',
+        subtitle: 'Temperature and gas pressure',
+        paragraphs: [
+          'Temperature also affects viscosity. Hot magma flows faster, while cooler magma flows slowly.',
+          'Magma contains dissolved gases such as water vapor, carbon dioxide, and sulfur dioxide. When pressure decreases, gases form bubbles. In thick magma, trapped gases build pressure and can cause explosive eruptions.',
+        ],
+      ),
+      const _MagmaTableSection(),
+      const _LessonSection(
+        icon: Icons.auto_graph_outlined,
+        title: 'Process of Volcanic Eruption',
+        paragraphs: [
+          'High temperature inside the Earth melts solid rocks in the mantle and turns them into magma. The continuous melting and accumulation of magma push it into the magma chamber of a volcano.',
+          'As gases are released from magma, bubbles form through vesiculation. This can happen by decompression or crystallization.',
+          'Decompression happens when pressure lowers as magma rises, similar to opening a soda bottle. Crystallization can also increase vapor pressure and lead to vesiculation.',
+          'Both decompression and crystallization can trigger an explosive eruption. As magma reaches the Earth surface, it can explode because of dissolved gases. The explosion type depends on magma composition.',
+        ],
+      ),
+      const _LessonSection(
+        icon: Icons.warning_amber_outlined,
+        title: 'Volcanic Hazards',
+        paragraphs: [
+          'Volcanic hazards are phenomena from volcanic activity that pose potential threats to people and property.',
+          'During major explosive eruptions, large amounts of volcanic gas, aerosol droplets, and ash are injected into the atmosphere.',
+          'Tephra, or fragmented volcanic debris, can be violently ejected and extend tens of kilometers above the volcano.',
+          'Carbon dioxide can contribute to global warming, while sulfur dioxide can cause global cooling, ozone destruction, and air pollution.',
+        ],
+      ),
+      const _LessonSection(
+        icon: Icons.warning_amber_outlined,
+        title: 'Hazard Types',
+        subtitle: 'Field identification',
+        facts: [
+          _Fact(
+            label: 'Ash fall',
+            value:
+                'Pulverized rocks, sand, and gritty glass particles ejected into the air.',
+          ),
+          _Fact(
+            label: 'Mudflow',
+            value:
+                'Water, volcanic material, and debris flowing down the volcano. Also called lahar.',
+          ),
+          _Fact(
+            label: 'Lava flow',
+            value:
+                'Streams of molten rock and fragmented materials emitted by an eruption.',
+          ),
+          _Fact(
+            label: 'Pyroclastic flow',
+            value:
+                'Fast-moving hot mixtures of gas, ash, and molten rocks moving away from the volcano.',
+          ),
+        ],
+      ),
+      const _PeopleNearVolcanoesSection(),
+      const _PrecautionSection(),
+      _CompletionConsole(
+        label: isComplete
+            ? 'RETURN TO MENU'
+            : widget.isReplay
+            ? 'COMPLETE PRACTICE'
+            : 'COMPLETE LESSON',
+        isLoading: _isSaving,
+        onTap: isComplete ? _continueToLevelNine : _completeLesson,
+      ),
+    ];
+  }
+
+  void _goToPage(int nextPage) {
+    if (nextPage < 0 || nextPage >= _lessonPages(false).length) {
+      return;
+    }
+
+    if (nextPage == _pageIndex) {
+      return;
+    }
+
+    setState(() {
+      _turningForward = nextPage > _pageIndex;
+      _pageIndex = nextPage;
+    });
   }
 
   Future<void> _completeLesson() async {
@@ -241,6 +270,197 @@ class _LessonTopBar extends StatelessWidget {
         title: 'LEVEL 8 DEBRIEF',
         xp: xp,
         onBack: onBack,
+      ),
+    );
+  }
+}
+
+class _LessonBook extends StatelessWidget {
+  final int pageIndex;
+  final int pageCount;
+  final bool turningForward;
+  final Widget page;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  const _LessonBook({
+    required this.pageIndex,
+    required this.pageCount,
+    required this.turningForward,
+    required this.page,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: _BookPageSurface(
+            pageIndex: pageIndex,
+            turningForward: turningForward,
+            child: page,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _LessonImageButton(
+                label: 'PREV',
+                isLoading: false,
+                onTap: onPrevious,
+              ),
+            ),
+            const SizedBox(width: 12),
+            _BookProgress(currentPage: pageIndex + 1, pageCount: pageCount),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _LessonImageButton(
+                label: pageIndex == pageCount - 1 ? 'DONE' : 'NEXT',
+                isLoading: false,
+                onTap: onNext,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _BookPageSurface extends StatelessWidget {
+  final int pageIndex;
+  final bool turningForward;
+  final Widget child;
+
+  const _BookPageSurface({
+    required this.pageIndex,
+    required this.turningForward,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: 0.72),
+        border: Border.all(color: AppColors.borderAlt, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.background.withValues(alpha: 0.7),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 520),
+          switchInCurve: Curves.easeOutQuart,
+          switchOutCurve: Curves.easeOutQuart,
+          layoutBuilder: (currentChild, previousChildren) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                ...previousChildren,
+                if (currentChild != null) currentChild,
+              ],
+            );
+          },
+          transitionBuilder: (child, animation) {
+            final isIncoming = child.key == ValueKey(pageIndex);
+            final turn = turningForward ? 1.0 : -1.0;
+
+            return AnimatedBuilder(
+              animation: animation,
+              child: child,
+              builder: (context, child) {
+                final progress = animation.value;
+                final angle = isIncoming
+                    ? (1 - progress) * math.pi / 2 * turn
+                    : -progress * math.pi / 2 * turn;
+
+                return Transform(
+                  alignment: turningForward
+                      ? Alignment.centerLeft
+                      : Alignment.centerRight,
+                  transform: Matrix4.identity()
+                    ..setEntry(3, 2, 0.0014)
+                    ..rotateY(angle),
+                  child: Opacity(
+                    opacity: 0.35 + (progress * 0.65),
+                    child: child,
+                  ),
+                );
+              },
+            );
+          },
+          child: _BookPageContent(key: ValueKey(pageIndex), child: child),
+        ),
+      ),
+    );
+  }
+}
+
+class _BookPageContent extends StatelessWidget {
+  final Widget child;
+
+  const _BookPageContent({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+          color: AppColors.surface.withValues(alpha: 0.28),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(width: constraints.maxWidth, child: child),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BookProgress extends StatelessWidget {
+  final int currentPage;
+  final int pageCount;
+
+  const _BookProgress({required this.currentPage, required this.pageCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 82,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'FIELD NOTES',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 8,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 5),
+          LinearProgressIndicator(
+            minHeight: 3,
+            value: currentPage / pageCount,
+            color: AppColors.teal,
+            backgroundColor: AppColors.tealDark,
+          ),
+        ],
       ),
     );
   }
@@ -382,7 +602,6 @@ class _HeroReadout extends StatelessWidget {
 }
 
 class _LessonSection extends StatelessWidget {
-  final String sequence;
   final IconData icon;
   final String title;
   final String? subtitle;
@@ -391,7 +610,6 @@ class _LessonSection extends StatelessWidget {
   final List<_Fact> facts;
 
   const _LessonSection({
-    required this.sequence,
     required this.icon,
     required this.title,
     this.subtitle,
@@ -407,58 +625,57 @@ class _LessonSection extends StatelessWidget {
       child: _DossierPanel(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SectionIndex(sequence: sequence, icon: icon),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionIcon(icon: icon),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle!.toUpperCase(),
+                        title,
                         style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
+                          color: AppColors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.3,
                         ),
                       ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!.toUpperCase(),
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
+              ],
+            ),
+            if (paragraphs.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              for (var i = 0; i < paragraphs.length; i++)
+                _Paragraph(text: paragraphs[i]),
             ],
-          ),
-          if (paragraphs.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            for (var i = 0; i < paragraphs.length; i++)
-              _Paragraph(index: i + 1, text: paragraphs[i]),
+            if (bullets.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              for (var i = 0; i < bullets.length; i++)
+                _Bullet(text: bullets[i]),
+            ],
+            if (facts.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              for (var i = 0; i < facts.length; i++) _FactRow(fact: facts[i]),
+            ],
           ],
-          if (bullets.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            for (var i = 0; i < bullets.length; i++)
-              _Bullet(index: i + 1, text: bullets[i]),
-          ],
-          if (facts.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            for (var i = 0; i < facts.length; i++)
-              _FactRow(index: i + 1, fact: facts[i]),
-          ],
-        ],
         ),
       ),
     );
@@ -515,30 +732,22 @@ class _DossierPanel extends StatelessWidget {
   }
 }
 
-class _SectionIndex extends StatelessWidget {
-  final String sequence;
+class _SectionIcon extends StatelessWidget {
   final IconData icon;
 
-  const _SectionIndex({required this.sequence, required this.icon});
+  const _SectionIcon({required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 44,
-      child: Column(
-        children: [
-          Text(
-            sequence,
-            style: const TextStyle(
-              color: AppColors.teal,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Icon(icon, color: AppColors.textMuted, size: 17),
-        ],
+      height: 44,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.tealDark,
+          border: Border.all(color: AppColors.borderAlt, width: 1),
+        ),
+        child: Icon(icon, color: AppColors.teal, size: 19),
       ),
     );
   }
@@ -552,38 +761,35 @@ class _MagmaTableSection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: _DossierPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SectionIndex(
-                sequence: '04',
-                icon: Icons.table_chart_outlined,
-              ),
-              SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'Classifications of Magma',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionIcon(icon: Icons.table_chart_outlined),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'Classifications of Magma',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const _ReferencePlate(
-            assetPath: Assets.missionEightMagmaClassification,
-            semanticLabel: 'Magma classification table',
-            caption: 'MAGMA COMPOSITION AND CHARACTERISTICS',
-          ),
-        ],
-      ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const _ReferencePlate(
+              assetPath: Assets.missionEightMagmaClassification,
+              semanticLabel: 'Magma classification table',
+              caption: 'MAGMA COMPOSITION AND CHARACTERISTICS',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -598,33 +804,33 @@ class _PeopleNearVolcanoesSection extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: _DossierPanel(
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SectionIndex(sequence: '07', icon: Icons.groups_outlined),
-              SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'Why People Live Near Volcanoes',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.3,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionIcon(icon: Icons.groups_outlined),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'Why People Live Near Volcanoes',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const _ReferencePlate(
-            assetPath: Assets.missionEightWhyLiveNearVolcanoes,
-            semanticLabel: 'Reasons people live near volcanoes',
-            caption: 'SETTLEMENT BENEFITS AND LIVELIHOODS',
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 18),
+            const _ReferencePlate(
+              assetPath: Assets.missionEightWhyLiveNearVolcanoes,
+              semanticLabel: 'Reasons people live near volcanoes',
+              caption: 'SETTLEMENT BENEFITS AND LIVELIHOODS',
+            ),
+          ],
         ),
       ),
     );
@@ -637,7 +843,6 @@ class _PrecautionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const _LessonSection(
-      sequence: '08',
       icon: Icons.health_and_safety_outlined,
       title: 'Precautionary Measures',
       subtitle: 'Before, during, and after an eruption',
@@ -663,10 +868,9 @@ class _PrecautionSection extends StatelessWidget {
 }
 
 class _Paragraph extends StatelessWidget {
-  final int index;
   final String text;
 
-  const _Paragraph({required this.index, required this.text});
+  const _Paragraph({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -675,7 +879,7 @@ class _Paragraph extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ReadingMarker(index: index),
+          const _ReadingMarker(),
           const SizedBox(width: 11),
           Expanded(
             child: Text(
@@ -695,10 +899,9 @@ class _Paragraph extends StatelessWidget {
 }
 
 class _Bullet extends StatelessWidget {
-  final int index;
   final String text;
 
-  const _Bullet({required this.index, required this.text});
+  const _Bullet({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -707,7 +910,7 @@ class _Bullet extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ReadingMarker(index: index),
+          const _ReadingMarker(),
           const SizedBox(width: 9),
           Expanded(
             child: Text(
@@ -727,10 +930,9 @@ class _Bullet extends StatelessWidget {
 }
 
 class _FactRow extends StatelessWidget {
-  final int index;
   final _Fact fact;
 
-  const _FactRow({required this.index, required this.fact});
+  const _FactRow({required this.fact});
 
   @override
   Widget build(BuildContext context) {
@@ -742,7 +944,7 @@ class _FactRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ReadingMarker(index: index),
+          const _ReadingMarker(),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
@@ -821,9 +1023,7 @@ class _ReferencePlate extends StatelessWidget {
 }
 
 class _ReadingMarker extends StatelessWidget {
-  final int index;
-
-  const _ReadingMarker({required this.index});
+  const _ReadingMarker();
 
   @override
   Widget build(BuildContext context) {
@@ -832,13 +1032,12 @@ class _ReadingMarker extends StatelessWidget {
       height: 25,
       alignment: Alignment.center,
       color: AppColors.tealDark,
-      child: Text(
-        index.toString().padLeft(2, '0'),
-        style: const TextStyle(
+      child: const DecoratedBox(
+        decoration: BoxDecoration(
           color: AppColors.teal,
-          fontSize: 8,
-          fontWeight: FontWeight.w900,
+          shape: BoxShape.circle,
         ),
+        child: SizedBox(width: 5, height: 5),
       ),
     );
   }
@@ -884,8 +1083,65 @@ class _CompletionConsole extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          LabButton(label: label, isLoading: isLoading, onTap: onTap),
+          _LessonImageButton(label: label, isLoading: isLoading, onTap: onTap),
         ],
+      ),
+    );
+  }
+}
+
+class _LessonImageButton extends StatelessWidget {
+  final String label;
+  final bool isLoading;
+  final VoidCallback? onTap;
+
+  const _LessonImageButton({
+    required this.label,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onTap != null && !isLoading;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: Opacity(
+        opacity: isEnabled ? 1 : 0.55,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(Assets.missionOneButtonContainer, fit: BoxFit.fill),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: isEnabled ? onTap : null,
+                child: Center(
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: AppColors.teal,
+                          ),
+                        )
+                      : Text(
+                          label,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

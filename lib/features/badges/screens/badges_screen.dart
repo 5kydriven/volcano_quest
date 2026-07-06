@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/badge_award_image.dart';
 import '../application/badges_controller.dart';
 
 class BadgesScreen extends ConsumerWidget {
@@ -169,7 +170,7 @@ class _BadgeTile extends StatelessWidget {
           SizedBox(
             width: 72,
             height: 72,
-            child: _BadgeAvatar(imagePath: badge.imagePath),
+            child: BadgeAwardImage(imagePath: badge.imagePath, size: 72),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -200,28 +201,6 @@ class _BadgeTile extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _BadgeAvatar extends StatelessWidget {
-  final String imagePath;
-
-  const _BadgeAvatar({required this.imagePath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      imagePath,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
-      errorBuilder: (context, error, stackTrace) {
-        return const Icon(
-          Icons.military_tech_outlined,
-          color: AppColors.teal,
-          size: 34,
-        );
-      },
     );
   }
 }

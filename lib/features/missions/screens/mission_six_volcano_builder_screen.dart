@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_answer_container.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
 
@@ -320,11 +320,7 @@ class _BuilderContent extends StatelessWidget {
               const SizedBox(height: 14),
               for (var index = 0; index < answerOptions.length; index++) ...[
                 _BuilderAnswerTile(
-                  assetPath: Assets.missionTwoAnswerContainers[index],
-                  imageOffsetY: switch (index) {
-                    0 => -9.5,
-                    _ => 0.0,
-                  },
+                  optionIndex: index,
                   text: answerOptions[index],
                   isSelected: selectedOptionIndex == index,
                   onTap: onSelect == null ? null : () => onSelect!(index),
@@ -651,15 +647,13 @@ class _CrackedTilePainter extends CustomPainter {
 }
 
 class _BuilderAnswerTile extends StatelessWidget {
-  final String assetPath;
-  final double imageOffsetY;
+  final int optionIndex;
   final String text;
   final bool isSelected;
   final VoidCallback? onTap;
 
   const _BuilderAnswerTile({
-    required this.assetPath,
-    required this.imageOffsetY,
+    required this.optionIndex,
     required this.text,
     required this.isSelected,
     required this.onTap,
@@ -678,30 +672,11 @@ class _BuilderAnswerTile extends StatelessWidget {
         clipBehavior: Clip.none,
         child: Stack(
           fit: StackFit.expand,
+          clipBehavior: Clip.none,
           children: [
-            if (isSelected)
-              Transform.translate(
-                offset: Offset(0, imageOffsetY),
-                child: Transform.scale(
-                  scaleY: 6,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        const Color(0xFFFF5A00).withValues(alpha: 0.38),
-                        BlendMode.srcATop,
-                      ),
-                      child: Image.asset(assetPath, fit: BoxFit.fill),
-                    ),
-                  ),
-                ),
-              ),
-            Transform.translate(
-              offset: Offset(0, imageOffsetY),
-              child: Transform.scale(
-                scaleY: 6,
-                child: Image.asset(assetPath, fit: BoxFit.fill),
-              ),
+            MissionAnswerContainer(
+              letter: String.fromCharCode(65 + optionIndex),
+              isSelected: isSelected,
             ),
             Positioned(
               left: 92,
@@ -758,78 +733,18 @@ class _BuilderSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.teal, width: 1),
-                ),
-                child: const Icon(
-                  Icons.construction_outlined,
-                  color: AppColors.teal,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 6 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'VOLCANO ARCHITECT BADGE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.teal,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  const Expanded(
-                    child: _SummaryMetric(label: 'TILES', value: '5/5'),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
-                ),
-              ),
-            ],
-          ),
+        child: MissionCompletePanel(
+          title: 'MISSION 6 COMPLETE!',
+          badgeName: 'Volcano Architect Badge',
+          badgeImagePath: Assets.badgeVolcanoArchitect,
+          fallbackIcon: Icons.construction_outlined,
+          message:
+              'Congratulations, scientist. You earned the Volcano Architect Badge.',
+          metrics: [
+            const MissionCompleteMetric(label: 'TILES', value: '5/5'),
+            MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
+          ],
+          onProceed: onProceed,
         ),
       ),
     );
@@ -939,48 +854,6 @@ class _ScannerLabel extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

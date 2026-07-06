@@ -6,8 +6,21 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_answer_container.dart';
+import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
+
+class _MissionFourPalette {
+  static const obsidian = Color(0xFF120D0A);
+  static const basalt = Color(0xFF211712);
+  static const magma = Color(0xFFFF8A24);
+  static const sulfur = Color(0xFFFFC857);
+  static const parchment = Color(0xFFFFE8C2);
+  static const ash = Color(0xFFD8B493);
+  static const fault = Color(0xFF7B3B1E);
+  static const danger = Color(0xFFFF7A7A);
+}
 
 class MissionFourMapQuizScreen extends ConsumerStatefulWidget {
   final int levelId;
@@ -263,7 +276,7 @@ class _MissionFourMapQuizScreenState
       _submitted = true;
       _isSaving = false;
     });
-    showMissionSnackBar(
+    _showMissionFourSnackBar(
       context,
       widget.isReplay
           ? isCorrect
@@ -275,6 +288,42 @@ class _MissionFourMapQuizScreenState
       isError: !isCorrect,
     );
   }
+}
+
+void _showMissionFourSnackBar(
+  BuildContext context,
+  String message, {
+  bool isError = false,
+}) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        message.toUpperCase(),
+        style: const TextStyle(
+          color: _MissionFourPalette.parchment,
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
+      ),
+      backgroundColor: isError
+          ? const Color(0xFF4A1F24)
+          : _MissionFourPalette.basalt,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(milliseconds: 1800),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(
+          color: isError
+              ? _MissionFourPalette.danger
+              : _MissionFourPalette.magma,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+    ),
+  );
 }
 
 class _MissionFourTopBar extends StatelessWidget {
@@ -316,27 +365,31 @@ class _MissionFourPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
+      decoration: BoxDecoration(
+        color: _MissionFourPalette.obsidian.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(6),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
           LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: AppColors.surface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
+            backgroundColor: _MissionFourPalette.basalt,
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              _MissionFourPalette.magma,
+            ),
           ),
           Expanded(
             child: Stack(
               children: [
-                const Positioned.fill(child: _MissionFourGrid()),
                 Positioned(
                   top: 8,
                   right: 18,
                   child: Text(
                     '$percentComplete% COMPLETE',
                     style: const TextStyle(
-                      color: AppColors.textMuted,
+                      color: _MissionFourPalette.sulfur,
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -381,7 +434,7 @@ class _VolcanoMapContent extends StatelessWidget {
         const Text(
           'Tap a volcano marker to inspect its field notes.',
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: _MissionFourPalette.ash,
             fontSize: 13,
             height: 1.35,
             letterSpacing: 0,
@@ -429,8 +482,16 @@ class PhilippinesMap extends StatelessWidget {
 
         return Container(
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.borderAlt, width: 1),
-            borderRadius: BorderRadius.circular(8),
+            color: _MissionFourPalette.basalt.withValues(alpha: 0.84),
+            border: Border.all(color: _MissionFourPalette.fault, width: 1.2),
+            borderRadius: BorderRadius.circular(4),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x661A0802),
+                offset: Offset(0, 8),
+                blurRadius: 14,
+              ),
+            ],
           ),
           clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
@@ -514,9 +575,9 @@ class VolcanoMarker extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isAnswered
         ? isCorrect
-              ? AppColors.teal
-              : const Color(0xFFFFB3B3)
-        : const Color(0xFFFFC857);
+              ? _MissionFourPalette.sulfur
+              : _MissionFourPalette.danger
+        : _MissionFourPalette.magma;
     final markerKey = volcano is _MissionFourVolcano
         ? ValueKey('mission4-volcano-${(volcano as _MissionFourVolcano).id}')
         : ValueKey('volcano-${volcano.name}');
@@ -543,7 +604,7 @@ class VolcanoMarker extends StatelessWidget {
                 size: 30,
                 shadows: [
                   Shadow(
-                    color: AppColors.background.withValues(alpha: 0.95),
+                    color: _MissionFourPalette.obsidian.withValues(alpha: 0.95),
                     blurRadius: 8,
                   ),
                 ],
@@ -563,11 +624,11 @@ class VolcanoMarker extends StatelessWidget {
               letterSpacing: 0,
               shadows: [
                 Shadow(
-                  color: AppColors.background,
+                  color: _MissionFourPalette.obsidian,
                   blurRadius: 6,
                   offset: Offset(0, 1),
                 ),
-                Shadow(color: AppColors.background, blurRadius: 10),
+                Shadow(color: _MissionFourPalette.obsidian, blurRadius: 10),
               ],
             ),
           ),
@@ -587,12 +648,16 @@ class _MapLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.terrain_outlined, color: Color(0xFFFFC857), size: 15),
+        const Icon(
+          Icons.terrain_outlined,
+          color: _MissionFourPalette.magma,
+          size: 15,
+        ),
         const SizedBox(width: 8),
         Text(
           '$answeredCount/$total VOLCANOES CHECKED',
           style: const TextStyle(
-            color: AppColors.textMuted,
+            color: _MissionFourPalette.sulfur,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1,
@@ -623,7 +688,7 @@ class _VolcanoFactContent extends StatelessWidget {
               Text(
                 volcano.name,
                 style: const TextStyle(
-                  color: AppColors.textPrimary,
+                  color: _MissionFourPalette.parchment,
                   fontSize: 22,
                   height: 1.18,
                   fontWeight: FontWeight.w800,
@@ -634,7 +699,7 @@ class _VolcanoFactContent extends StatelessWidget {
               const Text(
                 'FACTS',
                 style: TextStyle(
-                  color: AppColors.teal,
+                  color: _MissionFourPalette.sulfur,
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
@@ -649,9 +714,10 @@ class _VolcanoFactContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(onPressed: onNext, child: const Text('NEXT')),
+        _MissionImageActionButton(
+          assetPath: Assets.missionOneButtonContainer,
+          semanticLabel: 'NEXT',
+          onPressed: onNext,
         ),
       ],
     );
@@ -693,7 +759,7 @@ class _VolcanoQuestionContent extends StatelessWidget {
               Text(
                 volcano.question,
                 style: const TextStyle(
-                  color: AppColors.textPrimary,
+                  color: _MissionFourPalette.parchment,
                   fontSize: 21,
                   height: 1.25,
                   fontWeight: FontWeight.w800,
@@ -704,7 +770,7 @@ class _VolcanoQuestionContent extends StatelessWidget {
               Text(
                 '${volcano.name.toUpperCase()} - ${AppConstants.missionFourXpPerCorrect} XP',
                 style: const TextStyle(
-                  color: AppColors.textMuted,
+                  color: _MissionFourPalette.sulfur,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1,
@@ -713,7 +779,7 @@ class _VolcanoQuestionContent extends StatelessWidget {
               const SizedBox(height: 20),
               for (var index = 0; index < volcano.options.length; index++) ...[
                 _AnswerOptionTile(
-                  letter: String.fromCharCode(65 + index),
+                  optionIndex: index,
                   text: volcano.options[index],
                   isSelected: selectedOptionIndex == index,
                   isSubmitted: submitted,
@@ -726,33 +792,113 @@ class _VolcanoQuestionContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: submitted
-                ? onBackToMap
-                : canSubmit
-                ? onSubmit
-                : null,
-            child: isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: AppColors.teal,
-                    ),
-                  )
-                : Text(submitted ? 'BACK TO MAP' : 'SUBMIT ANSWER'),
-          ),
+        _MissionImageActionButton(
+          assetPath: Assets.missionOneButtonContainer,
+          semanticLabel: submitted ? 'BACK TO MAP' : 'SUBMIT ANSWER',
+          onPressed: submitted
+              ? onBackToMap
+              : canSubmit
+              ? onSubmit
+              : null,
+          opacity: submitted || canSubmit || isSaving ? 1 : 0.45,
+          child: isSaving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.8,
+                    color: _MissionFourPalette.parchment,
+                  ),
+                )
+              : null,
         ),
       ],
     );
   }
 }
 
+class _MissionImageActionButton extends StatelessWidget {
+  final String assetPath;
+  final String semanticLabel;
+  final VoidCallback? onPressed;
+  final double opacity;
+  final Widget? child;
+
+  const _MissionImageActionButton({
+    required this.assetPath,
+    required this.semanticLabel,
+    required this.onPressed,
+    this.opacity = 1,
+    this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          foregroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          side: BorderSide.none,
+          disabledForegroundColor: Colors.transparent,
+          overlayColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Opacity(
+          opacity: opacity,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                child: Image.asset(
+                  assetPath,
+                  fit: BoxFit.fill,
+                  alignment: Alignment.center,
+                ),
+              ),
+              ?child,
+              if (child == null)
+                Text(
+                  semanticLabel,
+                  style: const TextStyle(
+                    color: Color(0xFFFFD08A),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1,
+                    shadows: [
+                      Shadow(color: Color(0xFFFF5A00), blurRadius: 8),
+                      Shadow(
+                        color: Color(0x99000000),
+                        offset: Offset(0, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Opacity(opacity: 0, child: Text(semanticLabel)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AnswerOptionTile extends StatelessWidget {
-  final String letter;
+  final int optionIndex;
   final String text;
   final bool isSelected;
   final bool isSubmitted;
@@ -760,7 +906,7 @@ class _AnswerOptionTile extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _AnswerOptionTile({
-    required this.letter,
+    required this.optionIndex,
     required this.text,
     required this.isSelected,
     required this.isSubmitted,
@@ -772,70 +918,88 @@ class _AnswerOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final showCorrect = isSubmitted && isCorrect;
     final showWrong = isSubmitted && isSelected && !isCorrect;
-    final borderColor = showCorrect
-        ? AppColors.teal
-        : showWrong
-        ? const Color(0xFFFF7A7A)
-        : isSelected
-        ? AppColors.tealDim
-        : AppColors.borderAlt;
-    final backgroundColor = showCorrect
-        ? AppColors.teal.withValues(alpha: 0.18)
-        : showWrong
-        ? const Color(0xFFFF7A7A).withValues(alpha: 0.12)
-        : isSelected
-        ? AppColors.surfaceAlt.withValues(alpha: 0.88)
-        : const Color(0xFF1B2A36);
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
+      borderRadius: BorderRadius.zero,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 58),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: borderColor, width: 1),
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Row(
+        height: 50,
+        clipBehavior: Clip.none,
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.none,
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                border: Border.all(color: borderColor, width: 0.8),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                letter,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+            MissionAnswerContainer(
+              letter: String.fromCharCode(65 + optionIndex),
+              isSelected: isSelected && !isSubmitted,
+              feedback: showCorrect
+                  ? MissionAnswerFeedback.correct
+                  : showWrong
+                  ? MissionAnswerFeedback.wrong
+                  : MissionAnswerFeedback.none,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0,
+            Positioned(
+              left: 92,
+              right: showCorrect || showWrong ? 48 : 22,
+              top: 0,
+              bottom: 0,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF351305),
+                    fontSize: 18,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                    shadows: [
+                      Shadow(
+                        color: Color(0x99FFF0C9),
+                        offset: Offset(0, 1),
+                        blurRadius: 0,
+                      ),
+                      Shadow(
+                        color: Color(0x33000000),
+                        offset: Offset(1, 1),
+                        blurRadius: 1,
+                      ),
+                    ],
+                  ),
+                  strutStyle: const StrutStyle(
+                    fontSize: 18,
+                    height: 1,
+                    forceStrutHeight: true,
+                  ),
                 ),
               ),
             ),
             if (showCorrect)
-              const Icon(Icons.check, color: AppColors.teal, size: 18)
+              const Positioned(
+                right: 18,
+                top: 0,
+                bottom: 0,
+                child: Icon(
+                  Icons.check,
+                  color: _MissionFourPalette.sulfur,
+                  size: 20,
+                ),
+              )
             else if (showWrong)
-              const Icon(Icons.close, color: Color(0xFFFF7A7A), size: 18),
+              const Positioned(
+                right: 18,
+                top: 0,
+                bottom: 0,
+                child: Icon(
+                  Icons.close,
+                  color: _MissionFourPalette.danger,
+                  size: 20,
+                ),
+              ),
           ],
         ),
       ),
@@ -862,94 +1026,27 @@ class _MissionFourSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.teal, width: 1),
-                ),
-                child: const Icon(
-                  Icons.public_outlined,
-                  color: AppColors.teal,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'MISSION 4 COMPLETE',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'PHILIPPINE VOLCANO EXPLORER',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.teal,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              if (isPerfect) ...[
-                const SizedBox(height: 6),
-                const Text(
-                  'VOLCANO EXPLORER CHAMPION',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFFFC857),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'SCORE',
-                      value: '$correctCount/$totalVolcanoes',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryMetric(
-                      label: 'EARNED',
-                      value: '$earnedXP XP',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onProceed,
-                  child: const Text('RETURN TO MENU'),
-                ),
-              ),
-            ],
-          ),
+        child: MissionCompletePanel(
+          title: 'MISSION 4 COMPLETE!',
+          badgeName: isPerfect
+              ? 'Philippine Volcano Explorer + Champion'
+              : 'Philippine Volcano Explorer Badge',
+          badgeImagePath: Assets.badgePhilippineVolcanoExplorer,
+          secondaryBadgeImagePath: isPerfect
+              ? Assets.badgeVolcanoExplorerChampion
+              : null,
+          fallbackIcon: Icons.public_outlined,
+          message: isPerfect
+              ? 'Congratulations, scientist. You earned the Philippine Volcano Explorer Badge and Volcano Explorer Champion Badge.'
+              : 'Congratulations, scientist. You earned the Philippine Volcano Explorer Badge.',
+          metrics: [
+            MissionCompleteMetric(
+              label: 'SCORE',
+              value: '$correctCount/$totalVolcanoes',
+            ),
+            MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
+          ],
+          onProceed: onProceed,
         ),
       ),
     );
@@ -966,12 +1063,16 @@ class _ScannerLabel extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.radar_outlined, color: AppColors.teal, size: 12),
+        const Icon(
+          Icons.travel_explore_outlined,
+          color: _MissionFourPalette.sulfur,
+          size: 12,
+        ),
         const SizedBox(width: 7),
         Text(
           text,
           style: const TextStyle(
-            color: AppColors.teal,
+            color: _MissionFourPalette.sulfur,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
@@ -994,14 +1095,14 @@ class _FactBullet extends StatelessWidget {
       children: [
         const Padding(
           padding: EdgeInsets.only(top: 7),
-          child: Icon(Icons.circle, color: AppColors.teal, size: 6),
+          child: Icon(Icons.circle, color: _MissionFourPalette.magma, size: 6),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             text,
             style: const TextStyle(
-              color: AppColors.textSecondary,
+              color: _MissionFourPalette.ash,
               fontSize: 14,
               height: 1.42,
               letterSpacing: 0,
@@ -1011,89 +1112,6 @@ class _FactBullet extends StatelessWidget {
       ],
     );
   }
-}
-
-class _SummaryMetric extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SummaryMetric({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 0.8),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MissionFourGrid extends StatelessWidget {
-  const _MissionFourGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(painter: _MissionFourGridPainter());
-  }
-}
-
-class _MissionFourGridPainter extends CustomPainter {
-  static const _gridColor = Color(0x151E4A5A);
-  static const _crossColor = Color(0x0F1E4A5A);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = _gridColor
-      ..strokeWidth = 0.6;
-    const spacing = 18.0;
-
-    for (var x = 0.0; x <= size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (var y = 0.0; y <= size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    final crossPaint = Paint()
-      ..color = _crossColor
-      ..strokeWidth = 1;
-    for (var x = spacing / 2; x <= size.width; x += spacing) {
-      for (var y = spacing / 2; y <= size.height; y += spacing) {
-        canvas.drawLine(Offset(x - 1, y), Offset(x + 1, y), crossPaint);
-        canvas.drawLine(Offset(x, y - 1), Offset(x, y + 1), crossPaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class Volcano {
