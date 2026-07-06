@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
@@ -119,7 +122,8 @@ class _LevelEightFieldLessonScreenState
           ),
           _Fact(
             label: 'Feature',
-            value: 'Caldera with water, often described as a lake within a lake',
+            value:
+                'Caldera with water, often described as a lake within a lake',
           ),
           _Fact(
             label: 'Eruption period',
@@ -244,6 +248,7 @@ class _LevelEightFieldLessonScreenState
       return;
     }
 
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.correct));
     showMissionSnackBar(
       context,
       widget.isReplay ? 'Practice lesson complete' : 'Field lesson complete',
@@ -364,10 +369,7 @@ class _BookPageSurface extends StatelessWidget {
           layoutBuilder: (currentChild, previousChildren) {
             return Stack(
               fit: StackFit.expand,
-              children: [
-                ...previousChildren,
-                if (currentChild != null) currentChild,
-              ],
+              children: [...previousChildren, ?currentChild],
             );
           },
           transitionBuilder: (child, animation) {
@@ -715,17 +717,10 @@ class _DossierPanel extends StatelessWidget {
             right: 0,
             child: SizedBox(
               width: 28,
-              child: Divider(
-                height: 1,
-                thickness: 1,
-                color: AppColors.teal,
-              ),
+              child: Divider(height: 1, thickness: 1, color: AppColors.teal),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: child,
-          ),
+          Padding(padding: const EdgeInsets.only(top: 4), child: child),
         ],
       ),
     );

@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
@@ -285,6 +288,7 @@ class _MissionThreeWordBuilderScreenState
       setState(() {
         _feedback = _WordFeedback.wrong;
       });
+      unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.wrong));
       showMissionSnackBar(context, 'Wrong sequence - try again', isError: true);
       return;
     }
@@ -327,6 +331,7 @@ class _MissionThreeWordBuilderScreenState
       }
       _feedback = _WordFeedback.correct;
     });
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.correct));
     showMissionSnackBar(
       context,
       widget.isReplay ? 'Practice word solved' : '+20 XP recorded',

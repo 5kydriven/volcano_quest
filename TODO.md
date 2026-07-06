@@ -1,7 +1,7 @@
 ### Phase 1
 
-- [] download all images
-- [] download all sfx and bg music
+- [x] download all images
+- [x] download all sfx and bg music
 - [] download all 3d models
 - [X] create player model
 - [X] create start page

@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
@@ -160,6 +164,11 @@ class _MissionEightEruptionWarningLabScreenState
       _selectedAnswer = answer;
       _selectedAnswerIsCorrect = isCorrect;
     });
+    unawaited(
+      ref
+          .read(audioControllerProvider)
+          .playSfx(isCorrect ? SfxCue.correct : SfxCue.wrong),
+    );
 
     await Future<void>.delayed(const Duration(milliseconds: 900));
     if (!mounted) {

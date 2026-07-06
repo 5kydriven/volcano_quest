@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
@@ -188,6 +192,7 @@ class _MissionSixVolcanoBuilderScreenState
       setState(() {
         _selectedOptionIndex = null;
       });
+      unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.wrong));
       showMissionSnackBar(context, 'Type mismatch - try again', isError: true);
       return;
     }
@@ -199,6 +204,7 @@ class _MissionSixVolcanoBuilderScreenState
       _droppingTileIndex = tileIndex;
       _selectedOptionIndex = null;
     });
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.falling));
     showMissionSnackBar(
       context,
       widget.isReplay
