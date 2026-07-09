@@ -33,4 +33,7 @@
 
 ### Phase 5
 
+- [ ] change the image in mission 5
+- [ ] add volcano pieces in mission 6
+- [ ] L8 improve ui
 - [] deploy
