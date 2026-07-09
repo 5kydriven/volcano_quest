@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/badge_award_image.dart';
+import '../../../shared/widgets/mission_screen_background.dart';
 import '../application/badges_controller.dart';
 
 class BadgesScreen extends ConsumerWidget {
@@ -16,32 +17,34 @@ class BadgesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: _BadgesTopBar()),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 34, 24, 32),
-              sliver: badges.isEmpty
-                  ? const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: _EmptyBadgesState(),
-                    )
-                  : SliverGrid.builder(
-                      itemCount: badges.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1.04,
-                          ),
-                      itemBuilder: (context, index) {
-                        return _BadgeTile(badge: badges[index]);
-                      },
-                    ),
-            ),
-          ],
+      body: MissionScreenBackground(
+        child: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              const SliverToBoxAdapter(child: _BadgesTopBar()),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 34, 24, 32),
+                sliver: badges.isEmpty
+                    ? const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _EmptyBadgesState(),
+                      )
+                    : SliverGrid.builder(
+                        itemCount: badges.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.98,
+                            ),
+                        itemBuilder: (context, index) {
+                          return _BadgeTile(badge: badges[index]);
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -54,42 +57,64 @@ class _BadgesTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 10, 8, 0),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: AppColors.textSecondary,
-              size: 20,
-            ),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-              context.go(AppRoutes.menu);
-            },
-          ),
-          const Spacer(),
-          const Text(
-            'Badges',
-            style: TextStyle(
-              color: AppColors.teal,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
+          SizedBox(
+            width: 38,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: MissionBackButton(
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.go(AppRoutes.menu);
+                },
+              ),
             ),
           ),
           const Spacer(),
-          IconButton(
-            icon: const Icon(
-              Icons.settings_outlined,
-              color: AppColors.textSecondary,
-              size: 20,
+          const Expanded(
+            flex: 8,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _BadgesHeading('BADGES', size: 24),
             ),
-            onPressed: () => context.push(AppRoutes.settings),
           ),
+          const Spacer(),
+          const SizedBox(width: 38),
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgesHeading extends StatelessWidget {
+  final String text;
+  final double size;
+
+  const _BadgesHeading(this.text, {required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      style: TextStyle(
+        fontSize: size,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 2,
+        foreground: Paint()
+          ..shader = const LinearGradient(
+            colors: [Color(0xFFFFB13A), Color(0xFFFF6416), Color(0xFFC43110)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(Rect.fromLTWH(0, 0, 260, 70)),
+        shadows: const [
+          Shadow(color: Colors.black, offset: Offset(4, 4), blurRadius: 0),
+          Shadow(color: Color(0xFF6C2500), offset: Offset(2, 2)),
         ],
       ),
     );
@@ -127,7 +152,7 @@ class _EmptyBadgesState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.8,
               ),
@@ -138,7 +163,7 @@ class _EmptyBadgesState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.teal,
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.3,
               ),
@@ -168,13 +193,13 @@ class _BadgeTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 72,
-            height: 72,
-            child: BadgeAwardImage(imagePath: badge.imagePath, size: 72),
+            width: 78,
+            height: 78,
+            child: BadgeAwardImage(imagePath: badge.imagePath, size: 78),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
-            height: 28,
+            height: 36,
             child: Text(
               badge.name.toUpperCase(),
               maxLines: 2,
@@ -182,21 +207,11 @@ class _BadgeTile extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.9,
                 height: 1.25,
               ),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            '${badge.exp} XP',
-            style: const TextStyle(
-              color: AppColors.teal,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
             ),
           ),
         ],
