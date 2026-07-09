@@ -36,4 +36,6 @@
 - [ ] change the image in mission 5
 - [ ] add volcano pieces in mission 6
 - [ ] L8 improve ui
+- [ ] change place holder image in side quest
+- [ ] test audio
 - [] deploy
