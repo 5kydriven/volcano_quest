@@ -98,7 +98,7 @@ class _LeaderboardTopBar extends StatelessWidget {
             flex: 8,
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: _LavaHeading('LEADERBOARDS', size: 24),
+              child: _LavaHeading('LEADERBOARDS', size: 20),
             ),
           ),
           const Spacer(),
@@ -120,7 +120,7 @@ class _LeaderboardHeader extends StatelessWidget {
         const _LeaderboardCroppedAsset(
           assetPath: Assets.header,
           crop: _headerCrop,
-          width: 300,
+          width: 250,
         ),
         const SizedBox(height: 12),
         _lavaDivider(),
@@ -281,7 +281,7 @@ class _PodiumCard extends StatelessWidget {
           ),
           if (!isChampion)
             Positioned(
-              top: height * 0.04,
+              top: height * 0.03,
               child: Text(
                 '${scientist.rank}',
                 style: TextStyle(
@@ -297,17 +297,17 @@ class _PodiumCard extends StatelessWidget {
               ),
             ),
           Positioned(
-            top: height * (isChampion ? 0.34 : 0.32),
+            top: height * (isChampion ? 0.20 : 0.24),
             child: _AvatarImage(
               avatarIndex: scientist.avatarIndex,
-              size: avatarSize,
+              size: avatarSize + 12,
               borderRadius: width * 0.08,
             ),
           ),
           Positioned(
             left: width * 0.12,
             right: width * 0.12,
-            bottom: height * (isChampion ? 0.19 : 0.18),
+            bottom: height * (isChampion ? 0.10 : 0.11),
             child: Column(
               children: [
                 _FittedLabel(
