@@ -34,7 +34,7 @@
 ### Phase 5
 
 - [ ] change the image in mission 5
-- [ ] add volcano pieces in mission 6
+- [x] add volcano pieces in mission 6
 - [x] L8 improve ui
 - [ ] change place holder image in side quest
 - [ ] test audio
