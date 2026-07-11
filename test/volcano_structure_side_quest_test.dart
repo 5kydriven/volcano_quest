@@ -138,21 +138,20 @@ Future<SharedPreferences> _pumpSideQuest(
 }
 
 Future<void> _startQuiz(WidgetTester tester) async {
-  while (find.text('START CHECK').evaluate().isEmpty) {
+  while (find.text('STRUCTURE LESSON').evaluate().isNotEmpty) {
     await _tapButton(tester, 'NEXT');
   }
-  await _tapButton(tester, 'START CHECK');
 }
 
 Future<void> _answerCurrentQuestion(WidgetTester tester, String answer) async {
   await tester.ensureVisible(find.text(answer));
   await tester.tap(find.text(answer));
   await tester.pumpAndSettle();
-  await _tapButton(tester, 'SUBMIT');
+  await _tapButton(tester, 'SUBMIT ANSWER');
 }
 
 Future<void> _goNext(WidgetTester tester) async {
-  await _tapButton(tester, 'NEXT');
+  await _tapButton(tester, 'NEXT QUESTION');
 }
 
 Future<void> _tapButton(WidgetTester tester, String label) async {

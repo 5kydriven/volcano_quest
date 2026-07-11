@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/mission_answer_container.dart';
 import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
@@ -207,13 +213,6 @@ class _VolcanoStructureSideQuestScreenState
                             page: _lessonPages[_pageIndex],
                             pageNumber: _pageIndex + 1,
                             totalPages: _lessonPages.length,
-                            onPrevious: _pageIndex == 0
-                                ? null
-                                : () {
-                                    setState(() {
-                                      _pageIndex--;
-                                    });
-                                  },
                             onNext: () {
                               setState(() {
                                 _pageIndex++;
@@ -230,19 +229,6 @@ class _VolcanoStructureSideQuestScreenState
                             selectedOptionIndex: _selectedOptionIndex,
                             submitted: _submitted,
                             isSaving: _isSaving,
-                            onPrevious: _submitted || _isSaving
-                                ? null
-                                : () {
-                                    setState(() {
-                                      if (activeQuestionIndex == 0) {
-                                        _pageIndex = _lessonPages.length - 1;
-                                      } else {
-                                        _questionIndex =
-                                            activeQuestionIndex - 1;
-                                      }
-                                      _selectedOptionIndex = null;
-                                    });
-                                  },
                             onSelect: _submitted || _isSaving
                                 ? null
                                 : (index) {
@@ -364,6 +350,11 @@ class _VolcanoStructureSideQuestScreenState
       _submitted = true;
       _isSaving = false;
     });
+    unawaited(
+      ref
+          .read(audioControllerProvider)
+          .playSfx(isCorrect ? SfxCue.correct : SfxCue.wrong),
+    );
     showMissionSnackBar(
       context,
       widget.isReplay
@@ -415,65 +406,100 @@ class _SideQuestPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF061625),
-        border: Border.all(color: AppColors.borderAlt, width: 1),
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-            child: Row(
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 6,
+            backgroundColor: AppColors.surface,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
+          ),
+          Expanded(
+            child: Stack(
               children: [
-                const Text(
-                  'STRUCTURE LESSON',
-                  style: TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.3,
+                const Positioned.fill(child: _SideQuestGrid()),
+                Positioned(
+                  top: 8,
+                  right: 18,
+                  child: Text(
+                    '$percentComplete% COMPLETE',
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  '$percentComplete%',
-                  style: const TextStyle(
-                    color: AppColors.teal,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 26, 14, 18),
+                    child: child,
                   ),
                 ),
               ],
             ),
           ),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 3,
-            backgroundColor: AppColors.surface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
-          ),
-          Expanded(child: child),
         ],
       ),
     );
   }
 }
 
+class _SideQuestGrid extends StatelessWidget {
+  const _SideQuestGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _SideQuestGridPainter());
+  }
+}
+
+class _SideQuestGridPainter extends CustomPainter {
+  static const _gridColor = Color(0x151E4A5A);
+  static const _crossColor = Color(0x0F1E4A5A);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = _gridColor
+      ..strokeWidth = 0.6;
+    const spacing = 18.0;
+
+    for (var x = 0.0; x <= size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (var y = 0.0; y <= size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    final crossPaint = Paint()
+      ..color = _crossColor
+      ..strokeWidth = 1;
+    for (var x = spacing / 2; x <= size.width; x += spacing) {
+      for (var y = spacing / 2; y <= size.height; y += spacing) {
+        canvas.drawLine(Offset(x - 1, y), Offset(x + 1, y), crossPaint);
+        canvas.drawLine(Offset(x, y - 1), Offset(x, y + 1), crossPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class _LessonContent extends StatelessWidget {
   final _LessonPage page;
   final int pageNumber;
   final int totalPages;
-  final VoidCallback? onPrevious;
   final VoidCallback onNext;
 
   const _LessonContent({
     required this.page,
     required this.pageNumber,
     required this.totalPages,
-    required this.onPrevious,
     required this.onNext,
   });
 
@@ -483,59 +509,53 @@ class _LessonContent extends StatelessWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PAGE $pageNumber/$totalPages',
-                  style: const TextStyle(
-                    color: AppColors.teal,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  page.title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                for (final paragraph in page.paragraphs) ...[
-                  Text(
-                    paragraph,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      height: 1.45,
-                      letterSpacing: 0,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ScannerLabel(text: 'STRUCTURE LESSON'),
+                    const SizedBox(height: 14),
+                    Text(
+                      page.title,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        height: 1.16,
+                        letterSpacing: 0,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-                for (final bullet in page.bullets) ...[
-                  _LessonBullet(text: bullet),
-                  const SizedBox(height: 8),
-                ],
-                for (final label in page.imageLabels) ...[
-                  const SizedBox(height: 10),
-                  _ImagePlaceholder(label: label),
-                ],
-              ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'PAGE $pageNumber/$totalPages',
+                      style: const TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _LessonDataSection(page: page),
+                    for (final label in page.imageLabels) ...[
+                      const SizedBox(height: 12),
+                      _VolcanoScanFrame(label: label),
+                    ],
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-        _BottomActions(
-          leadingLabel: 'BACK',
-          trailingLabel: pageNumber == totalPages ? 'START CHECK' : 'NEXT',
-          onLeading: onPrevious,
-          onTrailing: onNext,
+        _SideQuestActionButton(
+          assetPath: Assets.missionOneButtonContainer,
+          semanticLabel: 'NEXT',
+          visibleLabel: 'NEXT',
+          onPressed: onNext,
         ),
       ],
     );
@@ -549,7 +569,6 @@ class _QuestionContent extends StatelessWidget {
   final int? selectedOptionIndex;
   final bool submitted;
   final bool isSaving;
-  final VoidCallback? onPrevious;
   final ValueChanged<int>? onSelect;
   final VoidCallback onAction;
 
@@ -560,7 +579,6 @@ class _QuestionContent extends StatelessWidget {
     required this.selectedOptionIndex,
     required this.submitted,
     required this.isSaving,
-    required this.onPrevious,
     required this.onSelect,
     required this.onAction,
   });
@@ -569,72 +587,168 @@ class _QuestionContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final canSubmit = selectedOptionIndex != null && !isSaving;
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'CHECK ${questionIndex + 1}/$totalQuestions - ${question.xp} XP',
-                  style: const TextStyle(
-                    color: AppColors.teal,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  question.tag,
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  question.question,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    height: 1.25,
-                    letterSpacing: 0,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                for (var index = 0; index < question.options.length; index++)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _OptionTile(
-                      letter: String.fromCharCode(65 + index),
-                      text: question.options[index],
-                      isSelected: selectedOptionIndex == index,
-                      isSubmitted: submitted,
-                      isCorrect: question.correctOptionIndex == index,
-                      onTap: onSelect == null ? null : () => onSelect!(index),
-                    ),
-                  ),
-              ],
-            ),
+        _ScannerLabel(text: question.tag),
+        const SizedBox(height: 14),
+        Text(
+          question.question,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            height: 1.28,
+            letterSpacing: 0,
           ),
         ),
-        _BottomActions(
-          leadingLabel: 'BACK',
-          trailingLabel: submitted
-              ? questionIndex == totalQuestions - 1
-                    ? 'VIEW RESULTS'
-                    : 'NEXT'
-              : 'SUBMIT',
-          onLeading: onPrevious,
-          onTrailing: canSubmit || submitted ? onAction : null,
-          isLoading: isSaving,
+        const SizedBox(height: 8),
+        Text(
+          'CHECK ${questionIndex + 1}/$totalQuestions - ${question.xp} XP',
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const SizedBox(height: 20),
+              for (var index = 0; index < question.options.length; index++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _SideQuestAnswerOption(
+                    letter: String.fromCharCode(65 + index),
+                    text: question.options[index],
+                    isSelected: selectedOptionIndex == index,
+                    isSubmitted: submitted,
+                    isCorrect: question.correctOptionIndex == index,
+                    onTap: onSelect == null ? null : () => onSelect!(index),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _SideQuestActionButton(
+          assetPath: submitted
+              ? Assets.missionNextQuestionButton
+              : Assets.missionSubmitAnswerButton,
+          semanticLabel: submitted ? 'NEXT QUESTION' : 'SUBMIT ANSWER',
+          onPressed: submitted || canSubmit ? onAction : null,
+          opacity: submitted || canSubmit || isSaving ? 1 : 0.45,
+          child: isSaving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.8,
+                    color: AppColors.textPrimary,
+                  ),
+                )
+              : null,
         ),
       ],
+    );
+  }
+}
+
+class _SideQuestAnswerOption extends StatelessWidget {
+  final String letter;
+  final String text;
+  final bool isSelected;
+  final bool isSubmitted;
+  final bool isCorrect;
+  final VoidCallback? onTap;
+
+  const _SideQuestAnswerOption({
+    required this.letter,
+    required this.text,
+    required this.isSelected,
+    required this.isSubmitted,
+    required this.isCorrect,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final showCorrect = isSubmitted && isCorrect;
+    final showWrong = isSubmitted && isSelected && !isCorrect;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.zero,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: double.infinity,
+        height: 55,
+        clipBehavior: Clip.none,
+        child: Stack(
+          fit: StackFit.expand,
+          clipBehavior: Clip.none,
+          children: [
+            MissionAnswerContainer(
+              letter: letter,
+              isSelected: isSelected && !isSubmitted,
+              feedback: showCorrect
+                  ? MissionAnswerFeedback.correct
+                  : showWrong
+                  ? MissionAnswerFeedback.wrong
+                  : MissionAnswerFeedback.none,
+            ),
+            Positioned(
+              left: 92,
+              right: showCorrect || showWrong ? 48 : 22,
+              top: 0,
+              bottom: 0,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  text,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF292828),
+                    fontSize: 18,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                    shadows: [
+                      Shadow(
+                        color: Color(0x99FFF0C9),
+                        offset: Offset(0, 1),
+                        blurRadius: 0,
+                      ),
+                      Shadow(
+                        color: Color(0x33000000),
+                        offset: Offset(1, 1),
+                        blurRadius: 1,
+                      ),
+                    ],
+                  ),
+                  strutStyle: const StrutStyle(
+                    fontSize: 18,
+                    height: 1,
+                    forceStrutHeight: true,
+                  ),
+                ),
+              ),
+            ),
+            if (showCorrect || showWrong)
+              Positioned(
+                right: 18,
+                top: 0,
+                bottom: 0,
+                child: Icon(
+                  showCorrect ? Icons.check : Icons.close,
+                  color: showCorrect ? AppColors.teal : const Color(0xFFFF7A7A),
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -677,54 +791,155 @@ class _SideQuestSummary extends StatelessWidget {
   }
 }
 
-class _BottomActions extends StatelessWidget {
-  final String leadingLabel;
-  final String trailingLabel;
-  final VoidCallback? onLeading;
-  final VoidCallback? onTrailing;
-  final bool isLoading;
+class _SideQuestActionButton extends StatelessWidget {
+  final String assetPath;
+  final String semanticLabel;
+  final String? visibleLabel;
+  final VoidCallback? onPressed;
+  final double opacity;
+  final Widget? child;
 
-  const _BottomActions({
-    required this.leadingLabel,
-    required this.trailingLabel,
-    required this.onLeading,
-    required this.onTrailing,
-    this.isLoading = false,
+  const _SideQuestActionButton({
+    required this.assetPath,
+    required this.semanticLabel,
+    required this.onPressed,
+    this.visibleLabel,
+    this.opacity = 1,
+    this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.borderAlt, width: 1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: onLeading,
-              child: Text(leadingLabel),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: isLoading ? null : onTrailing,
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: AppColors.teal,
-                        strokeWidth: 1.5,
+    return SizedBox(
+      width: double.infinity,
+      height: 70,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          foregroundColor: Colors.transparent,
+          disabledForegroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          side: BorderSide.none,
+          overlayColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        child: Opacity(
+          opacity: opacity,
+          child: SizedBox.expand(
+            child: Stack(
+              fit: StackFit.expand,
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Image.asset(
+                  assetPath,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                ),
+                if (visibleLabel != null)
+                  Center(
+                    child: Text(
+                      visibleLabel!,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black,
+                            offset: Offset(2, 2),
+                            blurRadius: 0,
+                          ),
+                        ],
                       ),
-                    )
-                  : Text(trailingLabel),
+                    ),
+                  ),
+                if (child != null) Center(child: child),
+                if (visibleLabel == null)
+                  Center(
+                    child: Opacity(opacity: 0, child: Text(semanticLabel)),
+                  ),
+              ],
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScannerLabel extends StatelessWidget {
+  final String text;
+
+  const _ScannerLabel({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.radar_outlined, color: AppColors.teal, size: 12),
+        const SizedBox(width: 7),
+        Text(
+          text,
+          style: const TextStyle(
+            color: AppColors.teal,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LessonDataSection extends StatelessWidget {
+  final _LessonPage page;
+
+  const _LessonDataSection({required this.page});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.82),
+        border: Border.all(color: AppColors.borderAlt, width: 1),
+        borderRadius: BorderRadius.circular(6),
+        boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 12)],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final paragraph in page.paragraphs) ...[
+              Text(
+                paragraph,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.45,
+                  letterSpacing: 0,
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            for (final bullet in page.bullets) ...[
+              _LessonBullet(text: bullet),
+              const SizedBox(height: 8),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -766,50 +981,77 @@ class _LessonBullet extends StatelessWidget {
   }
 }
 
-class _ImagePlaceholder extends StatelessWidget {
+class _VolcanoScanFrame extends StatelessWidget {
   final String label;
 
-  const _ImagePlaceholder({required this.label});
+  const _VolcanoScanFrame({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 9,
-      child: Container(
-        width: double.infinity,
-        alignment: Alignment.center,
+      child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.background,
-          border: Border.all(color: AppColors.borderAlt, width: 1),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF21140F), Color(0xFF0F0D0B)],
+          ),
+          border: Border.all(color: AppColors.borderAlt, width: 1.2),
           borderRadius: BorderRadius.circular(6),
+          boxShadow: const [
+            BoxShadow(color: Color(0x55100000), blurRadius: 14),
+          ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
           children: [
-            const Icon(
-              Icons.image_outlined,
-              color: AppColors.textMuted,
-              size: 24,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'IMAGE PLACEHOLDER',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1,
+            const Positioned.fill(child: _SideQuestGrid()),
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: CustomPaint(painter: _VolcanoScanPainter()),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textDim,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.background.withValues(alpha: 0.72),
+                  border: Border.all(color: AppColors.tealDim, width: 1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ),
+            const Positioned(
+              left: 12,
+              top: 10,
+              child: _ScannerLabel(text: 'VOLCANO SCAN'),
+            ),
+            Positioned(
+              right: 12,
+              bottom: 10,
+              child: Text(
+                'FIELD FILE ${label.hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}',
+                style: const TextStyle(
+                  color: AppColors.textDim,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
           ],
@@ -819,96 +1061,64 @@ class _ImagePlaceholder extends StatelessWidget {
   }
 }
 
-class _OptionTile extends StatelessWidget {
-  final String letter;
-  final String text;
-  final bool isSelected;
-  final bool isSubmitted;
-  final bool isCorrect;
-  final VoidCallback? onTap;
+class _VolcanoScanPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final ridgePaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.34)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final fillPaint = Paint()
+      ..color = AppColors.surfaceAlt.withValues(alpha: 0.32)
+      ..style = PaintingStyle.fill;
+    final lavaPaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.42)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
 
-  const _OptionTile({
-    required this.letter,
-    required this.text,
-    required this.isSelected,
-    required this.isSubmitted,
-    required this.isCorrect,
-    required this.onTap,
-  });
+    final volcano = Path()
+      ..moveTo(size.width * 0.18, size.height * 0.82)
+      ..lineTo(size.width * 0.42, size.height * 0.28)
+      ..quadraticBezierTo(
+        size.width * 0.50,
+        size.height * 0.20,
+        size.width * 0.58,
+        size.height * 0.28,
+      )
+      ..lineTo(size.width * 0.82, size.height * 0.82)
+      ..close();
+    canvas.drawPath(volcano, fillPaint);
+    canvas.drawPath(volcano, ridgePaint);
+
+    final conduit = Path()
+      ..moveTo(size.width * 0.50, size.height * 0.32)
+      ..quadraticBezierTo(
+        size.width * 0.47,
+        size.height * 0.54,
+        size.width * 0.52,
+        size.height * 0.78,
+      );
+    canvas.drawPath(conduit, lavaPaint);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.5, size.height * 0.27),
+        width: size.width * 0.18,
+        height: size.height * 0.055,
+      ),
+      ridgePaint,
+    );
+
+    for (final marker in const [0.28, 0.72]) {
+      canvas.drawCircle(
+        Offset(size.width * marker, size.height * 0.26),
+        3,
+        Paint()..color = AppColors.teal.withValues(alpha: 0.5),
+      );
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final showCorrect = isSubmitted && isCorrect;
-    final showWrong = isSubmitted && isSelected && !isCorrect;
-    final borderColor = showCorrect
-        ? AppColors.teal
-        : showWrong
-        ? const Color(0xFFFF7A7A)
-        : isSelected
-        ? AppColors.tealDim
-        : AppColors.borderAlt;
-    final backgroundColor = showCorrect
-        ? AppColors.teal.withValues(alpha: 0.18)
-        : showWrong
-        ? const Color(0xFFFF7A7A).withValues(alpha: 0.12)
-        : isSelected
-        ? AppColors.surfaceAlt.withValues(alpha: 0.88)
-        : const Color(0xFF1B2A36);
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 60),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: borderColor, width: 1),
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                border: Border.all(color: borderColor, width: 0.8),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                letter,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
-            if (showCorrect)
-              const Icon(Icons.check, color: AppColors.teal, size: 18)
-            else if (showWrong)
-              const Icon(Icons.close, color: Color(0xFFFF7A7A), size: 18),
-          ],
-        ),
-      ),
-    );
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _LessonPage {

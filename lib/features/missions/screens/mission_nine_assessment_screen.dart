@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
@@ -251,6 +255,11 @@ class _MissionNineAssessmentScreenState
       _submitted = true;
       _isSaving = false;
     });
+    unawaited(
+      ref
+          .read(audioControllerProvider)
+          .playSfx(isCorrect ? SfxCue.correct : SfxCue.wrong),
+    );
     showMissionSnackBar(
       context,
       widget.isReplay

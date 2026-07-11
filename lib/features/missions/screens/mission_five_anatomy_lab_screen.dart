@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/routing/app_routes.dart';
@@ -191,6 +195,7 @@ class _MissionFiveAnatomyLabScreenState
       setState(() {
         _selectedLabelId = null;
       });
+      unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.wrong));
       showMissionSnackBar(
         context,
         '${label.label} does not match ${target.label}',
@@ -204,6 +209,7 @@ class _MissionFiveAnatomyLabScreenState
       _placedLabels[targetId] = activeLabelId;
       _selectedLabelId = null;
     });
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.correct));
     showMissionSnackBar(
       context,
       completed ? 'Anatomy scan complete' : '${target.label} locked',

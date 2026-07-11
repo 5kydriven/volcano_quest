@@ -1,4 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/audio/audio_catalog.dart';
+import '../../core/audio/audio_controller.dart';
 import '../../core/theme/app_theme.dart';
 
 class ScanLine extends StatelessWidget {
@@ -73,7 +79,7 @@ class LabBadge extends StatelessWidget {
   }
 }
 
-class LabButton extends StatelessWidget {
+class LabButton extends ConsumerWidget {
   final String label;
   final VoidCallback onTap;
   final bool isLoading;
@@ -86,11 +92,18 @@ class LabButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: isLoading ? null : onTap,
+        onPressed: isLoading
+            ? null
+            : () {
+                unawaited(
+                  ref.read(audioControllerProvider).playSfx(SfxCue.button),
+                );
+                onTap();
+              },
         child: isLoading
             ? const SizedBox(
                 height: 16,

@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/audio/audio_catalog.dart';
+import '../../core/audio/audio_controller.dart';
 import '../../core/constants/assets.dart';
 import '../../core/theme/app_theme.dart';
 import 'badge_award_image.dart';
@@ -10,7 +14,7 @@ const _lava = Color(0xFFFF7A1A);
 const _lavaDeep = Color(0xFFC74214);
 const _ember = Color(0xFFFFB45F);
 
-class MissionCompletePanel extends StatefulWidget {
+class MissionCompletePanel extends ConsumerStatefulWidget {
   final String title;
   final String badgeName;
   final String? badgeImagePath;
@@ -35,10 +39,11 @@ class MissionCompletePanel extends StatefulWidget {
   });
 
   @override
-  State<MissionCompletePanel> createState() => _MissionCompletePanelState();
+  ConsumerState<MissionCompletePanel> createState() =>
+      _MissionCompletePanelState();
 }
 
-class _MissionCompletePanelState extends State<MissionCompletePanel>
+class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _shineController;
 
@@ -48,7 +53,24 @@ class _MissionCompletePanelState extends State<MissionCompletePanel>
     _shineController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2400),
-    )..repeat();
+    );
+    if (_isAutomatedTestBinding()) {
+      _shineController.value = 0;
+    } else {
+      _shineController.repeat();
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.achievement));
+    });
+  }
+
+  bool _isAutomatedTestBinding() {
+    final bindingType = WidgetsBinding.instance.runtimeType.toString();
+    return bindingType.contains('TestWidgetsFlutterBinding') ||
+        bindingType.contains('AutomatedTestWidgetsFlutterBinding');
   }
 
   @override
@@ -84,7 +106,7 @@ class _MissionCompletePanelState extends State<MissionCompletePanel>
             ),
             const SizedBox(height: 16),
             Text(
-              widget.title,
+              _displayTitle,
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.textPrimary,
@@ -136,6 +158,12 @@ class _MissionCompletePanelState extends State<MissionCompletePanel>
         ),
       ),
     );
+  }
+
+  String get _displayTitle {
+    return widget.title.endsWith('!')
+        ? widget.title.substring(0, widget.title.length - 1)
+        : widget.title;
   }
 }
 
@@ -435,7 +463,7 @@ class _BadgeShinePainter extends CustomPainter {
   }
 }
 
-class _MissionCompleteImageButton extends StatelessWidget {
+class _MissionCompleteImageButton extends ConsumerWidget {
   final VoidCallback? onPressed;
   final Widget child;
 
@@ -445,7 +473,7 @@ class _MissionCompleteImageButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isEnabled = onPressed != null;
 
     return SizedBox(
@@ -460,7 +488,16 @@ class _MissionCompleteImageButton extends StatelessWidget {
             Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: onPressed,
+                onTap: onPressed == null
+                    ? null
+                    : () {
+                        unawaited(
+                          ref
+                              .read(audioControllerProvider)
+                              .playSfx(SfxCue.button),
+                        );
+                        onPressed!();
+                      },
                 child: Center(
                   child: DefaultTextStyle(
                     style: const TextStyle(

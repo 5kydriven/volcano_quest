@@ -1,7 +1,7 @@
 ### Phase 1
 
-- [] download all images
-- [] download all sfx and bg music
+- [x] download all images
+- [x] download all sfx and bg music
 - [] download all 3d models
 - [X] create player model
 - [X] create start page
@@ -33,4 +33,9 @@
 
 ### Phase 5
 
+- [ ] change the image in mission 5
+- [ ] add volcano pieces in mission 6
+- [ ] L8 improve ui
+- [ ] change place holder image in side quest
+- [ ] test audio
 - [] deploy

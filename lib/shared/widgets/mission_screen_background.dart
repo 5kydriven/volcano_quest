@@ -1,5 +1,10 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/audio/audio_catalog.dart';
+import '../../core/audio/audio_controller.dart';
 import '../../core/constants/assets.dart';
 import '../../core/theme/app_theme.dart';
 
@@ -25,16 +30,23 @@ class MissionScreenBackground extends StatelessWidget {
   }
 }
 
-class MissionBackButton extends StatelessWidget {
+class MissionBackButton extends ConsumerWidget {
   final VoidCallback? onPressed;
 
   const MissionBackButton({super.key, required this.onPressed});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onPressed,
+      onTap: onPressed == null
+          ? null
+          : () {
+              unawaited(
+                ref.read(audioControllerProvider).playSfx(SfxCue.button),
+              );
+              onPressed!();
+            },
       child: Image.asset(Assets.backButton, height: 36, fit: BoxFit.contain),
     );
   }
