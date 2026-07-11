@@ -392,12 +392,7 @@ class _WordBuilderPanel extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 4,
-            backgroundColor: Colors.black.withValues(alpha: 0.45),
-            valueColor: const AlwaysStoppedAnimation<Color>(_lava),
-          ),
+          MissionVolcanoProgressBar(value: progress, height: 10),
           Expanded(
             child: Stack(
               children: [

@@ -557,6 +557,11 @@ class _MissionPrompt extends StatelessWidget {
               letterSpacing: 0.7,
             ),
           ),
+          const SizedBox(height: 7),
+          MissionVolcanoProgressBar(
+            value: total == 0 ? 0 : progress / total,
+            height: 10,
+          ),
         ],
       ),
     );

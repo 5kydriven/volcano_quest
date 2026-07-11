@@ -949,12 +949,7 @@ class _WarningPanel extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: AppColors.surface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
-          ),
+          MissionVolcanoProgressBar(value: progress),
           Expanded(
             child: Stack(
               children: [

@@ -456,12 +456,7 @@ class _BookProgress extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 5),
-          LinearProgressIndicator(
-            minHeight: 3,
-            value: currentPage / pageCount,
-            color: AppColors.teal,
-            backgroundColor: AppColors.tealDark,
-          ),
+          MissionVolcanoProgressBar(value: currentPage / pageCount, height: 8),
         ],
       ),
     );

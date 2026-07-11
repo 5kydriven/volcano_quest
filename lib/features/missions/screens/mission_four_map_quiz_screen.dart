@@ -381,14 +381,7 @@ class _MissionFourPanel extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: _MissionFourPalette.basalt,
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              _MissionFourPalette.magma,
-            ),
-          ),
+          MissionVolcanoProgressBar(value: progress),
           Expanded(
             child: Stack(
               children: [
