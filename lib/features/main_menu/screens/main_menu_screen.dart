@@ -12,6 +12,8 @@ import '../../../core/routing/app_routes.dart';
 import '../../../data/models/player_model.dart';
 import '../../player/application/player_controller.dart';
 
+const _topBarExtent = 85.0;
+
 class MainMenuScreen extends ConsumerWidget {
   const MainMenuScreen({super.key});
 
@@ -22,89 +24,149 @@ class MainMenuScreen extends ConsumerWidget {
     final progress = missionsDone / AppConstants.totalLevels;
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            CustomScrollView(
-              slivers: [
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _StickyTopBarDelegate(
-                    player: player,
-                    missionsDone: missionsDone,
-                    progress: progress,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          CustomScrollView(
+            slivers: [SliverToBoxAdapter(child: _MissionMap(player: player))],
+          ),
+          SafeArea(
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: _topBarExtent,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                    child: _TopBar(
+                      player: player,
+                      missionsDone: missionsDone,
+                      progress: progress,
+                    ),
                   ),
                 ),
-                SliverToBoxAdapter(child: _MissionMap(player: player)),
+                _FloatingMenuRail(player: player),
+                Positioned(
+                  bottom: 32,
+                  right: 20,
+                  child: _FooterIconButton(
+                    iconAsset: Assets.menuSettingIcon,
+                    tooltip: 'Settings',
+                    onTap: () => context.push(AppRoutes.settings),
+                  ),
+                ),
               ],
             ),
-            _FloatingMenuRail(player: player),
-            Positioned(
-              bottom: 32,
-              right: 20,
-              child: _FooterIconButton(
-                iconAsset: Assets.menuSettingIcon,
-                tooltip: 'Settings',
-                onTap: () => context.push(AppRoutes.settings),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _StickyTopBarDelegate extends SliverPersistentHeaderDelegate {
-  static const extent = 85.0;
-
-  final PlayerModel player;
-  final int missionsDone;
-  final double progress;
-
-  const _StickyTopBarDelegate({
-    required this.player,
-    required this.missionsDone,
-    required this.progress,
-  });
+class _LoopingMenuBackground extends StatefulWidget {
+  const _LoopingMenuBackground();
 
   @override
-  double get minExtent => extent;
+  State<_LoopingMenuBackground> createState() => _LoopingMenuBackgroundState();
+}
+
+class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
+    with WidgetsBindingObserver {
+  late final VideoPlayerController _controller;
+  var _isReady = false;
+  var _reduceMotion = false;
 
   @override
-  double get maxExtent => extent;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        border: overlapsContent
-            ? const Border(
-                bottom: BorderSide(color: AppColors.border, width: 0.5),
-              )
-            : null,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-        child: _TopBar(
-          player: player,
-          missionsDone: missionsDone,
-          progress: progress,
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _controller = VideoPlayerController.asset(Assets.menuBgAnimated);
+    unawaited(_initializeVideo());
   }
 
   @override
-  bool shouldRebuild(covariant _StickyTopBarDelegate oldDelegate) {
-    return oldDelegate.player != player ||
-        oldDelegate.missionsDone != missionsDone ||
-        oldDelegate.progress != progress;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion == reduceMotion) {
+      return;
+    }
+    _reduceMotion = reduceMotion;
+    _syncPlayback();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      await _controller.initialize();
+      await _controller.setLooping(true);
+      await _controller.setVolume(0);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isReady = true);
+      _syncPlayback();
+    } catch (_) {
+      // The static map remains visible when video initialization is unavailable.
+    }
+  }
+
+  void _syncPlayback() {
+    if (!_isReady) {
+      return;
+    }
+    if (_reduceMotion) {
+      unawaited(_controller.pause());
+    } else {
+      unawaited(_controller.play());
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_isReady) {
+      return;
+    }
+    if (state == AppLifecycleState.resumed) {
+      _syncPlayback();
+    } else {
+      unawaited(_controller.pause());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            Assets.menuBg,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          if (_isReady)
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _controller.value.size.width,
+                height: _controller.value.size.height,
+                child: VideoPlayer(_controller),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -194,95 +256,224 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        _AvatarSquare(avatarIndex: player.avatarIndex),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                player.name.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFFFF0D5),
+                  fontSize: 14,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
+                  shadows: [
+                    Shadow(
+                      color: Color(0xFF130603),
+                      offset: Offset(-1.5, 0),
+                      blurRadius: 1,
+                    ),
+                    Shadow(
+                      color: Color(0xFF130603),
+                      offset: Offset(1.5, 0),
+                      blurRadius: 1,
+                    ),
+                    Shadow(
+                      color: Color(0xFF130603),
+                      offset: Offset(0, 2),
+                      blurRadius: 1,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 3),
               Row(
                 children: [
-                  _AvatarSquare(avatarIndex: player.avatarIndex),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          player.name.toUpperCase(),
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 13,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          'LEVEL ${player.currentLevel} SCIENTIST',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 9,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF7A1A),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: Color(0xFFFF5E16), blurRadius: 5),
                       ],
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      'LEVEL ${player.currentLevel}  |  FIELD SCIENTIST',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFFFB45F),
+                        fontSize: 8,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.9,
+                        shadows: [
+                          Shadow(
+                            color: Color(0xFF0A0302),
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Semantics(
                 label: 'Mission progress',
                 value: '$missionsDone of ${AppConstants.totalLevels}',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: AppColors.surface,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.teal,
-                    ),
+                child: SizedBox(
+                  height: 8,
+                  child: CustomPaint(
+                    painter: _MoltenProgressPainter(value: progress),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 10),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _HeaderMetric(
-              icon: Icons.bolt_outlined,
-              value: '${player.totalXP}',
-              tooltip: 'Total XP',
-            ),
-            const SizedBox(width: 8),
-            _HeaderMetric(
-              icon: Icons.military_tech_outlined,
-              value: '${player.earnedBadges.length}',
-              tooltip: 'Badges earned',
-            ),
-            const SizedBox(width: 8),
-            _HeaderMetric(
-              icon: Icons.bar_chart_outlined,
-              value: '$missionsDone',
-              tooltip: 'Missions done',
-            ),
-          ],
+        const SizedBox(width: 12),
+        _HeaderStats(
+          totalXp: player.totalXP,
+          badges: player.earnedBadges.length,
+          missions: missionsDone,
         ),
       ],
     );
   }
 }
 
-class _HeaderMetric extends StatelessWidget {
+class _MoltenProgressPainter extends CustomPainter {
+  final double value;
+
+  const _MoltenProgressPainter({required this.value});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final track = RRect.fromRectAndRadius(rect, const Radius.circular(4));
+    canvas.drawRRect(track, Paint()..color = const Color(0xFF0A0503));
+    canvas.drawRRect(
+      track.deflate(0.5),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF69321E),
+    );
+
+    final fillWidth = size.width * value.clamp(0.0, 1.0);
+    if (fillWidth <= 0) {
+      return;
+    }
+    final fillRect = Rect.fromLTWH(1, 1, fillWidth.clamp(0, size.width - 2), 6);
+    final fill = RRect.fromRectAndRadius(fillRect, const Radius.circular(3));
+    canvas.drawRRect(
+      fill.inflate(1),
+      Paint()
+        ..color = const Color(0x66FF5D17)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawRRect(
+      fill,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFD483), Color(0xFFFF781C), Color(0xFFB93412)],
+        ).createShader(fillRect),
+    );
+    canvas.drawLine(
+      Offset(fillRect.left + 3, fillRect.top + 1.5),
+      Offset(
+        math.max(fillRect.left + 3, fillRect.right - 3),
+        fillRect.top + 1.5,
+      ),
+      Paint()
+        ..color = const Color(0xAAFFF1C2)
+        ..strokeWidth = 1
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MoltenProgressPainter oldDelegate) {
+    return oldDelegate.value != value;
+  }
+}
+
+class _HeaderStats extends StatelessWidget {
+  final int totalXp;
+  final int badges;
+  final int missions;
+
+  const _HeaderStats({
+    required this.totalXp,
+    required this.badges,
+    required this.missions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label:
+          '$totalXp total XP, $badges badges earned, $missions missions done',
+      child: CustomPaint(
+        painter: const _HeaderStatsPainter(),
+        child: SizedBox(
+          height: 44,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _HeaderStat(
+                  icon: Icons.bolt_rounded,
+                  value: '$totalXp',
+                  tooltip: 'Total XP',
+                ),
+                const _HeaderStatDivider(),
+                _HeaderStat(
+                  icon: Icons.military_tech_rounded,
+                  value: '$badges',
+                  tooltip: 'Badges earned',
+                ),
+                const _HeaderStatDivider(),
+                _HeaderStat(
+                  icon: Icons.flag_rounded,
+                  value: '$missions',
+                  tooltip: 'Missions done',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderStat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String tooltip;
 
-  const _HeaderMetric({
+  const _HeaderStat({
     required this.icon,
     required this.value,
     required this.tooltip,
@@ -292,35 +483,96 @@ class _HeaderMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Semantics(
-        label: '$tooltip: $value',
-        child: Container(
-          height: 30,
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 0.5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppColors.teal, size: 15),
-              const SizedBox(width: 4),
-              Text(
+      child: SizedBox(
+        width: 31,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFFFFA24A),
+              size: 13,
+              shadows: const [
+                Shadow(color: Color(0xFF000000), blurRadius: 2),
+                Shadow(color: Color(0x77FF5E16), blurRadius: 4),
+              ],
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
                 value,
+                maxLines: 1,
                 style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12,
-                  letterSpacing: 0.4,
+                  color: Color(0xFFFFE8C4),
+                  fontSize: 10,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                  shadows: [
+                    Shadow(color: Color(0xFF000000), offset: Offset(0, 1)),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 24,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: const Color(0xFF6D321E),
+    );
+  }
+}
+
+class _HeaderStatsPainter extends CustomPainter {
+  const _HeaderStatsPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final face = RRect.fromRectAndRadius(rect, const Radius.circular(12));
+    canvas.drawRRect(
+      face.shift(const Offset(0, 3)),
+      Paint()
+        ..color = const Color(0xBB050201)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+    canvas.drawRRect(
+      face,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF22F1C13), Color(0xF21A0E0A), Color(0xF20C0604)],
+        ).createShader(rect),
+    );
+    canvas.drawRRect(
+      face.deflate(0.7),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFCE6A32), Color(0xFF572719), Color(0xFF160906)],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _AvatarSquare extends StatelessWidget {
@@ -338,9 +590,21 @@ class _AvatarSquare extends StatelessWidget {
       height: 40,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        border: Border.all(color: AppColors.teal, width: 1),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFA554), Color(0xFF6A2B17), Color(0xFF1C0B07)],
+        ),
+        border: Border.all(color: const Color(0xFFFFB766), width: 1),
         borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x99000000),
+            offset: Offset(0, 3),
+            blurRadius: 3,
+          ),
+          BoxShadow(color: Color(0x55FF6718), blurRadius: 7),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(5),
@@ -412,13 +676,10 @@ class _MissionMapState extends State<_MissionMap> {
         final screenHeight = MediaQuery.sizeOf(context).height;
         final canvasWidth = constraints.maxWidth;
         final imageRatioHeight = canvasWidth / _menuImageAspectRatio;
-        final canvasHeight = math.max(
-          imageRatioHeight,
-          screenHeight - _StickyTopBarDelegate.extent,
-        );
-        final canvasSize = Size(canvasWidth, canvasHeight);
+        final canvasHeight = math.max(imageRatioHeight, screenHeight);
         final positions = _missionNodePositions(
-          canvasSize: canvasSize,
+          backgroundSize: MediaQuery.sizeOf(context),
+          contentTop: 0,
           count: nodes.length,
         );
         final positionedNodes = nodes.take(positions.length).toList();
@@ -429,20 +690,7 @@ class _MissionMapState extends State<_MissionMap> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  Assets.menuBg,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                ),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF090504).withValues(alpha: 0.28),
-                  ),
-                ),
-              ),
+              const Positioned.fill(child: _LoopingMenuBackground()),
               for (var index = positionedNodes.length - 1; index >= 0; index--)
                 Positioned(
                   left: positions[index].dx - nodeSize / 2,
@@ -460,8 +708,7 @@ class _MissionMapState extends State<_MissionMap> {
                     onTap: positionedNodes[index].isUnlocked
                         ? () {
                             setState(() {
-                              _selectedNodeId =
-                                  _nodeId(positionedNodes[index]);
+                              _selectedNodeId = _nodeId(positionedNodes[index]);
                               _eruptingNodeId = null;
                             });
                             _showMissionDialog(context, positionedNodes[index]);
@@ -578,7 +825,8 @@ class _MissionMapState extends State<_MissionMap> {
         .every(
           (id) =>
               player
-                  .completedMissionOrbs[AppConstants.sideQuestVolcanoStructureId]
+                  .completedMissionOrbs[AppConstants
+                      .sideQuestVolcanoStructureId]
                   ?.contains(id) ??
               false,
         );
@@ -725,17 +973,18 @@ class _MissionMapState extends State<_MissionMap> {
   }
 
   List<Offset> _missionNodePositions({
-    required Size canvasSize,
+    required Size backgroundSize,
+    required double contentTop,
     required int count,
   }) {
-    final imageRect = _menuImageRect(canvasSize);
+    final imageRect = _menuImageRect(backgroundSize);
     final anchorCount = math.min(count, _missionPathAnchors.length);
 
     return [
       for (final anchor in _missionPathAnchors.take(anchorCount))
         Offset(
           imageRect.left + imageRect.width * anchor.dx,
-          imageRect.top + imageRect.height * anchor.dy,
+          imageRect.top + imageRect.height * anchor.dy - contentTop,
         ),
     ];
   }
@@ -1018,7 +1267,11 @@ class _MissionVolcanoMarkerPainter extends CustomPainter {
         ..shader = RadialGradient(
           colors: [
             accent.withValues(
-              alpha: isLocked ? 0.06 : isHighlighted ? 0.38 : 0.2,
+              alpha: isLocked
+                  ? 0.06
+                  : isHighlighted
+                  ? 0.38
+                  : 0.2,
             ),
             accent.withValues(alpha: 0),
           ],
@@ -1122,8 +1375,10 @@ class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
   var _isReady = false;
 
   AvatarAsset get _avatar {
-    return Assets.avatars[
-        widget.avatarIndex.clamp(0, Assets.avatars.length - 1)];
+    return Assets.avatars[widget.avatarIndex.clamp(
+      0,
+      Assets.avatars.length - 1,
+    )];
   }
 
   @override
@@ -1245,10 +1500,7 @@ class _LocationPinPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            accent.withValues(alpha: 0.9),
-            const Color(0xFF22110A),
-          ],
+          colors: [accent.withValues(alpha: 0.9), const Color(0xFF22110A)],
         ).createShader(rect),
     );
     canvas.drawPath(
@@ -1970,6 +2222,9 @@ class _FooterIconButton extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
+                const SizedBox.expand(
+                  child: CustomPaint(painter: _MenuControlWellPainter()),
+                ),
                 Image.asset(
                   iconAsset,
                   width: 44,
@@ -2010,6 +2265,56 @@ class _FooterIconButton extends StatelessWidget {
   }
 }
 
+class _MenuControlWellPainter extends CustomPainter {
+  const _MenuControlWellPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    canvas.drawCircle(
+      center + const Offset(0, 3),
+      size.width * 0.46,
+      Paint()
+        ..color = const Color(0xCC030201)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(
+      center,
+      size.width * 0.45,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: [Color(0xFF3A2117), Color(0xFF170D09), Color(0xFF080403)],
+          stops: [0, 0.7, 1],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawCircle(
+      center,
+      size.width * 0.44,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD5743B), Color(0xFF5C2918), Color(0xFF160906)],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: size.width * 0.38),
+      math.pi * 1.08,
+      math.pi * 0.78,
+      false,
+      Paint()
+        ..color = const Color(0x66FFD08B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class _VolcanoBadgePainter extends CustomPainter {
   final Color accent;
 
@@ -2025,10 +2330,7 @@ class _VolcanoBadgePainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            accent.withValues(alpha: 0.92),
-            const Color(0xFF351409),
-          ],
+          colors: [accent.withValues(alpha: 0.92), const Color(0xFF351409)],
         ).createShader(rect),
     );
     canvas.drawRRect(
