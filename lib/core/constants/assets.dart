@@ -115,6 +115,18 @@ class Assets {
       'assets/missions/misson-three/letter_slot.png';
   static const String missionFiveSelectedContainer =
       'assets/missions/mission-five/selected_container.png';
+  static const String missionSixVolcanoSliceTop =
+      'assets/missions/mission-six/volcano_slice_top.png';
+  static const String missionSixVolcanoSliceUpper =
+      'assets/missions/mission-six/volcano_slice_upper.png';
+  static const String missionSixVolcanoSliceMiddle =
+      'assets/missions/mission-six/volcano_slice_middle.png';
+  static const String missionSixVolcanoSliceLower =
+      'assets/missions/mission-six/volcano_slice_lower.png';
+  static const String missionSixVolcanoSliceBottom =
+      'assets/missions/mission-six/volcano_slice_bottom.png';
+  static const String missionSixVolcanoComplete =
+      'assets/missions/mission-six/volcano_complete.png';
   static const String missionSevenStatsContainer =
       'assets/images/mission_seven_stats_container.png';
   static const String missionSevenMayon =
