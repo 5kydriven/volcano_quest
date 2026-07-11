@@ -493,42 +493,41 @@ class _LabelBank extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 112),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border.all(color: AppColors.borderAlt, width: 4),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '${labels.length} LABELS READY',
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+    return CustomPaint(
+      painter: const _LabContainerPainter(),
+      child: Container(
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 112),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+        child: Column(
+          children: [
+            Text(
+              '${labels.length} LABELS READY',
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final label in labels)
-                _LabelChip(
-                  key: ValueKey('mission5-label-${label.id}'),
-                  part: label,
-                  isSelected: selectedLabelId == label.id,
-                  isEnabled: !isSaving,
-                  onTap: () => onSelectLabel(label.id),
-                ),
-            ],
-          ),
-        ],
+            const SizedBox(height: 10),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final label in labels)
+                  _LabelChip(
+                    key: ValueKey('mission5-label-${label.id}'),
+                    part: label,
+                    isSelected: selectedLabelId == label.id,
+                    isEnabled: !isSaving,
+                    onTap: () => onSelectLabel(label.id),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -546,7 +545,6 @@ class _ClearPlacementsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = isEnabled ? AppColors.teal : AppColors.textDim;
-    final borderColor = isEnabled ? AppColors.teal : AppColors.borderAlt;
     final iconColor = isEnabled ? AppColors.textMuted : AppColors.textDim;
 
     return Opacity(
@@ -560,7 +558,10 @@ class _ClearPlacementsButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: AppColors.surfaceAlt.withValues(alpha: 0.72),
-              border: Border.all(color: borderColor, width: 1),
+              image: const DecorationImage(
+                image: AssetImage(Assets.missionOneButtonContainer),
+                fit: BoxFit.fill,
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -613,22 +614,20 @@ class _LabelChip extends StatelessWidget {
     final chip = AnimatedContainer(
       duration: const Duration(milliseconds: 140),
       constraints: const BoxConstraints(minWidth: 132),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(Assets.rectangleContainer),
-          fit: BoxFit.fill,
-        ),
-      ),
-
-      child: Text(
-        part.label,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: labelColor,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
+      child: CustomPaint(
+        painter: _LabelChipPainter(isSelected: isSelected),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          child: Text(
+            part.label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: labelColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
+          ),
         ),
       ),
     );
@@ -677,6 +676,88 @@ class _TelemetryStrip extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _LabContainerPainter extends CustomPainter {
+  const _LabContainerPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final fill = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.background, Color(0xFF1B100B)],
+      ).createShader(rect);
+    final border = Paint()
+      ..color = AppColors.borderAlt
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
+    final accent = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.72)
+      ..strokeWidth = 1.2;
+
+    canvas.drawRect(rect, fill);
+    canvas.drawRect(rect.deflate(2), border);
+    canvas.drawLine(const Offset(12, 10), const Offset(54, 10), accent);
+    canvas.drawLine(
+      Offset(size.width - 54, size.height - 10),
+      Offset(size.width - 12, size.height - 10),
+      accent,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _LabelChipPainter extends CustomPainter {
+  final bool isSelected;
+
+  const _LabelChipPainter({required this.isSelected});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final path = Path()
+      ..moveTo(8, 0)
+      ..lineTo(size.width - 8, 0)
+      ..lineTo(size.width, size.height / 2)
+      ..lineTo(size.width - 8, size.height)
+      ..lineTo(8, size.height)
+      ..lineTo(0, size.height / 2)
+      ..close();
+    final borderColor = isSelected ? const Color(0xFFFFC857) : AppColors.teal;
+    final fill = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          AppColors.surfaceAlt.withValues(alpha: 0.88),
+          AppColors.tealDark.withValues(alpha: 0.94),
+        ],
+      ).createShader(rect);
+    final border = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isSelected ? 1.8 : 1.1;
+
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, border);
+    canvas.drawLine(
+      const Offset(14, 4),
+      Offset(size.width - 14, 4),
+      Paint()
+        ..color = borderColor.withValues(alpha: 0.35)
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LabelChipPainter oldDelegate) {
+    return oldDelegate.isSelected != isSelected;
   }
 }
 
