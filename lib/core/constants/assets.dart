@@ -161,6 +161,8 @@ class Assets {
   static const String settingToggleOff = 'assets/setting_screen/toggle_of.png';
   static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
   static const String menuBg = 'assets/menu_screen/menu_bg.jpeg';
+  static const String menuMissionVolcanoItem =
+      'assets/menu_screen/mission_volcano_item.png';
   static const String menuLeaderboardIcon =
       'assets/menu_screen/icons/leaderboard_icon.png';
   static const String menuBadgeIcon = 'assets/menu_screen/icons/badge_icon.png';

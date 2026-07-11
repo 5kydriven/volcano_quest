@@ -940,7 +940,7 @@ class _MissionVolcanoMarkerState extends State<_MissionVolcanoMarker>
           child: Opacity(
             opacity: isLocked ? 0.46 : 1,
             child: CustomPaint(
-              painter: _MissionVolcanoMarkerPainter(
+              foregroundPainter: _MissionVolcanoMarkerPainter(
                 kind: widget.kind,
                 accent: isLocked ? AppColors.textDim : widget.accent,
                 isComplete: widget.status == _MissionNodeStatus.complete,
@@ -949,6 +949,10 @@ class _MissionVolcanoMarkerState extends State<_MissionVolcanoMarker>
                 isErupting: widget.isErupting,
                 isLocked: isLocked,
                 eruptionProgress: _eruptionController.value,
+              ),
+              child: Image.asset(
+                Assets.menuMissionVolcanoItem,
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -984,7 +988,6 @@ class _MissionVolcanoMarkerPainter extends CustomPainter {
     final scale = size.shortestSide / 32;
     final centerX = size.width / 2;
     final baseY = size.height * 0.84;
-    final craterY = size.height * 0.2;
 
     if (isErupting) {
       _paintEruption(canvas, size, scale, eruptionProgress);
@@ -1031,122 +1034,6 @@ class _MissionVolcanoMarkerPainter extends CustomPainter {
       shadowRect,
       Paint()..color = const Color(0xFF050403).withValues(alpha: 0.42),
     );
-
-    final leftFace = Path()
-      ..moveTo(centerX, craterY)
-      ..lineTo(size.width * 0.06, baseY - 1 * scale)
-      ..quadraticBezierTo(size.width * 0.36, baseY + 4 * scale, centerX, baseY)
-      ..close();
-    final rightFace = Path()
-      ..moveTo(centerX, craterY)
-      ..lineTo(size.width * 0.94, baseY - 1 * scale)
-      ..quadraticBezierTo(size.width * 0.64, baseY + 4 * scale, centerX, baseY)
-      ..close();
-
-    canvas.drawPath(
-      leftFace,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF7A3B20),
-            const Color(0xFF35180F),
-          ],
-        ).createShader(Offset.zero & size),
-    );
-    canvas.drawPath(
-      rightFace,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            const Color(0xFF4F2415),
-            const Color(0xFF160A06),
-          ],
-        ).createShader(Offset.zero & size),
-    );
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(centerX, craterY + 2 * scale)
-        ..lineTo(size.width * 0.06, baseY - 1 * scale)
-        ..quadraticBezierTo(size.width * 0.36, baseY + 4 * scale, centerX, baseY)
-        ..quadraticBezierTo(
-          size.width * 0.64,
-          baseY + 4 * scale,
-          size.width * 0.94,
-          baseY - 1 * scale,
-        )
-        ..close(),
-      Paint()
-        ..color = const Color(0xFFB87945).withValues(alpha: 0.16)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.4 * scale,
-    );
-
-    final ridgePaint = Paint()
-      ..color = const Color(0xFFC98954).withValues(alpha: 0.24)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.1 * scale
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(centerX, craterY + 2 * scale),
-      Offset(size.width * 0.28, baseY - 2 * scale),
-      ridgePaint,
-    );
-    canvas.drawLine(
-      Offset(centerX + 1.5 * scale, craterY + 3 * scale),
-      Offset(size.width * 0.7, baseY - 2 * scale),
-      ridgePaint..color = accent.withValues(alpha: 0.16),
-    );
-
-    final lavaPath = Path()
-      ..moveTo(centerX - 2 * scale, craterY + 5 * scale)
-      ..cubicTo(
-        centerX + 2 * scale,
-        craterY + 9 * scale,
-        centerX - 3 * scale,
-        craterY + 14 * scale,
-        centerX + 1 * scale,
-        baseY - 6 * scale,
-      );
-    canvas.drawPath(
-      lavaPath,
-      Paint()
-        ..color = accent.withValues(alpha: 0.62)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.7 * scale
-        ..strokeCap = StrokeCap.round,
-    );
-
-    final craterRect = Rect.fromCenter(
-      center: Offset(centerX, craterY + 2 * scale),
-      width: 13 * scale,
-      height: 7 * scale,
-    );
-    canvas.drawOval(
-      craterRect,
-      Paint()..color = const Color(0xFF1B0D08),
-    );
-    canvas.drawOval(
-      craterRect.deflate(1.2 * scale),
-      Paint()..color = accent.withValues(alpha: 0.68),
-    );
-
-    canvas.drawCircle(
-      Offset(centerX - 5 * scale, craterY - 4 * scale),
-      2.2 * scale,
-      Paint()..color = accent.withValues(alpha: 0.18),
-    );
-    canvas.drawCircle(
-      Offset(centerX + 5 * scale, craterY - 7 * scale),
-      1.5 * scale,
-      Paint()..color = accent.withValues(alpha: 0.14),
-    );
-
-    _paintMissionKindDetail(canvas, size, scale);
 
     if (isComplete) {
       final checkPaint = Paint()
@@ -1200,111 +1087,6 @@ class _MissionVolcanoMarkerPainter extends CustomPainter {
         craterY + math.sin(angle) * distance,
       );
       canvas.drawLine(start, end, emberPaint);
-    }
-  }
-
-  void _paintMissionKindDetail(Canvas canvas, Size size, double scale) {
-    final paint = Paint()
-      ..color = accent.withValues(alpha: 0.72)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4 * scale
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final fill = Paint()..color = accent.withValues(alpha: 0.64);
-
-    switch (kind) {
-      case _MissionKind.research:
-        canvas.drawCircle(
-          Offset(size.width * 0.25, size.height * 0.27),
-          2 * scale,
-          fill,
-        );
-        canvas.drawLine(
-          Offset(size.width * 0.25, size.height * 0.33),
-          Offset(size.width * 0.25, size.height * 0.48),
-          paint,
-        );
-        return;
-      case _MissionKind.quiz:
-        canvas.drawArc(
-          Rect.fromCenter(
-            center: Offset(size.width * 0.76, size.height * 0.32),
-            width: 11 * scale,
-            height: 11 * scale,
-          ),
-          -math.pi * 0.15,
-          math.pi * 1.35,
-          false,
-          paint,
-        );
-        return;
-      case _MissionKind.wordBuilder:
-        for (var index = 0; index < 3; index++) {
-          canvas.drawRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromLTWH(
-                size.width * 0.18 + index * 5.2 * scale,
-                size.height * 0.56,
-                4.2 * scale,
-                4.2 * scale,
-              ),
-              Radius.circular(0.8 * scale),
-            ),
-            fill,
-          );
-        }
-        return;
-      case _MissionKind.sideQuest:
-        final path = Path()
-          ..moveTo(size.width * 0.22, size.height * 0.7)
-          ..quadraticBezierTo(
-            size.width * 0.42,
-            size.height * 0.52,
-            size.width * 0.6,
-            size.height * 0.68,
-          )
-          ..quadraticBezierTo(
-            size.width * 0.72,
-            size.height * 0.79,
-            size.width * 0.86,
-            size.height * 0.62,
-          );
-        canvas.drawPath(path, paint..strokeWidth = 1.2 * scale);
-        return;
-      case _MissionKind.lab:
-        canvas.drawCircle(
-          Offset(size.width * 0.72, size.height * 0.24),
-          2 * scale,
-          fill,
-        );
-        canvas.drawCircle(
-          Offset(size.width * 0.8, size.height * 0.35),
-          1.5 * scale,
-          fill,
-        );
-        return;
-      case _MissionKind.builder:
-        for (var index = 0; index < 3; index++) {
-          canvas.drawLine(
-            Offset(size.width * 0.24, size.height * (0.62 + index * 0.07)),
-            Offset(size.width * 0.48, size.height * (0.58 + index * 0.07)),
-            paint,
-          );
-        }
-        return;
-      case _MissionKind.fieldLesson:
-        canvas.drawLine(
-          Offset(size.width * 0.76, size.height * 0.22),
-          Offset(size.width * 0.76, size.height * 0.46),
-          paint,
-        );
-        final flag = Path()
-          ..moveTo(size.width * 0.76, size.height * 0.22)
-          ..lineTo(size.width * 0.9, size.height * 0.27)
-          ..lineTo(size.width * 0.76, size.height * 0.33)
-          ..close();
-        canvas.drawPath(flag, fill);
-        return;
     }
   }
 
