@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
@@ -41,7 +43,7 @@ class MainMenuScreen extends ConsumerWidget {
               bottom: 32,
               right: 20,
               child: _FooterIconButton(
-                icon: Icons.settings_outlined,
+                iconAsset: Assets.menuSettingIcon,
                 tooltip: 'Settings',
                 onTap: () => context.push(AppRoutes.settings),
               ),
@@ -119,38 +121,28 @@ class _FloatingMenuRail extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(left: 8),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.background.withValues(alpha: 0.88),
-            border: Border.all(color: AppColors.border, width: 0.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _FooterIconButton(
-                  icon: Icons.emoji_events_outlined,
-                  tooltip: 'Leaderboard',
-                  onTap: () => context.push(AppRoutes.leaderboard),
-                ),
-                const SizedBox(height: 4),
-                _FooterIconButton(
-                  icon: Icons.military_tech_outlined,
-                  tooltip: 'Badge collection',
-                  badge: earnedBadges > 0 ? '$earnedBadges' : null,
-                  onTap: () => context.push(AppRoutes.badges),
-                ),
-                const SizedBox(height: 4),
-                _FooterIconButton(
-                  icon: Icons.switch_account_outlined,
-                  tooltip: 'Switch player',
-                  onTap: () => context.go(AppRoutes.players),
-                ),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FooterIconButton(
+              iconAsset: Assets.menuLeaderboardIcon,
+              tooltip: 'Leaderboard',
+              onTap: () => context.push(AppRoutes.leaderboard),
             ),
-          ),
+            const SizedBox(height: 7),
+            _FooterIconButton(
+              iconAsset: Assets.menuBadgeIcon,
+              tooltip: 'Badge collection',
+              badge: earnedBadges > 0 ? '$earnedBadges' : null,
+              onTap: () => context.push(AppRoutes.badges),
+            ),
+            const SizedBox(height: 7),
+            _FooterIconButton(
+              iconAsset: Assets.menuSwitchIcon,
+              tooltip: 'Switch player',
+              onTap: () => context.go(AppRoutes.players),
+            ),
+          ],
         ),
       ),
     );
@@ -358,15 +350,58 @@ class _AvatarSquare extends StatelessWidget {
   }
 }
 
-class _MissionMap extends StatelessWidget {
+class _MissionMap extends StatefulWidget {
   final PlayerModel player;
 
   const _MissionMap({required this.player});
 
   @override
+  State<_MissionMap> createState() => _MissionMapState();
+}
+
+class _MissionMapState extends State<_MissionMap> {
+  final _activeNodeKey = GlobalKey();
+  String? _selectedNodeId;
+  String? _eruptingNodeId;
+  String? _pendingEruptionNodeId;
+  String? _lastAutoScrolledRoute;
+  int _teleportToken = 0;
+  var _pendingStartScheduled = false;
+
+  @override
+  void didUpdateWidget(covariant _MissionMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.player.currentLevel != widget.player.currentLevel ||
+        oldWidget.player.completedMissionOrbs !=
+            widget.player.completedMissionOrbs) {
+      final oldActiveNode = _firstNodeWhere(
+        _missionNodes(oldWidget.player),
+        (node) => node.isCurrent,
+      );
+      if (oldActiveNode != null) {
+        final completedNodeId = _nodeId(oldActiveNode);
+        if (_isCurrentRoute) {
+          _beginCompletionTransition(completedNodeId);
+        } else {
+          _pendingEruptionNodeId = completedNodeId;
+        }
+      } else {
+        _selectedNodeId = null;
+        _eruptingNodeId = null;
+        _pendingEruptionNodeId = null;
+        _lastAutoScrolledRoute = null;
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const nodeSize = 44.0;
-    final nodes = _missionNodes();
+    const nodeSize = 58.0;
+    final nodes = _missionNodes(widget.player);
+    final pinnedNodeId = _pinnedNodeId(nodes);
+    final activeRoute = _activeRoute(nodes);
+    _startPendingEruptionWhenVisible();
+    _scrollToActiveRoute(activeRoute);
     assert(
       nodes.length == _missionPathAnchors.length,
       'Mission nodes must match the menu background path anchors.',
@@ -401,18 +436,36 @@ class _MissionMap extends StatelessWidget {
                   alignment: Alignment.center,
                 ),
               ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF090504).withValues(alpha: 0.28),
+                  ),
+                ),
+              ),
               for (var index = positionedNodes.length - 1; index >= 0; index--)
                 Positioned(
                   left: positions[index].dx - nodeSize / 2,
                   top: positions[index].dy - nodeSize / 2,
                   child: _MissionNode(
+                    key: positionedNodes[index].route == activeRoute
+                        ? _activeNodeKey
+                        : null,
+                    avatarIndex: widget.player.avatarIndex,
                     node: positionedNodes[index],
+                    isPinned: _nodeId(positionedNodes[index]) == pinnedNodeId,
+                    isErupting:
+                        _nodeId(positionedNodes[index]) == _eruptingNodeId,
                     size: nodeSize,
                     onTap: positionedNodes[index].isUnlocked
-                        ? () => _showMissionDialog(
-                            context,
-                            positionedNodes[index],
-                          )
+                        ? () {
+                            setState(() {
+                              _selectedNodeId =
+                                  _nodeId(positionedNodes[index]);
+                              _eruptingNodeId = null;
+                            });
+                            _showMissionDialog(context, positionedNodes[index]);
+                          }
                         : null,
                   ),
                 ),
@@ -423,14 +476,109 @@ class _MissionMap extends StatelessWidget {
     );
   }
 
-  List<_MissionMapNode> _missionNodes() {
+  String? _activeRoute(List<_MissionMapNode> nodes) {
+    return _firstNodeWhere(nodes, (node) => node.isCurrent)?.route;
+  }
+
+  String? _pinnedNodeId(List<_MissionMapNode> nodes) {
+    final selectedNode = _firstNodeWhere(
+      nodes,
+      (node) => node.isUnlocked && _nodeId(node) == _selectedNodeId,
+    );
+    if (selectedNode != null) {
+      return _nodeId(selectedNode);
+    }
+
+    final currentNode = _firstNodeWhere(nodes, (node) => node.isCurrent);
+    return currentNode == null ? null : _nodeId(currentNode);
+  }
+
+  String _nodeId(_MissionMapNode node) => '${node.eyebrow}|${node.title}';
+
+  bool get _isCurrentRoute => ModalRoute.of(context)?.isCurrent ?? true;
+
+  _MissionMapNode? _firstNodeWhere(
+    List<_MissionMapNode> nodes,
+    bool Function(_MissionMapNode node) test,
+  ) {
+    for (final node in nodes) {
+      if (test(node)) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  void _scrollToActiveRoute(String? activeRoute) {
+    if (activeRoute == null || activeRoute == _lastAutoScrolledRoute) {
+      return;
+    }
+    _lastAutoScrolledRoute = activeRoute;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final activeContext = _activeNodeKey.currentContext;
+      if (activeContext == null) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        activeContext,
+        alignment: 0.55,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  void _schedulePinTeleport() {
+    final token = ++_teleportToken;
+    Future<void>.delayed(const Duration(milliseconds: 1400), () {
+      if (!mounted || token != _teleportToken) {
+        return;
+      }
+      setState(() {
+        _selectedNodeId = null;
+        _eruptingNodeId = null;
+        _lastAutoScrolledRoute = null;
+      });
+    });
+  }
+
+  void _beginCompletionTransition(String completedNodeId) {
+    _selectedNodeId = completedNodeId;
+    _eruptingNodeId = completedNodeId;
+    _pendingEruptionNodeId = null;
+    _lastAutoScrolledRoute = null;
+    _schedulePinTeleport();
+  }
+
+  void _startPendingEruptionWhenVisible() {
+    if (!_isCurrentRoute ||
+        _pendingEruptionNodeId == null ||
+        _pendingStartScheduled) {
+      return;
+    }
+    _pendingStartScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_isCurrentRoute || _pendingEruptionNodeId == null) {
+        _pendingStartScheduled = false;
+        return;
+      }
+      setState(() {
+        _pendingStartScheduled = false;
+        _beginCompletionTransition(_pendingEruptionNodeId!);
+      });
+    });
+  }
+
+  List<_MissionMapNode> _missionNodes(PlayerModel player) {
     final activeLevel = player.currentLevel.clamp(1, AppConstants.totalLevels);
     final sideQuestComplete = AppConstants.sideQuestVolcanoStructureQuestionIds
         .every(
           (id) =>
               player
-                  .completedMissionOrbs[AppConstants
-                      .sideQuestVolcanoStructureId]
+                  .completedMissionOrbs[AppConstants.sideQuestVolcanoStructureId]
                   ?.contains(id) ??
               false,
         );
@@ -655,28 +803,26 @@ class _MissionMapNode {
 }
 
 class _MissionNode extends StatelessWidget {
+  final int avatarIndex;
   final _MissionMapNode node;
+  final bool isPinned;
+  final bool isErupting;
   final double size;
   final VoidCallback? onTap;
 
-  const _MissionNode({required this.node, required this.size, this.onTap});
+  const _MissionNode({
+    super.key,
+    required this.avatarIndex,
+    required this.node,
+    required this.isPinned,
+    required this.isErupting,
+    required this.size,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColor = node.isCurrent
-        ? AppColors.teal
-        : node.isComplete
-        ? AppColors.textMuted
-        : AppColors.textDim;
-    final borderColor = node.isCurrent ? AppColors.teal : AppColors.borderAlt;
-    final backgroundColor = node.isCurrent
-        ? AppColors.tealDark.withValues(alpha: 0.94)
-        : AppColors.background.withValues(alpha: 0.78);
-    final statusIcon = node.isComplete
-        ? Icons.check_circle
-        : node.isCurrent
-        ? Icons.play_circle_fill
-        : Icons.lock;
+    final style = _MissionBriefingStyle.fromKind(node.kind);
 
     return Tooltip(
       message: node.isCurrent
@@ -700,59 +846,641 @@ class _MissionNode extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    border: Border.all(
-                      color: borderColor,
-                      width: node.isCurrent ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(13),
-                    boxShadow: node.isCurrent
-                        ? [
-                            BoxShadow(
-                              color: AppColors.teal.withValues(alpha: 0.28),
-                              blurRadius: 12,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    node.numberLabel,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: foregroundColor,
-                      fontSize: node.numberLabel.length > 1 ? 12 : 16,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                    ),
-                  ),
+                _MissionVolcanoMarker(
+                  kind: node.kind,
+                  status: node.status,
+                  accent: style.accent,
+                  size: size * 0.92,
+                  isHighlighted: isPinned,
+                  isErupting: isErupting,
                 ),
-                Positioned(
-                  right: -4,
-                  top: -4,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.background.withValues(alpha: 0.9),
-                      border: Border.all(color: borderColor, width: 0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(1.5),
-                      child: Icon(statusIcon, color: foregroundColor, size: 13),
+                if (isPinned)
+                  Positioned(
+                    top: -34,
+                    child: _ActiveMissionAvatarPin(
+                      avatarIndex: avatarIndex,
+                      accent: style.accent,
                     ),
                   ),
-                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _MissionVolcanoMarker extends StatefulWidget {
+  final _MissionKind kind;
+  final _MissionNodeStatus status;
+  final Color accent;
+  final double size;
+  final bool isHighlighted;
+  final bool isErupting;
+
+  const _MissionVolcanoMarker({
+    required this.kind,
+    required this.status,
+    required this.accent,
+    required this.size,
+    this.isHighlighted = false,
+    this.isErupting = false,
+  });
+
+  @override
+  State<_MissionVolcanoMarker> createState() => _MissionVolcanoMarkerState();
+}
+
+class _MissionVolcanoMarkerState extends State<_MissionVolcanoMarker>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _eruptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _eruptionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1350),
+    );
+    _syncEruption();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MissionVolcanoMarker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncEruption();
+  }
+
+  void _syncEruption() {
+    if (widget.isErupting) {
+      _eruptionController.forward(from: 0);
+    } else {
+      _eruptionController.stop();
+      _eruptionController.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _eruptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = widget.status == _MissionNodeStatus.locked;
+
+    return AnimatedBuilder(
+      animation: _eruptionController,
+      builder: (context, child) {
+        return SizedBox(
+          width: widget.size,
+          height: widget.size,
+          child: Opacity(
+            opacity: isLocked ? 0.46 : 1,
+            child: CustomPaint(
+              painter: _MissionVolcanoMarkerPainter(
+                kind: widget.kind,
+                accent: isLocked ? AppColors.textDim : widget.accent,
+                isComplete: widget.status == _MissionNodeStatus.complete,
+                isCurrent: widget.status == _MissionNodeStatus.current,
+                isHighlighted: widget.isHighlighted,
+                isErupting: widget.isErupting,
+                isLocked: isLocked,
+                eruptionProgress: _eruptionController.value,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MissionVolcanoMarkerPainter extends CustomPainter {
+  final _MissionKind kind;
+  final Color accent;
+  final bool isComplete;
+  final bool isCurrent;
+  final bool isHighlighted;
+  final bool isErupting;
+  final bool isLocked;
+  final double eruptionProgress;
+
+  const _MissionVolcanoMarkerPainter({
+    required this.kind,
+    required this.accent,
+    required this.isComplete,
+    required this.isCurrent,
+    required this.isHighlighted,
+    required this.isErupting,
+    required this.isLocked,
+    required this.eruptionProgress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / 32;
+    final centerX = size.width / 2;
+    final baseY = size.height * 0.84;
+    final craterY = size.height * 0.2;
+
+    if (isErupting) {
+      _paintEruption(canvas, size, scale, eruptionProgress);
+    }
+
+    if (isHighlighted) {
+      canvas.drawCircle(
+        Offset(centerX, size.height * 0.55),
+        size.shortestSide * 0.48,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              accent.withValues(alpha: 0.14),
+              accent.withValues(alpha: 0),
+            ],
+          ).createShader(Offset.zero & size),
+      );
+    }
+
+    final glowRect = Rect.fromCenter(
+      center: Offset(centerX, baseY + 1.8 * scale),
+      width: size.width * 0.82,
+      height: 8 * scale,
+    );
+    canvas.drawOval(
+      glowRect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            accent.withValues(
+              alpha: isLocked ? 0.06 : isHighlighted ? 0.38 : 0.2,
+            ),
+            accent.withValues(alpha: 0),
+          ],
+        ).createShader(glowRect),
+    );
+
+    final shadowRect = Rect.fromCenter(
+      center: Offset(centerX, baseY + 2 * scale),
+      width: size.width * 0.96,
+      height: 7 * scale,
+    );
+    canvas.drawOval(
+      shadowRect,
+      Paint()..color = const Color(0xFF050403).withValues(alpha: 0.42),
+    );
+
+    final leftFace = Path()
+      ..moveTo(centerX, craterY)
+      ..lineTo(size.width * 0.06, baseY - 1 * scale)
+      ..quadraticBezierTo(size.width * 0.36, baseY + 4 * scale, centerX, baseY)
+      ..close();
+    final rightFace = Path()
+      ..moveTo(centerX, craterY)
+      ..lineTo(size.width * 0.94, baseY - 1 * scale)
+      ..quadraticBezierTo(size.width * 0.64, baseY + 4 * scale, centerX, baseY)
+      ..close();
+
+    canvas.drawPath(
+      leftFace,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF7A3B20),
+            const Color(0xFF35180F),
+          ],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawPath(
+      rightFace,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            const Color(0xFF4F2415),
+            const Color(0xFF160A06),
+          ],
+        ).createShader(Offset.zero & size),
+    );
+
+    canvas.drawPath(
+      Path()
+        ..moveTo(centerX, craterY + 2 * scale)
+        ..lineTo(size.width * 0.06, baseY - 1 * scale)
+        ..quadraticBezierTo(size.width * 0.36, baseY + 4 * scale, centerX, baseY)
+        ..quadraticBezierTo(
+          size.width * 0.64,
+          baseY + 4 * scale,
+          size.width * 0.94,
+          baseY - 1 * scale,
+        )
+        ..close(),
+      Paint()
+        ..color = const Color(0xFFB87945).withValues(alpha: 0.16)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4 * scale,
+    );
+
+    final ridgePaint = Paint()
+      ..color = const Color(0xFFC98954).withValues(alpha: 0.24)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1 * scale
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(centerX, craterY + 2 * scale),
+      Offset(size.width * 0.28, baseY - 2 * scale),
+      ridgePaint,
+    );
+    canvas.drawLine(
+      Offset(centerX + 1.5 * scale, craterY + 3 * scale),
+      Offset(size.width * 0.7, baseY - 2 * scale),
+      ridgePaint..color = accent.withValues(alpha: 0.16),
+    );
+
+    final lavaPath = Path()
+      ..moveTo(centerX - 2 * scale, craterY + 5 * scale)
+      ..cubicTo(
+        centerX + 2 * scale,
+        craterY + 9 * scale,
+        centerX - 3 * scale,
+        craterY + 14 * scale,
+        centerX + 1 * scale,
+        baseY - 6 * scale,
+      );
+    canvas.drawPath(
+      lavaPath,
+      Paint()
+        ..color = accent.withValues(alpha: 0.62)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.7 * scale
+        ..strokeCap = StrokeCap.round,
+    );
+
+    final craterRect = Rect.fromCenter(
+      center: Offset(centerX, craterY + 2 * scale),
+      width: 13 * scale,
+      height: 7 * scale,
+    );
+    canvas.drawOval(
+      craterRect,
+      Paint()..color = const Color(0xFF1B0D08),
+    );
+    canvas.drawOval(
+      craterRect.deflate(1.2 * scale),
+      Paint()..color = accent.withValues(alpha: 0.68),
+    );
+
+    canvas.drawCircle(
+      Offset(centerX - 5 * scale, craterY - 4 * scale),
+      2.2 * scale,
+      Paint()..color = accent.withValues(alpha: 0.18),
+    );
+    canvas.drawCircle(
+      Offset(centerX + 5 * scale, craterY - 7 * scale),
+      1.5 * scale,
+      Paint()..color = accent.withValues(alpha: 0.14),
+    );
+
+    _paintMissionKindDetail(canvas, size, scale);
+
+    if (isComplete) {
+      final checkPaint = Paint()
+        ..color = const Color(0xFFE9FFF9).withValues(alpha: 0.86)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.1 * scale
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+      final check = Path()
+        ..moveTo(size.width * 0.66, size.height * 0.22)
+        ..lineTo(size.width * 0.74, size.height * 0.3)
+        ..lineTo(size.width * 0.88, size.height * 0.14);
+      canvas.drawPath(check, checkPaint);
+    }
+  }
+
+  void _paintEruption(Canvas canvas, Size size, double scale, double phase) {
+    final centerX = size.width / 2;
+    final craterY = size.height * 0.2;
+    final pulse = math.sin(phase * math.pi * 2) * 0.5 + 0.5;
+    final smokePaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFE7D0B5).withValues(alpha: 0.2 + pulse * 0.16),
+          const Color(0xFF5B4336).withValues(alpha: 0.08),
+          Colors.transparent,
+        ],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawCircle(
+      Offset(centerX - 5 * scale, craterY - (8 + pulse * 4) * scale),
+      (4.2 + pulse * 1.6) * scale,
+      smokePaint,
+    );
+    canvas.drawCircle(
+      Offset(centerX + 4 * scale, craterY - (11 - pulse * 2) * scale),
+      (3.4 + (1 - pulse) * 1.4) * scale,
+      smokePaint,
+    );
+
+    final emberPaint = Paint()
+      ..color = accent.withValues(alpha: 0.48 + pulse * 0.28)
+      ..strokeWidth = 1.4 * scale
+      ..strokeCap = StrokeCap.round;
+    for (var index = 0; index < 4; index++) {
+      final angle = -math.pi / 2 + (index - 1.5) * 0.34;
+      final distance = (8 + ((phase * 18 + index * 5) % 7)) * scale;
+      final start = Offset(centerX, craterY - 1 * scale);
+      final end = Offset(
+        centerX + math.cos(angle) * distance,
+        craterY + math.sin(angle) * distance,
+      );
+      canvas.drawLine(start, end, emberPaint);
+    }
+  }
+
+  void _paintMissionKindDetail(Canvas canvas, Size size, double scale) {
+    final paint = Paint()
+      ..color = accent.withValues(alpha: 0.72)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final fill = Paint()..color = accent.withValues(alpha: 0.64);
+
+    switch (kind) {
+      case _MissionKind.research:
+        canvas.drawCircle(
+          Offset(size.width * 0.25, size.height * 0.27),
+          2 * scale,
+          fill,
+        );
+        canvas.drawLine(
+          Offset(size.width * 0.25, size.height * 0.33),
+          Offset(size.width * 0.25, size.height * 0.48),
+          paint,
+        );
+        return;
+      case _MissionKind.quiz:
+        canvas.drawArc(
+          Rect.fromCenter(
+            center: Offset(size.width * 0.76, size.height * 0.32),
+            width: 11 * scale,
+            height: 11 * scale,
+          ),
+          -math.pi * 0.15,
+          math.pi * 1.35,
+          false,
+          paint,
+        );
+        return;
+      case _MissionKind.wordBuilder:
+        for (var index = 0; index < 3; index++) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(
+                size.width * 0.18 + index * 5.2 * scale,
+                size.height * 0.56,
+                4.2 * scale,
+                4.2 * scale,
+              ),
+              Radius.circular(0.8 * scale),
+            ),
+            fill,
+          );
+        }
+        return;
+      case _MissionKind.sideQuest:
+        final path = Path()
+          ..moveTo(size.width * 0.22, size.height * 0.7)
+          ..quadraticBezierTo(
+            size.width * 0.42,
+            size.height * 0.52,
+            size.width * 0.6,
+            size.height * 0.68,
+          )
+          ..quadraticBezierTo(
+            size.width * 0.72,
+            size.height * 0.79,
+            size.width * 0.86,
+            size.height * 0.62,
+          );
+        canvas.drawPath(path, paint..strokeWidth = 1.2 * scale);
+        return;
+      case _MissionKind.lab:
+        canvas.drawCircle(
+          Offset(size.width * 0.72, size.height * 0.24),
+          2 * scale,
+          fill,
+        );
+        canvas.drawCircle(
+          Offset(size.width * 0.8, size.height * 0.35),
+          1.5 * scale,
+          fill,
+        );
+        return;
+      case _MissionKind.builder:
+        for (var index = 0; index < 3; index++) {
+          canvas.drawLine(
+            Offset(size.width * 0.24, size.height * (0.62 + index * 0.07)),
+            Offset(size.width * 0.48, size.height * (0.58 + index * 0.07)),
+            paint,
+          );
+        }
+        return;
+      case _MissionKind.fieldLesson:
+        canvas.drawLine(
+          Offset(size.width * 0.76, size.height * 0.22),
+          Offset(size.width * 0.76, size.height * 0.46),
+          paint,
+        );
+        final flag = Path()
+          ..moveTo(size.width * 0.76, size.height * 0.22)
+          ..lineTo(size.width * 0.9, size.height * 0.27)
+          ..lineTo(size.width * 0.76, size.height * 0.33)
+          ..close();
+        canvas.drawPath(flag, fill);
+        return;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionVolcanoMarkerPainter oldDelegate) {
+    return oldDelegate.kind != kind ||
+        oldDelegate.accent != accent ||
+        oldDelegate.isComplete != isComplete ||
+        oldDelegate.isCurrent != isCurrent ||
+        oldDelegate.isHighlighted != isHighlighted ||
+        oldDelegate.isErupting != isErupting ||
+        oldDelegate.isLocked != isLocked ||
+        oldDelegate.eruptionProgress != eruptionProgress;
+  }
+}
+
+class _ActiveMissionAvatarPin extends StatefulWidget {
+  final int avatarIndex;
+  final Color accent;
+
+  const _ActiveMissionAvatarPin({
+    required this.avatarIndex,
+    required this.accent,
+  });
+
+  @override
+  State<_ActiveMissionAvatarPin> createState() =>
+      _ActiveMissionAvatarPinState();
+}
+
+class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
+  late VideoPlayerController _controller;
+  var _isReady = false;
+
+  AvatarAsset get _avatar {
+    return Assets.avatars[
+        widget.avatarIndex.clamp(0, Assets.avatars.length - 1)];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset(_avatar.animatedPath)
+      ..setLooping(true)
+      ..setVolume(0);
+    _controller.addListener(_keepAvatarLooping);
+    _initialize();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ActiveMissionAvatarPin oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.avatarIndex != widget.avatarIndex) {
+      _controller.removeListener(_keepAvatarLooping);
+      _controller.dispose();
+      _isReady = false;
+      _controller = VideoPlayerController.asset(_avatar.animatedPath)
+        ..setLooping(true)
+        ..setVolume(0);
+      _controller.addListener(_keepAvatarLooping);
+      _initialize();
+    }
+  }
+
+  void _keepAvatarLooping() {
+    final value = _controller.value;
+    if (!value.isInitialized || value.isPlaying) {
+      return;
+    }
+    if (value.position >= value.duration) {
+      _controller.seekTo(Duration.zero);
+      _controller.play();
+    }
+  }
+
+  Future<void> _initialize() async {
+    try {
+      await _controller.initialize();
+    } catch (_) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _isReady = true);
+    try {
+      await _controller.play();
+    } catch (_) {
+      // The static avatar remains visible if playback is unavailable.
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_keepAvatarLooping);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 35,
+      height: 44,
+      child: CustomPaint(
+        painter: _LocationPinPainter(accent: widget.accent),
+        child: Align(
+          alignment: const Alignment(0, -0.38),
+          child: ClipOval(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: _isReady
+                  ? FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: _controller.value.size.width,
+                        height: _controller.value.size.height,
+                        child: VideoPlayer(_controller),
+                      ),
+                    )
+                  : Image.asset(_avatar.imagePath, fit: BoxFit.cover),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationPinPainter extends CustomPainter {
+  final Color accent;
+
+  const _LocationPinPainter({required this.accent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final center = Offset(size.width / 2, size.height * 0.34);
+    final radius = size.width * 0.42;
+    final pinPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: radius))
+      ..moveTo(center.dx - radius * 0.48, center.dy + radius * 0.56)
+      ..quadraticBezierTo(
+        center.dx,
+        size.height * 0.98,
+        center.dx + radius * 0.48,
+        center.dy + radius * 0.56,
+      )
+      ..close();
+
+    canvas.drawShadow(pinPath, const Color(0xFF050403), 8, false);
+    canvas.drawPath(
+      pinPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            accent.withValues(alpha: 0.9),
+            const Color(0xFF22110A),
+          ],
+        ).createShader(rect),
+    );
+    canvas.drawPath(
+      pinPath,
+      Paint()
+        ..color = const Color(0xFFFFD7A0).withValues(alpha: 0.36)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LocationPinPainter oldDelegate) {
+    return oldDelegate.accent != accent;
   }
 }
 
@@ -993,16 +1721,11 @@ class _MissionBriefingSeal extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(node.primaryIcon, color: style.accent, size: 26),
-              const SizedBox(height: 3),
-              Text(
-                node.numberLabel,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
+              _MissionVolcanoMarker(
+                kind: node.kind,
+                status: node.status,
+                accent: style.accent,
+                size: 42,
               ),
             ],
           ),
@@ -1434,13 +2157,13 @@ class _MissionDialogBadge extends StatelessWidget {
 }
 
 class _FooterIconButton extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String tooltip;
   final String? badge;
   final VoidCallback onTap;
 
   const _FooterIconButton({
-    required this.icon,
+    required this.iconAsset,
     required this.tooltip,
     required this.onTap,
     this.badge,
@@ -1455,48 +2178,43 @@ class _FooterIconButton extends StatelessWidget {
         label: tooltip,
         child: InkResponse(
           onTap: onTap,
-          radius: 28,
-          splashColor: AppColors.teal.withValues(alpha: 0.08),
-          highlightColor: AppColors.teal.withValues(alpha: 0.04),
+          radius: 31,
+          splashColor: const Color(0xFFFF9B45).withValues(alpha: 0.1),
+          highlightColor: const Color(0xFFFF9B45).withValues(alpha: 0.05),
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: 56,
+            height: 56,
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border.all(color: AppColors.borderAlt, width: 0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: AppColors.teal, size: 20),
+                Image.asset(
+                  iconAsset,
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.contain,
                 ),
                 if (badge != null)
                   Positioned(
-                    top: 2,
-                    right: 2,
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
+                    top: 0,
+                    right: 1,
+                    child: CustomPaint(
+                      painter: const _VolcanoBadgePainter(
+                        accent: Color(0xFFFFD184),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.tealDark,
-                        border: Border.all(color: AppColors.teal, width: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        badge!,
-                        style: const TextStyle(
-                          color: AppColors.teal,
-                          fontSize: 9,
-                          height: 1,
+                      child: SizedBox(
+                        width: 20,
+                        height: 18,
+                        child: Center(
+                          child: Text(
+                            badge!,
+                            style: const TextStyle(
+                              color: Color(0xFFFFE0AC),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1507,5 +2225,40 @@ class _FooterIconButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _VolcanoBadgePainter extends CustomPainter {
+  final Color accent;
+
+  const _VolcanoBadgePainter({required this.accent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(7));
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            accent.withValues(alpha: 0.92),
+            const Color(0xFF351409),
+          ],
+        ).createShader(rect),
+    );
+    canvas.drawRRect(
+      rrect.deflate(0.5),
+      Paint()
+        ..color = const Color(0xFFFFE0AC).withValues(alpha: 0.42)
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _VolcanoBadgePainter oldDelegate) {
+    return oldDelegate.accent != accent;
   }
 }

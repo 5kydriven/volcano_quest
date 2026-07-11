@@ -161,6 +161,13 @@ class Assets {
   static const String settingToggleOff = 'assets/setting_screen/toggle_of.png';
   static const String settingToggleOn = 'assets/setting_screen/toggle_on.png';
   static const String menuBg = 'assets/menu_screen/menu_bg.jpeg';
+  static const String menuLeaderboardIcon =
+      'assets/menu_screen/icons/leaderboard_icon.png';
+  static const String menuBadgeIcon = 'assets/menu_screen/icons/badge_icon.png';
+  static const String menuSettingIcon =
+      'assets/menu_screen/icons/setting_icon.png';
+  static const String menuSwitchIcon =
+      'assets/menu_screen/icons/switch_icon.png';
   static const String appLogo = 'assets/app_logo.png';
   static const String containerList = 'assets/leaderboard/container_list.png';
   static const String header = 'assets/leaderboard/header.png';
