@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/routing/app_route_observer.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../data/models/player_model.dart';
 import '../../player/application/player_controller.dart';
@@ -74,8 +75,9 @@ class _LoopingMenuBackground extends StatefulWidget {
 }
 
 class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, RouteAware {
   late final VideoPlayerController _controller;
+  ModalRoute<dynamic>? _route;
   var _isReady = false;
   var _reduceMotion = false;
 
@@ -90,6 +92,17 @@ class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (!identical(_route, route)) {
+      if (_route != null) {
+        appRouteObserver.unsubscribe(this);
+      }
+      _route = route;
+      if (route != null) {
+        appRouteObserver.subscribe(this, route);
+      }
+    }
+
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (_reduceMotion == reduceMotion) {
       return;
@@ -137,7 +150,13 @@ class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
   }
 
   @override
+  void didPopNext() {
+    _syncPlayback();
+  }
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     super.dispose();
@@ -258,92 +277,11 @@ class _TopBar extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _AvatarSquare(avatarIndex: player.avatarIndex),
-        const SizedBox(width: 10),
         Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                player.name.toUpperCase(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFFFFF0D5),
-                  fontSize: 14,
-                  height: 1,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.8,
-                  shadows: [
-                    Shadow(
-                      color: Color(0xFF130603),
-                      offset: Offset(-1.5, 0),
-                      blurRadius: 1,
-                    ),
-                    Shadow(
-                      color: Color(0xFF130603),
-                      offset: Offset(1.5, 0),
-                      blurRadius: 1,
-                    ),
-                    Shadow(
-                      color: Color(0xFF130603),
-                      offset: Offset(0, 2),
-                      blurRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  Container(
-                    width: 5,
-                    height: 5,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFF7A1A),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(color: Color(0xFFFF5E16), blurRadius: 5),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      'LEVEL ${player.currentLevel}  |  FIELD SCIENTIST',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFFFB45F),
-                        fontSize: 8,
-                        height: 1,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.9,
-                        shadows: [
-                          Shadow(
-                            color: Color(0xFF0A0302),
-                            offset: Offset(1, 1),
-                            blurRadius: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Semantics(
-                label: 'Mission progress',
-                value: '$missionsDone of ${AppConstants.totalLevels}',
-                child: SizedBox(
-                  height: 8,
-                  child: CustomPaint(
-                    painter: _MoltenProgressPainter(value: progress),
-                  ),
-                ),
-              ),
-            ],
+          child: _PlayerIdentityPlate(
+            player: player,
+            missionsDone: missionsDone,
+            progress: progress,
           ),
         ),
         const SizedBox(width: 12),
@@ -355,6 +293,185 @@ class _TopBar extends StatelessWidget {
       ],
     );
   }
+}
+
+class _PlayerIdentityPlate extends StatelessWidget {
+  final PlayerModel player;
+  final int missionsDone;
+  final double progress;
+
+  const _PlayerIdentityPlate({
+    required this.player,
+    required this.missionsDone,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: const _PlayerIdentityPlatePainter(),
+      child: SizedBox(
+        height: 52,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(7, 6, 22, 6),
+          child: Row(
+            children: [
+              _AvatarSquare(avatarIndex: player.avatarIndex),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      player.name.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFFFF0D5),
+                        fontSize: 14,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                        shadows: [
+                          Shadow(
+                            color: Color(0xFF130603),
+                            offset: Offset(0, 2),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF7A1A),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFFF5E16),
+                                blurRadius: 5,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'LEVEL ${player.currentLevel}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFFFFB45F),
+                              fontSize: 8,
+                              height: 1,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.9,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xFF0A0302),
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Semantics(
+                      label: 'Mission progress',
+                      value: '$missionsDone of ${AppConstants.totalLevels}',
+                      child: SizedBox(
+                        height: 7,
+                        child: CustomPaint(
+                          painter: _MoltenProgressPainter(value: progress),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerIdentityPlatePainter extends CustomPainter {
+  const _PlayerIdentityPlatePainter();
+
+  Path _platePath(Size size) {
+    return Path()
+      ..moveTo(10, 0)
+      ..lineTo(size.width * 0.42, 0)
+      ..lineTo(size.width * 0.47, 5)
+      ..lineTo(size.width * 0.52, 0)
+      ..lineTo(size.width - 19, 0)
+      ..lineTo(size.width - 7, 9)
+      ..lineTo(size.width, size.height * 0.48)
+      ..lineTo(size.width - 11, size.height)
+      ..lineTo(8, size.height)
+      ..lineTo(0, size.height - 9)
+      ..lineTo(0, 10)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final plate = _platePath(size);
+    final bounds = Offset.zero & size;
+
+    canvas.drawPath(
+      plate.shift(const Offset(0, 3)),
+      Paint()
+        ..color = const Color(0xB3050201)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawPath(
+      plate,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF2352118), Color(0xF21C100C), Color(0xF20C0705)],
+        ).createShader(bounds),
+    );
+    canvas.drawPath(
+      plate,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD0733C), Color(0xFF6A321F), Color(0xFF26110C)],
+        ).createShader(bounds),
+    );
+
+    final lavaSeam = Path()
+      ..moveTo(9, size.height - 2)
+      ..lineTo(size.width * 0.58, size.height - 2)
+      ..lineTo(size.width * 0.64, size.height - 5)
+      ..lineTo(size.width - 16, size.height - 5);
+    canvas.drawPath(
+      lavaSeam,
+      Paint()
+        ..color = const Color(0x99FF6B20)
+        ..strokeWidth = 1.3
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _MoltenProgressPainter extends CustomPainter {

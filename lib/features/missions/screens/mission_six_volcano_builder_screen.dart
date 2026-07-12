@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../core/audio/audio_catalog.dart';
 import '../../../core/audio/audio_controller.dart';
@@ -39,7 +40,12 @@ class _MissionSixVolcanoBuilderScreenState
   var _builtTileCount = 0;
   int? _droppingTileIndex;
   var _isSaving = false;
+  var _isCompleting = false;
   var _showSummary = false;
+  var _showEruptionVideo = false;
+  var _eruptionVideoStarted = false;
+  var _eruptionVideoFinished = false;
+  VideoPlayerController? _eruptionVideoController;
   final _replayCompletedParts = <String>[];
 
   static const _answerOptions = [
@@ -91,6 +97,9 @@ class _MissionSixVolcanoBuilderScreenState
 
   @override
   void dispose() {
+    _eruptionVideoController
+      ?..removeListener(_handleEruptionVideoProgress)
+      ..dispose();
     _dropController.dispose();
     _completeRevealController.dispose();
     super.dispose();
@@ -105,7 +114,8 @@ class _MissionSixVolcanoBuilderScreenState
     final alreadyCompleted = AppConstants.missionSixBuilderPartIds.every(
       completedParts.contains,
     );
-    final shouldShowSummary = _showSummary || alreadyCompleted;
+    final shouldShowSummary =
+        (_showSummary || alreadyCompleted) && !_isCompleting;
     final savedTileCount = completedParts.length.clamp(0, _questions.length);
     final builtTileCount = alreadyCompleted
         ? _questions.length
@@ -129,6 +139,9 @@ class _MissionSixVolcanoBuilderScreenState
                   xp: player.totalXP,
                   avatarIndex: player.avatarIndex,
                   onBack: () {
+                    if (_isCompleting) {
+                      return;
+                    }
                     if (context.canPop()) {
                       context.pop();
                       return;
@@ -153,13 +166,15 @@ class _MissionSixVolcanoBuilderScreenState
                             totalQuestions: _questions.length,
                             question: _questions[questionIndex],
                             selectedOptionIndex: _selectedOptionIndex,
-                            isSaving: _isSaving,
+                            isSaving: _isSaving || _isCompleting,
                             builtTileCount: builtTileCount,
                             droppingTileIndex: _droppingTileIndex,
                             dropAnimation: _dropController,
                             completeRevealAnimation: _completeRevealController,
+                            showEruptionVideo: _showEruptionVideo,
+                            eruptionVideoController: _eruptionVideoController,
                             answerOptions: _answerOptions,
-                            onSelect: _isSaving
+                            onSelect: _isSaving || _isCompleting
                                 ? null
                                 : (index) {
                                     setState(() {
@@ -205,8 +220,10 @@ class _MissionSixVolcanoBuilderScreenState
     }
 
     final tileIndex = builtTileCount;
+    final isFinalTile = tileIndex == _questions.length - 1;
     setState(() {
       _isSaving = true;
+      _isCompleting = isFinalTile;
       _builtTileCount = tileIndex + 1;
       _droppingTileIndex = tileIndex;
       _selectedOptionIndex = null;
@@ -256,19 +273,77 @@ class _MissionSixVolcanoBuilderScreenState
         return;
       }
 
-      await Future<void>.delayed(const Duration(seconds: 4));
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _showSummary = true;
-      });
+      await _playEruptionVideo();
       return;
     }
 
     setState(() {});
+  }
+
+  Future<void> _playEruptionVideo() async {
+    final controller = VideoPlayerController.asset(
+      Assets.missionSixVolcanoEruption,
+    );
+    _eruptionVideoController = controller;
+
+    try {
+      await controller.initialize().timeout(const Duration(seconds: 5));
+      if (!mounted || _eruptionVideoController != controller) {
+        unawaited(controller.dispose());
+        return;
+      }
+
+      controller.addListener(_handleEruptionVideoProgress);
+      await controller.setLooping(false);
+      await controller.play();
+      _eruptionVideoStarted = true;
+      setState(() {
+        _showEruptionVideo = true;
+      });
+    } catch (_) {
+      if (_eruptionVideoController == controller) {
+        _eruptionVideoController = null;
+      }
+      unawaited(controller.dispose());
+      _finishEruptionVideo();
+    }
+  }
+
+  void _handleEruptionVideoProgress() {
+    final controller = _eruptionVideoController;
+    if (controller == null ||
+        !_eruptionVideoStarted ||
+        _eruptionVideoFinished ||
+        !controller.value.isInitialized) {
+      return;
+    }
+
+    final value = controller.value;
+    final reachedEnd =
+        value.duration > Duration.zero &&
+        value.position >= value.duration - const Duration(milliseconds: 100);
+    if (value.hasError || reachedEnd) {
+      _finishEruptionVideo();
+    }
+  }
+
+  void _finishEruptionVideo() {
+    if (_eruptionVideoFinished || !mounted) {
+      return;
+    }
+
+    _eruptionVideoFinished = true;
+    final controller = _eruptionVideoController;
+    controller?.removeListener(_handleEruptionVideoProgress);
+    _eruptionVideoController = null;
+    setState(() {
+      _showEruptionVideo = false;
+      _isCompleting = false;
+      _showSummary = true;
+    });
+    if (controller != null) {
+      unawaited(controller.dispose());
+    }
   }
 }
 
@@ -282,6 +357,8 @@ class _BuilderContent extends StatelessWidget {
   final int? droppingTileIndex;
   final Animation<double> dropAnimation;
   final Animation<double> completeRevealAnimation;
+  final bool showEruptionVideo;
+  final VideoPlayerController? eruptionVideoController;
   final List<String> answerOptions;
   final ValueChanged<int>? onSelect;
   final VoidCallback onSubmit;
@@ -296,6 +373,8 @@ class _BuilderContent extends StatelessWidget {
     required this.droppingTileIndex,
     required this.dropAnimation,
     required this.completeRevealAnimation,
+    required this.showEruptionVideo,
+    required this.eruptionVideoController,
     required this.answerOptions,
     required this.onSelect,
     required this.onSubmit,
@@ -317,6 +396,8 @@ class _BuilderContent extends StatelessWidget {
             droppingTileIndex: droppingTileIndex,
             dropAnimation: dropAnimation,
             completeRevealAnimation: completeRevealAnimation,
+            showEruptionVideo: showEruptionVideo,
+            eruptionVideoController: eruptionVideoController,
           ),
         ),
         const SizedBox(height: 12),
@@ -424,12 +505,16 @@ class _VolcanoBuildStage extends StatelessWidget {
   final int? droppingTileIndex;
   final Animation<double> dropAnimation;
   final Animation<double> completeRevealAnimation;
+  final bool showEruptionVideo;
+  final VideoPlayerController? eruptionVideoController;
 
   const _VolcanoBuildStage({
     required this.builtTileCount,
     required this.droppingTileIndex,
     required this.dropAnimation,
     required this.completeRevealAnimation,
+    required this.showEruptionVideo,
+    required this.eruptionVideoController,
   });
 
   static const _slots = [
@@ -466,7 +551,21 @@ class _VolcanoBuildStage extends StatelessWidget {
           return Stack(
             children: [
               const Positioned.fill(child: _BuilderGrid()),
-              if (builtTileCount >= _slots.length && droppingTileIndex == null)
+              if (showEruptionVideo &&
+                  (eruptionVideoController?.value.isInitialized ?? false))
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black,
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: eruptionVideoController!.value.aspectRatio,
+                        child: VideoPlayer(eruptionVideoController!),
+                      ),
+                    ),
+                  ),
+                )
+              else if (builtTileCount >= _slots.length &&
+                  droppingTileIndex == null)
                 Positioned.fill(
                   child: _CompleteVolcanoImage(
                     revealAnimation: completeRevealAnimation,

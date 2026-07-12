@@ -21,11 +21,13 @@ import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/player/screens/player_profiles_screen.dart';
 import '../../features/player/application/player_controller.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import 'app_route_observer.dart';
 import 'app_routes.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    observers: [appRouteObserver],
     routes: [
       GoRoute(
         path: AppRoutes.splash,
