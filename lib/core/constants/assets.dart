@@ -118,6 +118,8 @@ class Assets {
   static const String missionThreeCompletionVideo = missionSixVolcanoEruption;
   static const String missionFiveSelectedContainer =
       'assets/missions/mission-five/selected_container.png';
+  static const String missionFiveVolcanoImage =
+      'assets/missions/mission-five/3d_volcano.jpg';
   static const String missionSixVolcanoSliceTop =
       'assets/missions/mission-six/volcano_slice_top.png';
   static const String missionSixVolcanoSliceUpper =

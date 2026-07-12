@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -47,42 +46,54 @@ class _MissionFiveAnatomyLabScreenState
       id: 'ash_cloud',
       label: 'ash cloud',
       x: 0.52,
-      y: 0.09,
+      y: 0.10,
+      anchorX: 0.50,
+      anchorY: 0.15,
       icon: Icons.cloud_outlined,
     ),
     _AnatomyPart(
       id: 'crater',
       label: 'crater',
       x: 0.51,
-      y: 0.23,
+      y: 0.32,
+      anchorX: 0.50,
+      anchorY: 0.38,
       icon: Icons.radio_button_unchecked,
     ),
     _AnatomyPart(
       id: 'main_vent',
       label: 'main vent',
       x: 0.51,
-      y: 0.48,
+      y: 0.55,
+      anchorX: 0.50,
+      anchorY: 0.58,
       icon: Icons.arrow_upward,
     ),
     _AnatomyPart(
       id: 'secondary_vent',
       label: 'secondary vent',
       x: 0.69,
-      y: 0.42,
+      y: 0.52,
+      anchorX: 0.60,
+      anchorY: 0.57,
       icon: Icons.call_split_outlined,
     ),
     _AnatomyPart(
       id: 'lava_flow',
       label: 'lava flow',
       x: 0.73,
-      y: 0.30,
+      y: 0.28,
+      anchorX: 0.73,
+      anchorY: 0.43,
       icon: Icons.local_fire_department_outlined,
     ),
     _AnatomyPart(
       id: 'magma_chamber',
       label: 'magma chamber',
       x: 0.49,
-      y: 0.76,
+      y: 0.82,
+      anchorX: 0.50,
+      anchorY: 0.85,
       icon: Icons.bubble_chart_outlined,
     ),
   ];
@@ -248,28 +259,17 @@ class _MissionFiveAnatomyLabScreenState
   }
 }
 
-class _VolcanoModelView extends StatefulWidget {
+class _VolcanoModelView extends StatelessWidget {
   const _VolcanoModelView();
 
   @override
-  State<_VolcanoModelView> createState() => _VolcanoModelViewState();
-}
-
-class _VolcanoModelViewState extends State<_VolcanoModelView> {
-  final _controller = Flutter3DController();
-
-  @override
   Widget build(BuildContext context) {
-    return Flutter3DViewer(
-      activeGestureInterceptor: true,
-      enableTouch: true,
-      progressBarColor: AppColors.teal,
-      controller: _controller,
-      src: Assets.volcano3dSection,
-      onLoad: (_) {
-        _controller.setCameraOrbit(0, 72, 2.65);
-        _controller.setCameraTarget(0, 0, 0);
-      },
+    return Image.asset(
+      Assets.missionFiveVolcanoImage,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.fill,
+      semanticLabel: 'Volcano anatomy cross-section',
     );
   }
 }
@@ -302,22 +302,98 @@ class _AnatomyLabContent extends StatelessWidget {
         .where((part) => !placedLabels.containsValue(part.id))
         .toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const _ScannerLabel(text: 'VOLCANO ANATOMY SCAN'),
-        const SizedBox(height: 10),
-        Expanded(
-          child: _ModelDropZone(
-            parts: parts,
-            placedLabels: placedLabels,
-            modelPreview: modelPreview,
-            onTryPlaceLabel: onTryPlaceLabel,
+    final dropZone = AspectRatio(
+      aspectRatio: 1,
+      child: _ModelDropZone(
+        parts: parts,
+        placedLabels: placedLabels,
+        modelPreview: modelPreview,
+        onTryPlaceLabel: onTryPlaceLabel,
+      ),
+    );
+    final controls = _AnatomyControls(
+      parts: parts,
+      remainingParts: remainingParts,
+      placedCount: placedLabels.length,
+      selectedLabelId: selectedLabelId,
+      isSaving: isSaving,
+      onSelectLabel: onSelectLabel,
+      onClear: onClear,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 640) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _ScannerLabel(text: 'VOLCANO ANATOMY SCAN'),
+              const SizedBox(height: 10),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: dropZone,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: SingleChildScrollView(child: controls),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _ScannerLabel(text: 'VOLCANO ANATOMY SCAN'),
+              const SizedBox(height: 10),
+              dropZone,
+              const SizedBox(height: 12),
+              controls,
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
+        );
+      },
+    );
+  }
+}
+
+class _AnatomyControls extends StatelessWidget {
+  final List<_AnatomyPart> parts;
+  final List<_AnatomyPart> remainingParts;
+  final int placedCount;
+  final String? selectedLabelId;
+  final bool isSaving;
+  final ValueChanged<String> onSelectLabel;
+  final VoidCallback onClear;
+
+  const _AnatomyControls({
+    required this.parts,
+    required this.remainingParts,
+    required this.placedCount,
+    required this.selectedLabelId,
+    required this.isSaving,
+    required this.onSelectLabel,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
         _TelemetryStrip(
-          placedCount: placedLabels.length,
+          placedCount: placedCount,
           totalCount: parts.length,
           selectedPart: selectedLabelId == null
               ? null
@@ -334,7 +410,7 @@ class _AnatomyLabContent extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: _ClearPlacementsButton(
-            isEnabled: placedLabels.isNotEmpty && !isSaving,
+            isEnabled: placedCount > 0 && !isSaving,
             onPressed: onClear,
           ),
         ),
@@ -344,6 +420,11 @@ class _AnatomyLabContent extends StatelessWidget {
 }
 
 class _ModelDropZone extends StatelessWidget {
+  static const _targetWidth = 104.0;
+  static const _targetInset = 6.0;
+  static const _targetHalfHeight = 20.0;
+  static const _targetBottomGuard = 48.0;
+
   final List<_AnatomyPart> parts;
   final Map<String, String> placedLabels;
   final Widget modelPreview;
@@ -376,10 +457,25 @@ class _ModelDropZone extends StatelessWidget {
             children: [
               Positioned.fill(child: modelPreview),
               const Positioned.fill(child: _ModelShade()),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _AnatomyConnectorPainter(
+                      parts: parts,
+                      placedPartIds: placedLabels.keys.toSet(),
+                    ),
+                  ),
+                ),
+              ),
               for (final part in parts)
                 Positioned(
-                  left: (width * part.x - 52).clamp(6, width - 110),
-                  top: (height * part.y - 20).clamp(6, height - 48),
+                  left: part.x < 0.6
+                      ? _targetInset
+                      : width - _targetWidth - _targetInset,
+                  top: (height * part.y - _targetHalfHeight).clamp(
+                    _targetInset,
+                    height - _targetBottomGuard,
+                  ),
                   child: _AnatomyDropTarget(
                     part: part,
                     isPlaced: placedLabels.containsKey(part.id),
@@ -391,6 +487,79 @@ class _ModelDropZone extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class _AnatomyConnectorPainter extends CustomPainter {
+  final List<_AnatomyPart> parts;
+  final Set<String> placedPartIds;
+
+  const _AnatomyConnectorPainter({
+    required this.parts,
+    required this.placedPartIds,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final part in parts) {
+      final isOnLeft = part.x < 0.6;
+      final targetTop =
+          (size.height * part.y - _ModelDropZone._targetHalfHeight)
+              .clamp(
+                _ModelDropZone._targetInset,
+                size.height - _ModelDropZone._targetBottomGuard,
+              )
+              .toDouble();
+      final start = Offset(
+        isOnLeft
+            ? _ModelDropZone._targetInset + _ModelDropZone._targetWidth
+            : size.width -
+                  _ModelDropZone._targetWidth -
+                  _ModelDropZone._targetInset,
+        targetTop + _ModelDropZone._targetHalfHeight,
+      );
+      final anchor = Offset(
+        size.width * part.anchorX,
+        size.height * part.anchorY,
+      );
+      final stub = Offset(start.dx + (isOnLeft ? 12 : -12), start.dy);
+      final isPlaced = placedPartIds.contains(part.id);
+      final color = isPlaced ? AppColors.teal : AppColors.tealDim;
+      final linePaint = Paint()
+        ..color = color.withValues(alpha: isPlaced ? 1 : 0.92)
+        ..strokeWidth = isPlaced ? 3.2 : 2.4
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+      final path = Path()
+        ..moveTo(start.dx, start.dy)
+        ..lineTo(stub.dx, stub.dy)
+        ..lineTo(anchor.dx, anchor.dy);
+
+      canvas.drawPath(path, linePaint);
+      canvas.drawCircle(
+        anchor,
+        isPlaced ? 4.5 : 3.8,
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(
+        anchor,
+        isPlaced ? 7.5 : 6.5,
+        Paint()
+          ..color = color.withValues(alpha: 0.3)
+          ..strokeWidth = 1.8
+          ..style = PaintingStyle.stroke,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _AnatomyConnectorPainter oldDelegate) {
+    return oldDelegate.parts != parts ||
+        oldDelegate.placedPartIds.length != placedPartIds.length ||
+        placedPartIds.any((id) => !oldDelegate.placedPartIds.contains(id));
   }
 }
 
@@ -986,6 +1155,8 @@ class _AnatomyPart {
   final String label;
   final double x;
   final double y;
+  final double anchorX;
+  final double anchorY;
   final IconData icon;
 
   const _AnatomyPart({
@@ -993,6 +1164,8 @@ class _AnatomyPart {
     required this.label,
     required this.x,
     required this.y,
+    required this.anchorX,
+    required this.anchorY,
     required this.icon,
   });
 }
