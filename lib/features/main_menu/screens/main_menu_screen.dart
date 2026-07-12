@@ -1,14 +1,19 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/routing/app_route_observer.dart';
 import '../../../core/routing/app_routes.dart';
 import '../../../data/models/player_model.dart';
 import '../../player/application/player_controller.dart';
+
+const _topBarExtent = 85.0;
 
 class MainMenuScreen extends ConsumerWidget {
   const MainMenuScreen({super.key});
@@ -20,89 +25,167 @@ class MainMenuScreen extends ConsumerWidget {
     final progress = missionsDone / AppConstants.totalLevels;
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            CustomScrollView(
-              slivers: [
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: _StickyTopBarDelegate(
-                    player: player,
-                    missionsDone: missionsDone,
-                    progress: progress,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          CustomScrollView(
+            slivers: [SliverToBoxAdapter(child: _MissionMap(player: player))],
+          ),
+          SafeArea(
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: _topBarExtent,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                    child: _TopBar(
+                      player: player,
+                      missionsDone: missionsDone,
+                      progress: progress,
+                    ),
                   ),
                 ),
-                SliverToBoxAdapter(child: _MissionMap(player: player)),
+                _FloatingMenuRail(player: player),
+                Positioned(
+                  bottom: 32,
+                  right: 20,
+                  child: _FooterIconButton(
+                    iconAsset: Assets.menuSettingIcon,
+                    tooltip: 'Settings',
+                    onTap: () => context.push(AppRoutes.settings),
+                  ),
+                ),
               ],
             ),
-            _FloatingMenuRail(player: player),
-            Positioned(
-              bottom: 32,
-              right: 20,
-              child: _FooterIconButton(
-                icon: Icons.settings_outlined,
-                tooltip: 'Settings',
-                onTap: () => context.push(AppRoutes.settings),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _StickyTopBarDelegate extends SliverPersistentHeaderDelegate {
-  static const extent = 85.0;
-
-  final PlayerModel player;
-  final int missionsDone;
-  final double progress;
-
-  const _StickyTopBarDelegate({
-    required this.player,
-    required this.missionsDone,
-    required this.progress,
-  });
+class _LoopingMenuBackground extends StatefulWidget {
+  const _LoopingMenuBackground();
 
   @override
-  double get minExtent => extent;
+  State<_LoopingMenuBackground> createState() => _LoopingMenuBackgroundState();
+}
+
+class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
+    with WidgetsBindingObserver, RouteAware {
+  late final VideoPlayerController _controller;
+  ModalRoute<dynamic>? _route;
+  var _isReady = false;
+  var _reduceMotion = false;
 
   @override
-  double get maxExtent => extent;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        border: overlapsContent
-            ? const Border(
-                bottom: BorderSide(color: AppColors.border, width: 0.5),
-              )
-            : null,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-        child: _TopBar(
-          player: player,
-          missionsDone: missionsDone,
-          progress: progress,
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _controller = VideoPlayerController.asset(Assets.menuBgAnimated);
+    unawaited(_initializeVideo());
   }
 
   @override
-  bool shouldRebuild(covariant _StickyTopBarDelegate oldDelegate) {
-    return oldDelegate.player != player ||
-        oldDelegate.missionsDone != missionsDone ||
-        oldDelegate.progress != progress;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (!identical(_route, route)) {
+      if (_route != null) {
+        appRouteObserver.unsubscribe(this);
+      }
+      _route = route;
+      if (route != null) {
+        appRouteObserver.subscribe(this, route);
+      }
+    }
+
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion == reduceMotion) {
+      return;
+    }
+    _reduceMotion = reduceMotion;
+    _syncPlayback();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      await _controller.initialize();
+      await _controller.setLooping(true);
+      await _controller.setVolume(0);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isReady = true);
+      _syncPlayback();
+    } catch (_) {
+      // The static map remains visible when video initialization is unavailable.
+    }
+  }
+
+  void _syncPlayback() {
+    if (!_isReady) {
+      return;
+    }
+    if (_reduceMotion) {
+      unawaited(_controller.pause());
+    } else {
+      unawaited(_controller.play());
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_isReady) {
+      return;
+    }
+    if (state == AppLifecycleState.resumed) {
+      _syncPlayback();
+    } else {
+      unawaited(_controller.pause());
+    }
+  }
+
+  @override
+  void didPopNext() {
+    _syncPlayback();
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            Assets.menuBg,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          if (_isReady)
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _controller.value.size.width,
+                height: _controller.value.size.height,
+                child: VideoPlayer(_controller),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -119,38 +202,28 @@ class _FloatingMenuRail extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Padding(
         padding: const EdgeInsets.only(left: 8),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.background.withValues(alpha: 0.88),
-            border: Border.all(color: AppColors.border, width: 0.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _FooterIconButton(
-                  icon: Icons.emoji_events_outlined,
-                  tooltip: 'Leaderboard',
-                  onTap: () => context.push(AppRoutes.leaderboard),
-                ),
-                const SizedBox(height: 4),
-                _FooterIconButton(
-                  icon: Icons.military_tech_outlined,
-                  tooltip: 'Badge collection',
-                  badge: earnedBadges > 0 ? '$earnedBadges' : null,
-                  onTap: () => context.push(AppRoutes.badges),
-                ),
-                const SizedBox(height: 4),
-                _FooterIconButton(
-                  icon: Icons.switch_account_outlined,
-                  tooltip: 'Switch player',
-                  onTap: () => context.go(AppRoutes.players),
-                ),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FooterIconButton(
+              iconAsset: Assets.menuLeaderboardIcon,
+              tooltip: 'Leaderboard',
+              onTap: () => context.push(AppRoutes.leaderboard),
             ),
-          ),
+            const SizedBox(height: 7),
+            _FooterIconButton(
+              iconAsset: Assets.menuBadgeIcon,
+              tooltip: 'Badge collection',
+              badge: earnedBadges > 0 ? '$earnedBadges' : null,
+              onTap: () => context.push(AppRoutes.badges),
+            ),
+            const SizedBox(height: 7),
+            _FooterIconButton(
+              iconAsset: Assets.menuSwitchIcon,
+              tooltip: 'Switch player',
+              onTap: () => context.go(AppRoutes.players),
+            ),
+          ],
         ),
       ),
     );
@@ -202,95 +275,322 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  _AvatarSquare(avatarIndex: player.avatarIndex),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          player.name.toUpperCase(),
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 13,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          'LEVEL ${player.currentLevel} SCIENTIST',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
-                            fontSize: 9,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Semantics(
-                label: 'Mission progress',
-                value: '$missionsDone of ${AppConstants.totalLevels}',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: AppColors.surface,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.teal,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          child: _PlayerIdentityPlate(
+            player: player,
+            missionsDone: missionsDone,
+            progress: progress,
           ),
         ),
-        const SizedBox(width: 10),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _HeaderMetric(
-              icon: Icons.bolt_outlined,
-              value: '${player.totalXP}',
-              tooltip: 'Total XP',
-            ),
-            const SizedBox(width: 8),
-            _HeaderMetric(
-              icon: Icons.military_tech_outlined,
-              value: '${player.earnedBadges.length}',
-              tooltip: 'Badges earned',
-            ),
-            const SizedBox(width: 8),
-            _HeaderMetric(
-              icon: Icons.bar_chart_outlined,
-              value: '$missionsDone',
-              tooltip: 'Missions done',
-            ),
-          ],
+        const SizedBox(width: 12),
+        _HeaderStats(
+          totalXp: player.totalXP,
+          badges: player.earnedBadges.length,
+          missions: missionsDone,
         ),
       ],
     );
   }
 }
 
-class _HeaderMetric extends StatelessWidget {
+class _PlayerIdentityPlate extends StatelessWidget {
+  final PlayerModel player;
+  final int missionsDone;
+  final double progress;
+
+  const _PlayerIdentityPlate({
+    required this.player,
+    required this.missionsDone,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: const _PlayerIdentityPlatePainter(),
+      child: SizedBox(
+        height: 52,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(7, 6, 22, 6),
+          child: Row(
+            children: [
+              _AvatarSquare(avatarIndex: player.avatarIndex),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      player.name.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFFFFF0D5),
+                        fontSize: 14,
+                        height: 1,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                        shadows: [
+                          Shadow(
+                            color: Color(0xFF130603),
+                            offset: Offset(0, 2),
+                            blurRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF7A1A),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFFF5E16),
+                                blurRadius: 5,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            'LEVEL ${player.currentLevel}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFFFFB45F),
+                              fontSize: 8,
+                              height: 1,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.9,
+                              shadows: [
+                                Shadow(
+                                  color: Color(0xFF0A0302),
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Semantics(
+                      label: 'Mission progress',
+                      value: '$missionsDone of ${AppConstants.totalLevels}',
+                      child: SizedBox(
+                        height: 7,
+                        child: CustomPaint(
+                          painter: _MoltenProgressPainter(value: progress),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerIdentityPlatePainter extends CustomPainter {
+  const _PlayerIdentityPlatePainter();
+
+  Path _platePath(Size size) {
+    return Path()
+      ..moveTo(10, 0)
+      ..lineTo(size.width * 0.42, 0)
+      ..lineTo(size.width * 0.47, 5)
+      ..lineTo(size.width * 0.52, 0)
+      ..lineTo(size.width - 19, 0)
+      ..lineTo(size.width - 7, 9)
+      ..lineTo(size.width, size.height * 0.48)
+      ..lineTo(size.width - 11, size.height)
+      ..lineTo(8, size.height)
+      ..lineTo(0, size.height - 9)
+      ..lineTo(0, 10)
+      ..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final plate = _platePath(size);
+    final bounds = Offset.zero & size;
+
+    canvas.drawPath(
+      plate.shift(const Offset(0, 3)),
+      Paint()
+        ..color = const Color(0xB3050201)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawPath(
+      plate,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF2352118), Color(0xF21C100C), Color(0xF20C0705)],
+        ).createShader(bounds),
+    );
+    canvas.drawPath(
+      plate,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD0733C), Color(0xFF6A321F), Color(0xFF26110C)],
+        ).createShader(bounds),
+    );
+
+    final lavaSeam = Path()
+      ..moveTo(9, size.height - 2)
+      ..lineTo(size.width * 0.58, size.height - 2)
+      ..lineTo(size.width * 0.64, size.height - 5)
+      ..lineTo(size.width - 16, size.height - 5);
+    canvas.drawPath(
+      lavaSeam,
+      Paint()
+        ..color = const Color(0x99FF6B20)
+        ..strokeWidth = 1.3
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MoltenProgressPainter extends CustomPainter {
+  final double value;
+
+  const _MoltenProgressPainter({required this.value});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final track = RRect.fromRectAndRadius(rect, const Radius.circular(4));
+    canvas.drawRRect(track, Paint()..color = const Color(0xFF0A0503));
+    canvas.drawRRect(
+      track.deflate(0.5),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF69321E),
+    );
+
+    final fillWidth = size.width * value.clamp(0.0, 1.0);
+    if (fillWidth <= 0) {
+      return;
+    }
+    final fillRect = Rect.fromLTWH(1, 1, fillWidth.clamp(0, size.width - 2), 6);
+    final fill = RRect.fromRectAndRadius(fillRect, const Radius.circular(3));
+    canvas.drawRRect(
+      fill.inflate(1),
+      Paint()
+        ..color = const Color(0x66FF5D17)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawRRect(
+      fill,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFD483), Color(0xFFFF781C), Color(0xFFB93412)],
+        ).createShader(fillRect),
+    );
+    canvas.drawLine(
+      Offset(fillRect.left + 3, fillRect.top + 1.5),
+      Offset(
+        math.max(fillRect.left + 3, fillRect.right - 3),
+        fillRect.top + 1.5,
+      ),
+      Paint()
+        ..color = const Color(0xAAFFF1C2)
+        ..strokeWidth = 1
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MoltenProgressPainter oldDelegate) {
+    return oldDelegate.value != value;
+  }
+}
+
+class _HeaderStats extends StatelessWidget {
+  final int totalXp;
+  final int badges;
+  final int missions;
+
+  const _HeaderStats({
+    required this.totalXp,
+    required this.badges,
+    required this.missions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label:
+          '$totalXp total XP, $badges badges earned, $missions missions done',
+      child: CustomPaint(
+        painter: const _HeaderStatsPainter(),
+        child: SizedBox(
+          height: 44,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _HeaderStat(
+                  icon: Icons.bolt_rounded,
+                  value: '$totalXp',
+                  tooltip: 'Total XP',
+                ),
+                const _HeaderStatDivider(),
+                _HeaderStat(
+                  icon: Icons.military_tech_rounded,
+                  value: '$badges',
+                  tooltip: 'Badges earned',
+                ),
+                const _HeaderStatDivider(),
+                _HeaderStat(
+                  icon: Icons.flag_rounded,
+                  value: '$missions',
+                  tooltip: 'Missions done',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderStat extends StatelessWidget {
   final IconData icon;
   final String value;
   final String tooltip;
 
-  const _HeaderMetric({
+  const _HeaderStat({
     required this.icon,
     required this.value,
     required this.tooltip,
@@ -300,35 +600,96 @@ class _HeaderMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
-      child: Semantics(
-        label: '$tooltip: $value',
-        child: Container(
-          height: 30,
-          padding: const EdgeInsets.symmetric(horizontal: 7),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border.all(color: AppColors.borderAlt, width: 0.5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: AppColors.teal, size: 15),
-              const SizedBox(width: 4),
-              Text(
+      child: SizedBox(
+        width: 31,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFFFFA24A),
+              size: 13,
+              shadows: const [
+                Shadow(color: Color(0xFF000000), blurRadius: 2),
+                Shadow(color: Color(0x77FF5E16), blurRadius: 4),
+              ],
+            ),
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
                 value,
+                maxLines: 1,
                 style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 12,
-                  letterSpacing: 0.4,
+                  color: Color(0xFFFFE8C4),
+                  fontSize: 10,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.2,
+                  shadows: [
+                    Shadow(color: Color(0xFF000000), offset: Offset(0, 1)),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _HeaderStatDivider extends StatelessWidget {
+  const _HeaderStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 24,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: const Color(0xFF6D321E),
+    );
+  }
+}
+
+class _HeaderStatsPainter extends CustomPainter {
+  const _HeaderStatsPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final face = RRect.fromRectAndRadius(rect, const Radius.circular(12));
+    canvas.drawRRect(
+      face.shift(const Offset(0, 3)),
+      Paint()
+        ..color = const Color(0xBB050201)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+    canvas.drawRRect(
+      face,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF22F1C13), Color(0xF21A0E0A), Color(0xF20C0604)],
+        ).createShader(rect),
+    );
+    canvas.drawRRect(
+      face.deflate(0.7),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFCE6A32), Color(0xFF572719), Color(0xFF160906)],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _AvatarSquare extends StatelessWidget {
@@ -346,9 +707,21 @@ class _AvatarSquare extends StatelessWidget {
       height: 40,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        border: Border.all(color: AppColors.teal, width: 1),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFA554), Color(0xFF6A2B17), Color(0xFF1C0B07)],
+        ),
+        border: Border.all(color: const Color(0xFFFFB766), width: 1),
         borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x99000000),
+            offset: Offset(0, 3),
+            blurRadius: 3,
+          ),
+          BoxShadow(color: Color(0x55FF6718), blurRadius: 7),
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(5),
@@ -358,15 +731,58 @@ class _AvatarSquare extends StatelessWidget {
   }
 }
 
-class _MissionMap extends StatelessWidget {
+class _MissionMap extends StatefulWidget {
   final PlayerModel player;
 
   const _MissionMap({required this.player});
 
   @override
+  State<_MissionMap> createState() => _MissionMapState();
+}
+
+class _MissionMapState extends State<_MissionMap> {
+  final _activeNodeKey = GlobalKey();
+  String? _selectedNodeId;
+  String? _eruptingNodeId;
+  String? _pendingEruptionNodeId;
+  String? _lastAutoScrolledRoute;
+  int _teleportToken = 0;
+  var _pendingStartScheduled = false;
+
+  @override
+  void didUpdateWidget(covariant _MissionMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.player.currentLevel != widget.player.currentLevel ||
+        oldWidget.player.completedMissionOrbs !=
+            widget.player.completedMissionOrbs) {
+      final oldActiveNode = _firstNodeWhere(
+        _missionNodes(oldWidget.player),
+        (node) => node.isCurrent,
+      );
+      if (oldActiveNode != null) {
+        final completedNodeId = _nodeId(oldActiveNode);
+        if (_isCurrentRoute) {
+          _beginCompletionTransition(completedNodeId);
+        } else {
+          _pendingEruptionNodeId = completedNodeId;
+        }
+      } else {
+        _selectedNodeId = null;
+        _eruptingNodeId = null;
+        _pendingEruptionNodeId = null;
+        _lastAutoScrolledRoute = null;
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const nodeSize = 44.0;
-    final nodes = _missionNodes();
+    const nodeSize = 58.0;
+    final nodes = _missionNodes(widget.player);
+    final pinnedNodeId = _pinnedNodeId(nodes);
+    final activeRoute = _activeRoute(nodes);
+    _startPendingEruptionWhenVisible();
+    _scrollToActiveRoute(activeRoute);
     assert(
       nodes.length == _missionPathAnchors.length,
       'Mission nodes must match the menu background path anchors.',
@@ -377,13 +793,10 @@ class _MissionMap extends StatelessWidget {
         final screenHeight = MediaQuery.sizeOf(context).height;
         final canvasWidth = constraints.maxWidth;
         final imageRatioHeight = canvasWidth / _menuImageAspectRatio;
-        final canvasHeight = math.max(
-          imageRatioHeight,
-          screenHeight - _StickyTopBarDelegate.extent,
-        );
-        final canvasSize = Size(canvasWidth, canvasHeight);
+        final canvasHeight = math.max(imageRatioHeight, screenHeight);
         final positions = _missionNodePositions(
-          canvasSize: canvasSize,
+          backgroundSize: MediaQuery.sizeOf(context),
+          contentTop: 0,
           count: nodes.length,
         );
         final positionedNodes = nodes.take(positions.length).toList();
@@ -394,25 +807,29 @@ class _MissionMap extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  Assets.menuBg,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.center,
-                ),
-              ),
+              const Positioned.fill(child: _LoopingMenuBackground()),
               for (var index = positionedNodes.length - 1; index >= 0; index--)
                 Positioned(
                   left: positions[index].dx - nodeSize / 2,
                   top: positions[index].dy - nodeSize / 2,
                   child: _MissionNode(
+                    key: positionedNodes[index].route == activeRoute
+                        ? _activeNodeKey
+                        : null,
+                    avatarIndex: widget.player.avatarIndex,
                     node: positionedNodes[index],
+                    isPinned: _nodeId(positionedNodes[index]) == pinnedNodeId,
+                    isErupting:
+                        _nodeId(positionedNodes[index]) == _eruptingNodeId,
                     size: nodeSize,
                     onTap: positionedNodes[index].isUnlocked
-                        ? () => _showMissionDialog(
-                            context,
-                            positionedNodes[index],
-                          )
+                        ? () {
+                            setState(() {
+                              _selectedNodeId = _nodeId(positionedNodes[index]);
+                              _eruptingNodeId = null;
+                            });
+                            _showMissionDialog(context, positionedNodes[index]);
+                          }
                         : null,
                   ),
                 ),
@@ -423,7 +840,103 @@ class _MissionMap extends StatelessWidget {
     );
   }
 
-  List<_MissionMapNode> _missionNodes() {
+  String? _activeRoute(List<_MissionMapNode> nodes) {
+    return _firstNodeWhere(nodes, (node) => node.isCurrent)?.route;
+  }
+
+  String? _pinnedNodeId(List<_MissionMapNode> nodes) {
+    final selectedNode = _firstNodeWhere(
+      nodes,
+      (node) => node.isUnlocked && _nodeId(node) == _selectedNodeId,
+    );
+    if (selectedNode != null) {
+      return _nodeId(selectedNode);
+    }
+
+    final currentNode = _firstNodeWhere(nodes, (node) => node.isCurrent);
+    return currentNode == null ? null : _nodeId(currentNode);
+  }
+
+  String _nodeId(_MissionMapNode node) => '${node.eyebrow}|${node.title}';
+
+  bool get _isCurrentRoute => ModalRoute.of(context)?.isCurrent ?? true;
+
+  _MissionMapNode? _firstNodeWhere(
+    List<_MissionMapNode> nodes,
+    bool Function(_MissionMapNode node) test,
+  ) {
+    for (final node in nodes) {
+      if (test(node)) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  void _scrollToActiveRoute(String? activeRoute) {
+    if (activeRoute == null || activeRoute == _lastAutoScrolledRoute) {
+      return;
+    }
+    _lastAutoScrolledRoute = activeRoute;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final activeContext = _activeNodeKey.currentContext;
+      if (activeContext == null) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        activeContext,
+        alignment: 0.55,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  void _schedulePinTeleport() {
+    final token = ++_teleportToken;
+    Future<void>.delayed(const Duration(milliseconds: 1400), () {
+      if (!mounted || token != _teleportToken) {
+        return;
+      }
+      setState(() {
+        _selectedNodeId = null;
+        _eruptingNodeId = null;
+        _lastAutoScrolledRoute = null;
+      });
+    });
+  }
+
+  void _beginCompletionTransition(String completedNodeId) {
+    _selectedNodeId = completedNodeId;
+    _eruptingNodeId = completedNodeId;
+    _pendingEruptionNodeId = null;
+    _lastAutoScrolledRoute = null;
+    _schedulePinTeleport();
+  }
+
+  void _startPendingEruptionWhenVisible() {
+    if (!_isCurrentRoute ||
+        _pendingEruptionNodeId == null ||
+        _pendingStartScheduled) {
+      return;
+    }
+    _pendingStartScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_isCurrentRoute || _pendingEruptionNodeId == null) {
+        _pendingStartScheduled = false;
+        return;
+      }
+      setState(() {
+        _pendingStartScheduled = false;
+        _beginCompletionTransition(_pendingEruptionNodeId!);
+      });
+    });
+  }
+
+  List<_MissionMapNode> _missionNodes(PlayerModel player) {
     final activeLevel = player.currentLevel.clamp(1, AppConstants.totalLevels);
     final sideQuestComplete = AppConstants.sideQuestVolcanoStructureQuestionIds
         .every(
@@ -577,17 +1090,18 @@ class _MissionMap extends StatelessWidget {
   }
 
   List<Offset> _missionNodePositions({
-    required Size canvasSize,
+    required Size backgroundSize,
+    required double contentTop,
     required int count,
   }) {
-    final imageRect = _menuImageRect(canvasSize);
+    final imageRect = _menuImageRect(backgroundSize);
     final anchorCount = math.min(count, _missionPathAnchors.length);
 
     return [
       for (final anchor in _missionPathAnchors.take(anchorCount))
         Offset(
           imageRect.left + imageRect.width * anchor.dx,
-          imageRect.top + imageRect.height * anchor.dy,
+          imageRect.top + imageRect.height * anchor.dy - contentTop,
         ),
     ];
   }
@@ -655,28 +1169,26 @@ class _MissionMapNode {
 }
 
 class _MissionNode extends StatelessWidget {
+  final int avatarIndex;
   final _MissionMapNode node;
+  final bool isPinned;
+  final bool isErupting;
   final double size;
   final VoidCallback? onTap;
 
-  const _MissionNode({required this.node, required this.size, this.onTap});
+  const _MissionNode({
+    super.key,
+    required this.avatarIndex,
+    required this.node,
+    required this.isPinned,
+    required this.isErupting,
+    required this.size,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final foregroundColor = node.isCurrent
-        ? AppColors.teal
-        : node.isComplete
-        ? AppColors.textMuted
-        : AppColors.textDim;
-    final borderColor = node.isCurrent ? AppColors.teal : AppColors.borderAlt;
-    final backgroundColor = node.isCurrent
-        ? AppColors.tealDark.withValues(alpha: 0.94)
-        : AppColors.background.withValues(alpha: 0.78);
-    final statusIcon = node.isComplete
-        ? Icons.check_circle
-        : node.isCurrent
-        ? Icons.play_circle_fill
-        : Icons.lock;
+    final style = _MissionBriefingStyle.fromKind(node.kind);
 
     return Tooltip(
       message: node.isCurrent
@@ -700,59 +1212,426 @@ class _MissionNode extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    border: Border.all(
-                      color: borderColor,
-                      width: node.isCurrent ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(13),
-                    boxShadow: node.isCurrent
-                        ? [
-                            BoxShadow(
-                              color: AppColors.teal.withValues(alpha: 0.28),
-                              blurRadius: 12,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    node.numberLabel,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: foregroundColor,
-                      fontSize: node.numberLabel.length > 1 ? 12 : 16,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                    ),
-                  ),
+                _MissionVolcanoMarker(
+                  kind: node.kind,
+                  status: node.status,
+                  accent: style.accent,
+                  size: size * 0.92,
+                  isHighlighted: isPinned,
+                  isErupting: isErupting,
                 ),
-                Positioned(
-                  right: -4,
-                  top: -4,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.background.withValues(alpha: 0.9),
-                      border: Border.all(color: borderColor, width: 0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(1.5),
-                      child: Icon(statusIcon, color: foregroundColor, size: 13),
+                if (isPinned)
+                  Positioned(
+                    top: -34,
+                    child: _ActiveMissionAvatarPin(
+                      avatarIndex: avatarIndex,
+                      accent: style.accent,
                     ),
                   ),
-                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _MissionVolcanoMarker extends StatefulWidget {
+  final _MissionKind kind;
+  final _MissionNodeStatus status;
+  final Color accent;
+  final double size;
+  final bool isHighlighted;
+  final bool isErupting;
+
+  const _MissionVolcanoMarker({
+    required this.kind,
+    required this.status,
+    required this.accent,
+    required this.size,
+    this.isHighlighted = false,
+    this.isErupting = false,
+  });
+
+  @override
+  State<_MissionVolcanoMarker> createState() => _MissionVolcanoMarkerState();
+}
+
+class _MissionVolcanoMarkerState extends State<_MissionVolcanoMarker>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _eruptionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _eruptionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1350),
+    );
+    _syncEruption();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MissionVolcanoMarker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncEruption();
+  }
+
+  void _syncEruption() {
+    if (widget.isErupting) {
+      _eruptionController.forward(from: 0);
+    } else {
+      _eruptionController.stop();
+      _eruptionController.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _eruptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLocked = widget.status == _MissionNodeStatus.locked;
+
+    return AnimatedBuilder(
+      animation: _eruptionController,
+      builder: (context, child) {
+        return SizedBox(
+          width: widget.size,
+          height: widget.size,
+          child: Opacity(
+            opacity: isLocked ? 0.46 : 1,
+            child: CustomPaint(
+              foregroundPainter: _MissionVolcanoMarkerPainter(
+                kind: widget.kind,
+                accent: isLocked ? AppColors.textDim : widget.accent,
+                isComplete: widget.status == _MissionNodeStatus.complete,
+                isCurrent: widget.status == _MissionNodeStatus.current,
+                isHighlighted: widget.isHighlighted,
+                isErupting: widget.isErupting,
+                isLocked: isLocked,
+                eruptionProgress: _eruptionController.value,
+              ),
+              child: Image.asset(
+                Assets.menuMissionVolcanoItem,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MissionVolcanoMarkerPainter extends CustomPainter {
+  final _MissionKind kind;
+  final Color accent;
+  final bool isComplete;
+  final bool isCurrent;
+  final bool isHighlighted;
+  final bool isErupting;
+  final bool isLocked;
+  final double eruptionProgress;
+
+  const _MissionVolcanoMarkerPainter({
+    required this.kind,
+    required this.accent,
+    required this.isComplete,
+    required this.isCurrent,
+    required this.isHighlighted,
+    required this.isErupting,
+    required this.isLocked,
+    required this.eruptionProgress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.shortestSide / 32;
+    final centerX = size.width / 2;
+    final baseY = size.height * 0.84;
+
+    if (isErupting) {
+      _paintEruption(canvas, size, scale, eruptionProgress);
+    }
+
+    if (isHighlighted) {
+      canvas.drawCircle(
+        Offset(centerX, size.height * 0.55),
+        size.shortestSide * 0.48,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              accent.withValues(alpha: 0.14),
+              accent.withValues(alpha: 0),
+            ],
+          ).createShader(Offset.zero & size),
+      );
+    }
+
+    final glowRect = Rect.fromCenter(
+      center: Offset(centerX, baseY + 1.8 * scale),
+      width: size.width * 0.82,
+      height: 8 * scale,
+    );
+    canvas.drawOval(
+      glowRect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            accent.withValues(
+              alpha: isLocked
+                  ? 0.06
+                  : isHighlighted
+                  ? 0.38
+                  : 0.2,
+            ),
+            accent.withValues(alpha: 0),
+          ],
+        ).createShader(glowRect),
+    );
+
+    final shadowRect = Rect.fromCenter(
+      center: Offset(centerX, baseY + 2 * scale),
+      width: size.width * 0.96,
+      height: 7 * scale,
+    );
+    canvas.drawOval(
+      shadowRect,
+      Paint()..color = const Color(0xFF050403).withValues(alpha: 0.42),
+    );
+
+    if (isComplete) {
+      final checkPaint = Paint()
+        ..color = const Color(0xFFE9FFF9).withValues(alpha: 0.86)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.1 * scale
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+      final check = Path()
+        ..moveTo(size.width * 0.66, size.height * 0.22)
+        ..lineTo(size.width * 0.74, size.height * 0.3)
+        ..lineTo(size.width * 0.88, size.height * 0.14);
+      canvas.drawPath(check, checkPaint);
+    }
+  }
+
+  void _paintEruption(Canvas canvas, Size size, double scale, double phase) {
+    final centerX = size.width / 2;
+    final craterY = size.height * 0.2;
+    final pulse = math.sin(phase * math.pi * 2) * 0.5 + 0.5;
+    final smokePaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFFE7D0B5).withValues(alpha: 0.2 + pulse * 0.16),
+          const Color(0xFF5B4336).withValues(alpha: 0.08),
+          Colors.transparent,
+        ],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawCircle(
+      Offset(centerX - 5 * scale, craterY - (8 + pulse * 4) * scale),
+      (4.2 + pulse * 1.6) * scale,
+      smokePaint,
+    );
+    canvas.drawCircle(
+      Offset(centerX + 4 * scale, craterY - (11 - pulse * 2) * scale),
+      (3.4 + (1 - pulse) * 1.4) * scale,
+      smokePaint,
+    );
+
+    final emberPaint = Paint()
+      ..color = accent.withValues(alpha: 0.48 + pulse * 0.28)
+      ..strokeWidth = 1.4 * scale
+      ..strokeCap = StrokeCap.round;
+    for (var index = 0; index < 4; index++) {
+      final angle = -math.pi / 2 + (index - 1.5) * 0.34;
+      final distance = (8 + ((phase * 18 + index * 5) % 7)) * scale;
+      final start = Offset(centerX, craterY - 1 * scale);
+      final end = Offset(
+        centerX + math.cos(angle) * distance,
+        craterY + math.sin(angle) * distance,
+      );
+      canvas.drawLine(start, end, emberPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MissionVolcanoMarkerPainter oldDelegate) {
+    return oldDelegate.kind != kind ||
+        oldDelegate.accent != accent ||
+        oldDelegate.isComplete != isComplete ||
+        oldDelegate.isCurrent != isCurrent ||
+        oldDelegate.isHighlighted != isHighlighted ||
+        oldDelegate.isErupting != isErupting ||
+        oldDelegate.isLocked != isLocked ||
+        oldDelegate.eruptionProgress != eruptionProgress;
+  }
+}
+
+class _ActiveMissionAvatarPin extends StatefulWidget {
+  final int avatarIndex;
+  final Color accent;
+
+  const _ActiveMissionAvatarPin({
+    required this.avatarIndex,
+    required this.accent,
+  });
+
+  @override
+  State<_ActiveMissionAvatarPin> createState() =>
+      _ActiveMissionAvatarPinState();
+}
+
+class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
+  late VideoPlayerController _controller;
+  var _isReady = false;
+
+  AvatarAsset get _avatar {
+    return Assets.avatars[widget.avatarIndex.clamp(
+      0,
+      Assets.avatars.length - 1,
+    )];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.asset(_avatar.animatedPath)
+      ..setLooping(true)
+      ..setVolume(0);
+    _controller.addListener(_keepAvatarLooping);
+    _initialize();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ActiveMissionAvatarPin oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.avatarIndex != widget.avatarIndex) {
+      _controller.removeListener(_keepAvatarLooping);
+      _controller.dispose();
+      _isReady = false;
+      _controller = VideoPlayerController.asset(_avatar.animatedPath)
+        ..setLooping(true)
+        ..setVolume(0);
+      _controller.addListener(_keepAvatarLooping);
+      _initialize();
+    }
+  }
+
+  void _keepAvatarLooping() {
+    final value = _controller.value;
+    if (!value.isInitialized || value.isPlaying) {
+      return;
+    }
+    if (value.position >= value.duration) {
+      _controller.seekTo(Duration.zero);
+      _controller.play();
+    }
+  }
+
+  Future<void> _initialize() async {
+    try {
+      await _controller.initialize();
+    } catch (_) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() => _isReady = true);
+    try {
+      await _controller.play();
+    } catch (_) {
+      // The static avatar remains visible if playback is unavailable.
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_keepAvatarLooping);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 35,
+      height: 44,
+      child: CustomPaint(
+        painter: _LocationPinPainter(accent: widget.accent),
+        child: Align(
+          alignment: const Alignment(0, -0.38),
+          child: ClipOval(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: _isReady
+                  ? FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: _controller.value.size.width,
+                        height: _controller.value.size.height,
+                        child: VideoPlayer(_controller),
+                      ),
+                    )
+                  : Image.asset(_avatar.imagePath, fit: BoxFit.cover),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationPinPainter extends CustomPainter {
+  final Color accent;
+
+  const _LocationPinPainter({required this.accent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final center = Offset(size.width / 2, size.height * 0.34);
+    final radius = size.width * 0.42;
+    final pinPath = Path()
+      ..addOval(Rect.fromCircle(center: center, radius: radius))
+      ..moveTo(center.dx - radius * 0.48, center.dy + radius * 0.56)
+      ..quadraticBezierTo(
+        center.dx,
+        size.height * 0.98,
+        center.dx + radius * 0.48,
+        center.dy + radius * 0.56,
+      )
+      ..close();
+
+    canvas.drawShadow(pinPath, const Color(0xFF050403), 8, false);
+    canvas.drawPath(
+      pinPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [accent.withValues(alpha: 0.9), const Color(0xFF22110A)],
+        ).createShader(rect),
+    );
+    canvas.drawPath(
+      pinPath,
+      Paint()
+        ..color = const Color(0xFFFFD7A0).withValues(alpha: 0.36)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LocationPinPainter oldDelegate) {
+    return oldDelegate.accent != accent;
   }
 }
 
@@ -993,16 +1872,11 @@ class _MissionBriefingSeal extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(node.primaryIcon, color: style.accent, size: 26),
-              const SizedBox(height: 3),
-              Text(
-                node.numberLabel,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  height: 1,
-                ),
+              _MissionVolcanoMarker(
+                kind: node.kind,
+                status: node.status,
+                accent: style.accent,
+                size: 42,
               ),
             ],
           ),
@@ -1434,13 +2308,13 @@ class _MissionDialogBadge extends StatelessWidget {
 }
 
 class _FooterIconButton extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String tooltip;
   final String? badge;
   final VoidCallback onTap;
 
   const _FooterIconButton({
-    required this.icon,
+    required this.iconAsset,
     required this.tooltip,
     required this.onTap,
     this.badge,
@@ -1455,48 +2329,46 @@ class _FooterIconButton extends StatelessWidget {
         label: tooltip,
         child: InkResponse(
           onTap: onTap,
-          radius: 28,
-          splashColor: AppColors.teal.withValues(alpha: 0.08),
-          highlightColor: AppColors.teal.withValues(alpha: 0.04),
+          radius: 31,
+          splashColor: const Color(0xFFFF9B45).withValues(alpha: 0.1),
+          highlightColor: const Color(0xFFFF9B45).withValues(alpha: 0.05),
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: 56,
+            height: 56,
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border.all(color: AppColors.borderAlt, width: 0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: AppColors.teal, size: 20),
+                const SizedBox.expand(
+                  child: CustomPaint(painter: _MenuControlWellPainter()),
+                ),
+                Image.asset(
+                  iconAsset,
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.contain,
                 ),
                 if (badge != null)
                   Positioned(
-                    top: 2,
-                    right: 2,
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
+                    top: 0,
+                    right: 1,
+                    child: CustomPaint(
+                      painter: const _VolcanoBadgePainter(
+                        accent: Color(0xFFFFD184),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.tealDark,
-                        border: Border.all(color: AppColors.teal, width: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        badge!,
-                        style: const TextStyle(
-                          color: AppColors.teal,
-                          fontSize: 9,
-                          height: 1,
+                      child: SizedBox(
+                        width: 20,
+                        height: 18,
+                        child: Center(
+                          child: Text(
+                            badge!,
+                            style: const TextStyle(
+                              color: Color(0xFFFFE0AC),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -1507,5 +2379,87 @@ class _FooterIconButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _MenuControlWellPainter extends CustomPainter {
+  const _MenuControlWellPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    canvas.drawCircle(
+      center + const Offset(0, 3),
+      size.width * 0.46,
+      Paint()
+        ..color = const Color(0xCC030201)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(
+      center,
+      size.width * 0.45,
+      Paint()
+        ..shader = const RadialGradient(
+          colors: [Color(0xFF3A2117), Color(0xFF170D09), Color(0xFF080403)],
+          stops: [0, 0.7, 1],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawCircle(
+      center,
+      size.width * 0.44,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFD5743B), Color(0xFF5C2918), Color(0xFF160906)],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: size.width * 0.38),
+      math.pi * 1.08,
+      math.pi * 0.78,
+      false,
+      Paint()
+        ..color = const Color(0x66FFD08B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _VolcanoBadgePainter extends CustomPainter {
+  final Color accent;
+
+  const _VolcanoBadgePainter({required this.accent});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(7));
+    canvas.drawRRect(
+      rrect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [accent.withValues(alpha: 0.92), const Color(0xFF351409)],
+        ).createShader(rect),
+    );
+    canvas.drawRRect(
+      rrect.deflate(0.5),
+      Paint()
+        ..color = const Color(0xFFFFE0AC).withValues(alpha: 0.42)
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _VolcanoBadgePainter oldDelegate) {
+    return oldDelegate.accent != accent;
   }
 }

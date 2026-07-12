@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../core/audio/audio_catalog.dart';
 import '../../../core/audio/audio_controller.dart';
@@ -32,13 +33,19 @@ class MissionSixVolcanoBuilderScreen extends ConsumerStatefulWidget {
 
 class _MissionSixVolcanoBuilderScreenState
     extends ConsumerState<MissionSixVolcanoBuilderScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _dropController;
+  late final AnimationController _completeRevealController;
   int? _selectedOptionIndex;
   var _builtTileCount = 0;
   int? _droppingTileIndex;
   var _isSaving = false;
+  var _isCompleting = false;
   var _showSummary = false;
+  var _showEruptionVideo = false;
+  var _eruptionVideoStarted = false;
+  var _eruptionVideoFinished = false;
+  VideoPlayerController? _eruptionVideoController;
   final _replayCompletedParts = <String>[];
 
   static const _answerOptions = [
@@ -82,11 +89,19 @@ class _MissionSixVolcanoBuilderScreenState
       vsync: this,
       duration: const Duration(milliseconds: 620),
     );
+    _completeRevealController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
   }
 
   @override
   void dispose() {
+    _eruptionVideoController
+      ?..removeListener(_handleEruptionVideoProgress)
+      ..dispose();
     _dropController.dispose();
+    _completeRevealController.dispose();
     super.dispose();
   }
 
@@ -99,7 +114,8 @@ class _MissionSixVolcanoBuilderScreenState
     final alreadyCompleted = AppConstants.missionSixBuilderPartIds.every(
       completedParts.contains,
     );
-    final shouldShowSummary = _showSummary || alreadyCompleted;
+    final shouldShowSummary =
+        (_showSummary || alreadyCompleted) && !_isCompleting;
     final savedTileCount = completedParts.length.clamp(0, _questions.length);
     final builtTileCount = alreadyCompleted
         ? _questions.length
@@ -123,6 +139,9 @@ class _MissionSixVolcanoBuilderScreenState
                   xp: player.totalXP,
                   avatarIndex: player.avatarIndex,
                   onBack: () {
+                    if (_isCompleting) {
+                      return;
+                    }
                     if (context.canPop()) {
                       context.pop();
                       return;
@@ -147,12 +166,15 @@ class _MissionSixVolcanoBuilderScreenState
                             totalQuestions: _questions.length,
                             question: _questions[questionIndex],
                             selectedOptionIndex: _selectedOptionIndex,
-                            isSaving: _isSaving,
+                            isSaving: _isSaving || _isCompleting,
                             builtTileCount: builtTileCount,
                             droppingTileIndex: _droppingTileIndex,
                             dropAnimation: _dropController,
+                            completeRevealAnimation: _completeRevealController,
+                            showEruptionVideo: _showEruptionVideo,
+                            eruptionVideoController: _eruptionVideoController,
                             answerOptions: _answerOptions,
-                            onSelect: _isSaving
+                            onSelect: _isSaving || _isCompleting
                                 ? null
                                 : (index) {
                                     setState(() {
@@ -198,8 +220,10 @@ class _MissionSixVolcanoBuilderScreenState
     }
 
     final tileIndex = builtTileCount;
+    final isFinalTile = tileIndex == _questions.length - 1;
     setState(() {
       _isSaving = true;
+      _isCompleting = isFinalTile;
       _builtTileCount = tileIndex + 1;
       _droppingTileIndex = tileIndex;
       _selectedOptionIndex = null;
@@ -243,13 +267,83 @@ class _MissionSixVolcanoBuilderScreenState
 
     final completed = tileIndex + 1 >= _questions.length;
     if (completed) {
-      setState(() {
-        _showSummary = true;
-      });
+      await _completeRevealController.forward(from: 0).orCancel;
+
+      if (!mounted) {
+        return;
+      }
+
+      await _playEruptionVideo();
       return;
     }
 
     setState(() {});
+  }
+
+  Future<void> _playEruptionVideo() async {
+    final controller = VideoPlayerController.asset(
+      Assets.missionSixVolcanoEruption,
+    );
+    _eruptionVideoController = controller;
+
+    try {
+      await controller.initialize().timeout(const Duration(seconds: 5));
+      if (!mounted || _eruptionVideoController != controller) {
+        unawaited(controller.dispose());
+        return;
+      }
+
+      controller.addListener(_handleEruptionVideoProgress);
+      await controller.setLooping(false);
+      await controller.play();
+      _eruptionVideoStarted = true;
+      setState(() {
+        _showEruptionVideo = true;
+      });
+    } catch (_) {
+      if (_eruptionVideoController == controller) {
+        _eruptionVideoController = null;
+      }
+      unawaited(controller.dispose());
+      _finishEruptionVideo();
+    }
+  }
+
+  void _handleEruptionVideoProgress() {
+    final controller = _eruptionVideoController;
+    if (controller == null ||
+        !_eruptionVideoStarted ||
+        _eruptionVideoFinished ||
+        !controller.value.isInitialized) {
+      return;
+    }
+
+    final value = controller.value;
+    final reachedEnd =
+        value.duration > Duration.zero &&
+        value.position >= value.duration - const Duration(milliseconds: 100);
+    if (value.hasError || reachedEnd) {
+      _finishEruptionVideo();
+    }
+  }
+
+  void _finishEruptionVideo() {
+    if (_eruptionVideoFinished || !mounted) {
+      return;
+    }
+
+    _eruptionVideoFinished = true;
+    final controller = _eruptionVideoController;
+    controller?.removeListener(_handleEruptionVideoProgress);
+    _eruptionVideoController = null;
+    setState(() {
+      _showEruptionVideo = false;
+      _isCompleting = false;
+      _showSummary = true;
+    });
+    if (controller != null) {
+      unawaited(controller.dispose());
+    }
   }
 }
 
@@ -262,6 +356,9 @@ class _BuilderContent extends StatelessWidget {
   final int builtTileCount;
   final int? droppingTileIndex;
   final Animation<double> dropAnimation;
+  final Animation<double> completeRevealAnimation;
+  final bool showEruptionVideo;
+  final VideoPlayerController? eruptionVideoController;
   final List<String> answerOptions;
   final ValueChanged<int>? onSelect;
   final VoidCallback onSubmit;
@@ -275,6 +372,9 @@ class _BuilderContent extends StatelessWidget {
     required this.builtTileCount,
     required this.droppingTileIndex,
     required this.dropAnimation,
+    required this.completeRevealAnimation,
+    required this.showEruptionVideo,
+    required this.eruptionVideoController,
     required this.answerOptions,
     required this.onSelect,
     required this.onSubmit,
@@ -295,45 +395,51 @@ class _BuilderContent extends StatelessWidget {
             builtTileCount: builtTileCount,
             droppingTileIndex: droppingTileIndex,
             dropAnimation: dropAnimation,
+            completeRevealAnimation: completeRevealAnimation,
+            showEruptionVideo: showEruptionVideo,
+            eruptionVideoController: eruptionVideoController,
           ),
         ),
         const SizedBox(height: 12),
         Expanded(
           flex: 6,
-          child: ListView(
+          child: SingleChildScrollView(
             padding: EdgeInsets.zero,
-            children: [
-              Text(
-                question.text,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 17,
-                  height: 1.28,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  question.text,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 17,
+                    height: 1.28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'BUILD STEP ${questionIndex + 1}/$totalQuestions',
-                style: const TextStyle(
-                  color: AppColors.textMuted,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
+                const SizedBox(height: 8),
+                Text(
+                  'BUILD STEP ${questionIndex + 1}/$totalQuestions',
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 14),
-              for (var index = 0; index < answerOptions.length; index++) ...[
-                _BuilderAnswerTile(
-                  optionIndex: index,
-                  text: answerOptions[index],
-                  isSelected: selectedOptionIndex == index,
-                  onTap: onSelect == null ? null : () => onSelect!(index),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
+                for (var index = 0; index < answerOptions.length; index++) ...[
+                  _BuilderAnswerTile(
+                    optionIndex: index,
+                    text: answerOptions[index],
+                    isSelected: selectedOptionIndex == index,
+                    onTap: onSelect == null ? null : () => onSelect!(index),
+                  ),
+                  const SizedBox(height: 10),
+                ],
               ],
-            ],
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -398,19 +504,33 @@ class _VolcanoBuildStage extends StatelessWidget {
   final int builtTileCount;
   final int? droppingTileIndex;
   final Animation<double> dropAnimation;
+  final Animation<double> completeRevealAnimation;
+  final bool showEruptionVideo;
+  final VideoPlayerController? eruptionVideoController;
 
   const _VolcanoBuildStage({
     required this.builtTileCount,
     required this.droppingTileIndex,
     required this.dropAnimation,
+    required this.completeRevealAnimation,
+    required this.showEruptionVideo,
+    required this.eruptionVideoController,
   });
 
   static const _slots = [
-    _TileSlot(x: 0.25, y: 0.72, width: 0.28, height: 0.22),
-    _TileSlot(x: 0.48, y: 0.72, width: 0.28, height: 0.22),
-    _TileSlot(x: 0.34, y: 0.48, width: 0.22, height: 0.25),
-    _TileSlot(x: 0.50, y: 0.48, width: 0.22, height: 0.25),
-    _TileSlot(x: 0.42, y: 0.24, width: 0.20, height: 0.24),
+    _TileSlot(x: 0, y: 0.80, width: 1, height: 0.20),
+    _TileSlot(x: 0, y: 0.60, width: 1, height: 0.20),
+    _TileSlot(x: 0, y: 0.40, width: 1, height: 0.20),
+    _TileSlot(x: 0, y: 0.20, width: 1, height: 0.20),
+    _TileSlot(x: 0, y: 0, width: 1, height: 0.20),
+  ];
+
+  static const _tileImages = [
+    Assets.missionSixVolcanoSliceBottom,
+    Assets.missionSixVolcanoSliceLower,
+    Assets.missionSixVolcanoSliceMiddle,
+    Assets.missionSixVolcanoSliceUpper,
+    Assets.missionSixVolcanoSliceTop,
   ];
 
   @override
@@ -431,6 +551,38 @@ class _VolcanoBuildStage extends StatelessWidget {
           return Stack(
             children: [
               const Positioned.fill(child: _BuilderGrid()),
+              if (showEruptionVideo &&
+                  (eruptionVideoController?.value.isInitialized ?? false))
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black,
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: eruptionVideoController!.value.aspectRatio,
+                        child: VideoPlayer(eruptionVideoController!),
+                      ),
+                    ),
+                  ),
+                )
+              else if (builtTileCount >= _slots.length &&
+                  droppingTileIndex == null)
+                Positioned.fill(
+                  child: _CompleteVolcanoImage(
+                    revealAnimation: completeRevealAnimation,
+                  ),
+                )
+              else
+                for (var index = 0; index < _slots.length; index++)
+                  _PositionedVolcanoTile(
+                    key: ValueKey('mission6-tile-$index'),
+                    slot: _slots[index],
+                    stageWidth: width,
+                    stageHeight: height,
+                    index: index,
+                    isVisible: index < builtTileCount,
+                    isDropping: droppingTileIndex == index,
+                    dropAnimation: dropAnimation,
+                  ),
               Positioned(
                 left: 12,
                 top: 10,
@@ -444,17 +596,6 @@ class _VolcanoBuildStage extends StatelessWidget {
                   ),
                 ),
               ),
-              for (var index = 0; index < _slots.length; index++)
-                _PositionedVolcanoTile(
-                  key: ValueKey('mission6-tile-$index'),
-                  slot: _slots[index],
-                  stageWidth: width,
-                  stageHeight: height,
-                  index: index,
-                  isVisible: index < builtTileCount,
-                  isDropping: droppingTileIndex == index,
-                  dropAnimation: dropAnimation,
-                ),
               Positioned(
                 left: width * 0.32,
                 right: width * 0.32,
@@ -472,6 +613,56 @@ class _VolcanoBuildStage extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class _CompleteVolcanoImage extends StatelessWidget {
+  final Animation<double> revealAnimation;
+
+  const _CompleteVolcanoImage({required this.revealAnimation});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: revealAnimation,
+      builder: (context, child) {
+        return ClipRect(
+          clipper: _TopToBottomRevealClipper(revealAnimation.value),
+          child: child,
+        );
+      },
+      child: Image.asset(
+        Assets.missionSixVolcanoComplete,
+        fit: BoxFit.fill,
+        width: double.infinity,
+        height: double.infinity,
+        semanticLabel: 'Completed volcano model',
+        errorBuilder: (context, error, stackTrace) {
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.7),
+              border: Border.all(color: AppColors.borderAlt),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TopToBottomRevealClipper extends CustomClipper<Rect> {
+  final double progress;
+
+  const _TopToBottomRevealClipper(this.progress);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTWH(0, 0, size.width, size.height * progress);
+  }
+
+  @override
+  bool shouldReclip(covariant _TopToBottomRevealClipper oldClipper) {
+    return progress != oldClipper.progress;
   }
 }
 
@@ -503,29 +694,17 @@ class _PositionedVolcanoTile extends StatelessWidget {
     final targetTop = stageHeight * slot.y;
 
     if (!isVisible) {
-      return Positioned(
-        left: left,
-        top: targetTop,
-        child: Opacity(
-          opacity: 0.16,
-          child: _CrackedVolcanoTile(
-            width: tileWidth,
-            height: tileHeight,
-            index: index,
-            isGhost: true,
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     if (!isDropping) {
       return Positioned(
         left: left,
         top: targetTop,
-        child: _CrackedVolcanoTile(
+        child: _VolcanoSliceTile(
           width: tileWidth,
           height: tileHeight,
-          index: index,
+          imagePath: _VolcanoBuildStage._tileImages[index],
         ),
       );
     }
@@ -541,114 +720,59 @@ class _PositionedVolcanoTile extends StatelessWidget {
         final top = targetTop - stageHeight * 0.68 * (1 - curve.value);
         return Positioned(left: left, top: top, child: child!);
       },
-      child: _CrackedVolcanoTile(
+      child: _VolcanoSliceTile(
         width: tileWidth,
         height: tileHeight,
-        index: index,
+        imagePath: _VolcanoBuildStage._tileImages[index],
         isDropping: true,
       ),
     );
   }
 }
 
-class _CrackedVolcanoTile extends StatelessWidget {
+class _VolcanoSliceTile extends StatelessWidget {
   final double width;
   final double height;
-  final int index;
-  final bool isGhost;
+  final String imagePath;
   final bool isDropping;
 
-  const _CrackedVolcanoTile({
+  const _VolcanoSliceTile({
     required this.width,
     required this.height,
-    required this.index,
-    this.isGhost = false,
+    required this.imagePath,
     this.isDropping = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final tileColors = [
-      const Color(0xFF26333A),
-      const Color(0xFF303A3C),
-      const Color(0xFF405049),
-      const Color(0xFF465650),
-      const Color(0xFF5A3A35),
-    ];
     final borderColor = isDropping ? const Color(0xFFFFC857) : AppColors.teal;
 
-    return CustomPaint(
-      painter: _CrackedTilePainter(
-        fillColor: isGhost
-            ? AppColors.surface
-            : tileColors[index.clamp(0, tileColors.length - 1)],
-        borderColor: isGhost ? AppColors.borderAlt : borderColor,
-        crackColor: isGhost ? AppColors.border : const Color(0xFFFF8A4C),
-        isGhost: isGhost,
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: borderColor.withValues(alpha: 0.72),
+          width: isDropping ? 2 : 1,
+        ),
       ),
-      child: SizedBox(width: width, height: height),
+      clipBehavior: Clip.antiAlias,
+      child: Image.asset(
+        imagePath,
+        fit: BoxFit.fill,
+        width: width,
+        height: height,
+        semanticLabel: 'Volcano builder slice',
+        errorBuilder: (context, error, stackTrace) {
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.7),
+              border: Border.all(color: AppColors.borderAlt),
+            ),
+          );
+        },
+      ),
     );
-  }
-}
-
-class _CrackedTilePainter extends CustomPainter {
-  final Color fillColor;
-  final Color borderColor;
-  final Color crackColor;
-  final bool isGhost;
-
-  const _CrackedTilePainter({
-    required this.fillColor,
-    required this.borderColor,
-    required this.crackColor,
-    required this.isGhost,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final fillPaint = Paint()..color = fillColor.withValues(alpha: 0.94);
-    final borderPaint = Paint()
-      ..color = borderColor.withValues(alpha: isGhost ? 0.44 : 0.86)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    final crackPaint = Paint()
-      ..color = crackColor.withValues(alpha: isGhost ? 0.24 : 0.72)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    final path = Path()
-      ..moveTo(size.width * 0.08, size.height * 0.16)
-      ..lineTo(size.width * 0.92, size.height * 0.08)
-      ..lineTo(size.width * 0.86, size.height * 0.88)
-      ..lineTo(size.width * 0.14, size.height * 0.94)
-      ..close();
-    canvas.drawPath(path, fillPaint);
-    canvas.drawPath(path, borderPaint);
-
-    final crack = Path()
-      ..moveTo(size.width * 0.24, size.height * 0.18)
-      ..lineTo(size.width * 0.48, size.height * 0.42)
-      ..lineTo(size.width * 0.40, size.height * 0.62)
-      ..lineTo(size.width * 0.62, size.height * 0.86);
-    canvas.drawPath(crack, crackPaint);
-    canvas.drawLine(
-      Offset(size.width * 0.48, size.height * 0.42),
-      Offset(size.width * 0.70, size.height * 0.34),
-      crackPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.40, size.height * 0.62),
-      Offset(size.width * 0.18, size.height * 0.72),
-      crackPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _CrackedTilePainter oldDelegate) {
-    return fillColor != oldDelegate.fillColor ||
-        borderColor != oldDelegate.borderColor ||
-        crackColor != oldDelegate.crackColor ||
-        isGhost != oldDelegate.isGhost;
   }
 }
 
@@ -800,12 +924,7 @@ class _BuilderPanel extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 6,
-            backgroundColor: AppColors.surface,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
-          ),
+          MissionVolcanoProgressBar(value: progress),
           Expanded(
             child: Stack(
               children: [

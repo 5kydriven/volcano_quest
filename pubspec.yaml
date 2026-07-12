@@ -56,7 +56,9 @@ flutter:
     - assets/missions/buttons/
     - assets/missions/mission-four/
     - assets/missions/misson-three/
+    - assets/missions/mission-three/
     - assets/missions/mission-five/
+    - assets/missions/mission-six/
     - assets/missions/mission-seven/
     - assets/missions/mission_eight/
     - assets/animated_avatars/
@@ -64,6 +66,7 @@ flutter:
     - assets/onboarding_screen/
     - assets/setting_screen/
     - assets/menu_screen/
+    - assets/menu_screen/icons/
     - assets/audios/
     - assets/leaderboard/
     - assets/badges/

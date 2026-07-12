@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../core/audio/audio_catalog.dart';
 import '../../../core/audio/audio_controller.dart';
@@ -46,6 +47,10 @@ class _MissionThreeWordBuilderScreenState
   var _availableLetters = <_LetterTileData>[];
   var _isSaving = false;
   var _showSummary = false;
+  var _showCompletionVideo = false;
+  var _completionVideoStarted = false;
+  var _completionVideoFinished = false;
+  VideoPlayerController? _completionVideoController;
   var _feedback = _WordFeedback.none;
   final _replaySolvedIds = <String>[];
 
@@ -67,6 +72,14 @@ class _MissionThreeWordBuilderScreenState
   }
 
   @override
+  void dispose() {
+    _completionVideoController
+      ?..removeListener(_handleCompletionVideoProgress)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
     final solvedIds = widget.isReplay
@@ -75,7 +88,8 @@ class _MissionThreeWordBuilderScreenState
     final allSolved = AppConstants.missionThreeWordIds.every(
       solvedIds.contains,
     );
-    final shouldShowSummary = _showSummary || allSolved;
+    final shouldShowSummary =
+        (_showSummary || allSolved) && !_showCompletionVideo;
     final activeIndex = shouldShowSummary
         ? _wordIndex.clamp(0, _words.length - 1)
         : _activeWordIndex(solvedIds);
@@ -109,6 +123,9 @@ class _MissionThreeWordBuilderScreenState
                   xp: player.totalXP,
                   avatarIndex: player.avatarIndex,
                   onBack: () {
+                    if (_showCompletionVideo) {
+                      return;
+                    }
                     if (context.canPop()) {
                       context.pop();
                       return;
@@ -139,7 +156,10 @@ class _MissionThreeWordBuilderScreenState
                             availableLetters: _availableLetters,
                             bankCount: _availableLetters.length,
                             feedback: _feedback,
-                            isSaving: _isSaving,
+                            isSaving: _isSaving || _showCompletionVideo,
+                            showCompletionVideo: _showCompletionVideo,
+                            completionVideoController:
+                                _completionVideoController,
                             onAcceptLetter: _placeLetter,
                             onRemoveLetter: _removeLetter,
                             onTapLetter: _placeLetterInNextBlank,
@@ -225,7 +245,7 @@ class _MissionThreeWordBuilderScreenState
   }
 
   void _placeLetter(_LetterDropPayload payload) {
-    if (_isSaving) {
+    if (_isSaving || _showCompletionVideo) {
       return;
     }
 
@@ -243,7 +263,7 @@ class _MissionThreeWordBuilderScreenState
   }
 
   void _removeLetter(int slotIndex) {
-    if (_isSaving) {
+    if (_isSaving || _showCompletionVideo) {
       return;
     }
 
@@ -273,7 +293,9 @@ class _MissionThreeWordBuilderScreenState
   }
 
   Future<void> _submitWord(_MissionThreeWord word) async {
-    if (_isSaving || _slotLetters.length != word.blankCount) {
+    if (_isSaving ||
+        _showCompletionVideo ||
+        _slotLetters.length != word.blankCount) {
       return;
     }
 
@@ -324,7 +346,8 @@ class _MissionThreeWordBuilderScreenState
 
     setState(() {
       _isSaving = false;
-      _showSummary = allSolved;
+      _showSummary = false;
+      _showCompletionVideo = allSolved;
       if (!allSolved && nextOpenIndex != -1) {
         _wordIndex = nextOpenIndex;
         _resetWordState(_words[nextOpenIndex]);
@@ -336,6 +359,69 @@ class _MissionThreeWordBuilderScreenState
       context,
       widget.isReplay ? 'Practice word solved' : '+20 XP recorded',
     );
+
+    if (allSolved) {
+      unawaited(_playCompletionVideo());
+    }
+  }
+
+  Future<void> _playCompletionVideo() async {
+    final controller = VideoPlayerController.asset(
+      Assets.missionThreeCompletionVideo,
+    );
+    _completionVideoController = controller;
+
+    try {
+      await controller.initialize().timeout(const Duration(seconds: 5));
+      if (!mounted || _completionVideoController != controller) {
+        unawaited(controller.dispose());
+        return;
+      }
+
+      controller.addListener(_handleCompletionVideoProgress);
+      await controller.setLooping(false);
+      await controller.play();
+      _completionVideoStarted = true;
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (_) {
+      if (_completionVideoController == controller) {
+        _completionVideoController = null;
+      }
+      unawaited(controller.dispose());
+      _finishCompletionVideo();
+    }
+  }
+
+  void _handleCompletionVideoProgress() {
+    final controller = _completionVideoController;
+    if (controller == null ||
+        !_completionVideoStarted ||
+        _completionVideoFinished ||
+        !controller.value.isInitialized) {
+      return;
+    }
+
+    final value = controller.value;
+    final reachedEnd =
+        value.duration > Duration.zero &&
+        value.position >= value.duration - const Duration(milliseconds: 100);
+    if (reachedEnd) {
+      _finishCompletionVideo();
+    }
+  }
+
+  void _finishCompletionVideo() {
+    if (_completionVideoFinished || !mounted) {
+      return;
+    }
+    _completionVideoFinished = true;
+    _completionVideoController?.removeListener(_handleCompletionVideoProgress);
+    setState(() {
+      _showCompletionVideo = false;
+      _showSummary = true;
+    });
   }
 }
 
@@ -392,12 +478,7 @@ class _WordBuilderPanel extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Column(
         children: [
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 4,
-            backgroundColor: Colors.black.withValues(alpha: 0.45),
-            valueColor: const AlwaysStoppedAnimation<Color>(_lava),
-          ),
+          MissionVolcanoProgressBar(value: progress, height: 10),
           Expanded(
             child: Stack(
               children: [
@@ -439,6 +520,8 @@ class _WordBuilderContent extends StatelessWidget {
   final int bankCount;
   final _WordFeedback feedback;
   final bool isSaving;
+  final bool showCompletionVideo;
+  final VideoPlayerController? completionVideoController;
   final ValueChanged<_LetterDropPayload> onAcceptLetter;
   final ValueChanged<int> onRemoveLetter;
   final ValueChanged<_LetterTileData> onTapLetter;
@@ -454,6 +537,8 @@ class _WordBuilderContent extends StatelessWidget {
     required this.bankCount,
     required this.feedback,
     required this.isSaving,
+    required this.showCompletionVideo,
+    required this.completionVideoController,
     required this.onAcceptLetter,
     required this.onRemoveLetter,
     required this.onTapLetter,
@@ -472,7 +557,10 @@ class _WordBuilderContent extends StatelessWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: [
-                _VolcanoImageCard(),
+                _VolcanoImageCard(
+                  showCompletionVideo: showCompletionVideo,
+                  completionVideoController: completionVideoController,
+                ),
                 const SizedBox(height: 12),
                 _MissionTelemetryStrip(
                   wordIndex: wordIndex,
@@ -779,8 +867,20 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _VolcanoImageCard extends StatelessWidget {
+  final bool showCompletionVideo;
+  final VideoPlayerController? completionVideoController;
+
+  const _VolcanoImageCard({
+    required this.showCompletionVideo,
+    required this.completionVideoController,
+  });
+
   @override
   Widget build(BuildContext context) {
+    final isVideoReady =
+        showCompletionVideo &&
+        (completionVideoController?.value.isInitialized ?? false);
+
     return Container(
       height: 206,
       decoration: BoxDecoration(
@@ -799,7 +899,15 @@ class _VolcanoImageCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(Assets.volcanoCutaway, fit: BoxFit.cover),
+          if (isVideoReady)
+            Center(
+              child: AspectRatio(
+                aspectRatio: completionVideoController!.value.aspectRatio,
+                child: VideoPlayer(completionVideoController!),
+              ),
+            )
+          else
+            Image.asset(Assets.missionThreeVolcanoImage, fit: BoxFit.contain),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -823,6 +931,8 @@ class _VolcanoImageCard extends StatelessWidget {
             bottom: 10,
             child: _ImageReadout(label: 'SIGNAL', value: 'VOLCANO CORE'),
           ),
+          if (showCompletionVideo && !isVideoReady)
+            const Center(child: CircularProgressIndicator(color: _lava)),
         ],
       ),
     );
@@ -1104,22 +1214,24 @@ class _MissionThreeSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: MissionCompletePanel(
-        title: 'MISSION 3 COMPLETE!',
-        badgeName: 'Volcano Vocabulary Badge',
-        badgeImagePath: Assets.badgeVolcanoVocabulary,
-        fallbackIcon: Icons.abc_outlined,
-        message:
-            'Congratulations, scientist. You earned the Volcano Vocabulary Badge.',
-        metrics: [
-          MissionCompleteMetric(
-            label: 'SOLVED',
-            value: '$solvedCount/$totalWords',
-          ),
-          MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
-        ],
-        onProceed: onProceed,
+    return SingleChildScrollView(
+      child: Center(
+        child: MissionCompletePanel(
+          title: 'MISSION 3 COMPLETE!',
+          badgeName: 'Volcano Vocabulary Badge',
+          badgeImagePath: Assets.badgeVolcanoVocabulary,
+          fallbackIcon: Icons.abc_outlined,
+          message:
+              'Congratulations, scientist. You earned the Volcano Vocabulary Badge.',
+          metrics: [
+            MissionCompleteMetric(
+              label: 'SOLVED',
+              value: '$solvedCount/$totalWords',
+            ),
+            MissionCompleteMetric(label: 'EARNED', value: '$earnedXP XP'),
+          ],
+          onProceed: onProceed,
+        ),
       ),
     );
   }
