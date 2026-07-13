@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routing/app_routes.dart';
@@ -56,6 +60,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   void _onStart() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
     context.go(AppRoutes.players);
   }
 
