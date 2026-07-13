@@ -221,7 +221,7 @@ class _FloatingMenuRail extends StatelessWidget {
             _FooterIconButton(
               iconAsset: Assets.menuSwitchIcon,
               tooltip: 'Switch player',
-              onTap: () => context.go(AppRoutes.players),
+              onTap: () => context.push(AppRoutes.playersFromMenu),
             ),
           ],
         ),

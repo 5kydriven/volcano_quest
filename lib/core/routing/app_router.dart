@@ -39,7 +39,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.players,
-        builder: (context, state) => const PlayerProfilesScreen(),
+        builder: (context, state) => PlayerProfilesScreen(
+          showCloseButton: state.uri.queryParameters['from'] == 'menu',
+        ),
       ),
       GoRoute(
         path: AppRoutes.menu,

@@ -12,6 +12,10 @@ class AppRoutes {
   static const levelEightLesson = '/level/8/field-lesson';
   static const levelPath = '/level/:levelId';
 
+  static String get playersFromMenu {
+    return Uri(path: players, queryParameters: {'from': 'menu'}).toString();
+  }
+
   static String level(int levelId) => '/level/$levelId';
 
   static String replayLevel(int levelId) => _withReplay(level(levelId));

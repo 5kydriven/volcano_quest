@@ -8,7 +8,9 @@ import '../../../data/models/player_model.dart';
 import '../application/player_controller.dart';
 
 class PlayerProfilesScreen extends ConsumerWidget {
-  const PlayerProfilesScreen({super.key});
+  final bool showCloseButton;
+
+  const PlayerProfilesScreen({super.key, this.showCloseButton = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,13 +69,8 @@ class PlayerProfilesScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _Header(
-                        onClose: () {
-                          if (context.canPop()) {
-                            context.pop();
-                          } else {
-                            context.go(AppRoutes.menu);
-                          }
-                        },
+                        showCloseButton: showCloseButton,
+                        onClose: () => context.pop(),
                       ),
                       const SizedBox(height: 44),
                       if (players.isEmpty)
@@ -102,7 +99,7 @@ class PlayerProfilesScreen extends ConsumerWidget {
                         ],
                       const SizedBox(height: 10),
                       _CreateScientistButton(
-                        onTap: () => context.go(AppRoutes.onboarding),
+                        onTap: () => context.push(AppRoutes.onboarding),
                       ),
                     ],
                   ),
@@ -117,9 +114,10 @@ class PlayerProfilesScreen extends ConsumerWidget {
 }
 
 class _Header extends StatelessWidget {
+  final bool showCloseButton;
   final VoidCallback onClose;
 
-  const _Header({required this.onClose});
+  const _Header({required this.showCloseButton, required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -205,13 +203,15 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 16),
-        _ImageButton(
-          asset: Assets.closeButton,
-          size: 56,
-          tooltip: 'Close',
-          onTap: onClose,
-        ),
+        if (showCloseButton) ...[
+          const SizedBox(width: 16),
+          _ImageButton(
+            asset: Assets.closeButton,
+            size: 56,
+            tooltip: 'Close',
+            onTap: onClose,
+          ),
+        ],
       ],
     );
   }
