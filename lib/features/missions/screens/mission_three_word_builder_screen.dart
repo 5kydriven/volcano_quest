@@ -368,6 +368,7 @@ class _MissionThreeWordBuilderScreenState
   Future<void> _playCompletionVideo() async {
     final controller = VideoPlayerController.asset(
       Assets.missionThreeCompletionVideo,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     _completionVideoController = controller;
 

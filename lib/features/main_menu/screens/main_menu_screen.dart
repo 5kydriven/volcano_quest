@@ -85,7 +85,10 @@ class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _controller = VideoPlayerController.asset(Assets.menuBgAnimated);
+    _controller = VideoPlayerController.asset(
+      Assets.menuBgAnimated,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
     unawaited(_initializeVideo());
   }
 
@@ -1501,7 +1504,10 @@ class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(_avatar.animatedPath)
+    _controller = VideoPlayerController.asset(
+      _avatar.animatedPath,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    )
       ..setLooping(true)
       ..setVolume(0);
     _controller.addListener(_keepAvatarLooping);
@@ -1515,7 +1521,10 @@ class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
       _controller.removeListener(_keepAvatarLooping);
       _controller.dispose();
       _isReady = false;
-      _controller = VideoPlayerController.asset(_avatar.animatedPath)
+      _controller = VideoPlayerController.asset(
+        _avatar.animatedPath,
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      )
         ..setLooping(true)
         ..setVolume(0);
       _controller.addListener(_keepAvatarLooping);

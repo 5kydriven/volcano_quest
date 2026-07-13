@@ -283,6 +283,7 @@ class _MissionSixVolcanoBuilderScreenState
   Future<void> _playEruptionVideo() async {
     final controller = VideoPlayerController.asset(
       Assets.missionSixVolcanoEruption,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     _eruptionVideoController = controller;
 

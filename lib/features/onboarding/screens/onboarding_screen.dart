@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routing/app_routes.dart';
@@ -24,6 +26,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _nameController = TextEditingController();
   int _selectedAvatar = 0;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(audioControllerProvider).setDesiredBgm(BgmTrack.menu);
+    });
+  }
 
   void _cancel() {
     if (context.canPop()) {
@@ -483,7 +496,10 @@ class _LoopingAvatarVideoState extends State<_LoopingAvatarVideo> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(widget.videoPath)
+    _controller = VideoPlayerController.asset(
+      widget.videoPath,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    )
       ..setLooping(true)
       ..setVolume(0);
     _initialize();
