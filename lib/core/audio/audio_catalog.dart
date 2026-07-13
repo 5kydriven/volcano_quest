@@ -23,7 +23,7 @@ class AudioCatalog {
 
   static String bgmAsset(BgmTrack track) {
     return switch (track) {
-      BgmTrack.menu => Audios.bgMenu1,
+      BgmTrack.menu => Audios.bgMenu2,
       BgmTrack.gameMenu => Audios.bgGameMenu1,
       BgmTrack.missionOne => Audios.bgGame1,
       BgmTrack.missionTwo => Audios.bgGame2,
@@ -43,16 +43,9 @@ class AudioCatalog {
     return switch (cue) {
       SfxCue.button => const [
         Audios.sfxBtn1,
-        Audios.sfxBtn2,
-        Audios.sfxBtn3,
-        Audios.sfxBtn4,
-        Audios.sfxBtn5,
       ],
       SfxCue.correct => const [
         Audios.sfxCorrect1,
-        Audios.sfxCorrect2,
-        Audios.sfxCorrect3,
-        Audios.sfxCorrect4,
       ],
       SfxCue.wrong => const [Audios.sfxWrong1],
       SfxCue.achievement => const [
