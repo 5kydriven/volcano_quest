@@ -81,29 +81,35 @@ class _LeaderboardTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 12, 4),
-      child: Row(
-        children: [
-          MissionBackButton(
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-              context.go(AppRoutes.menu);
-            },
-          ),
-          const Spacer(),
-          const Expanded(
-            flex: 8,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: _LavaHeading('LEADERBOARDS', size: 20),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: SizedBox(
+        height: 40,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: MissionBackButton(
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.go(AppRoutes.menu);
+                },
+              ),
             ),
-          ),
-          const Spacer(),
-          _SettingsButton(onPressed: () => context.push(AppRoutes.settings)),
-        ],
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 48),
+                child: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: _LavaHeading('LEADERBOARDS', size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -564,43 +570,6 @@ class _LabPanel extends StatelessWidget {
   }
 }
 
-class _SettingsButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _SettingsButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Settings',
-      child: Semantics(
-        button: true,
-        label: 'Settings',
-        child: InkResponse(
-          onTap: onPressed,
-          radius: 28,
-          splashColor: AppColors.teal.withValues(alpha: 0.08),
-          highlightColor: AppColors.teal.withValues(alpha: 0.04),
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              border: Border.all(color: AppColors.borderAlt, width: 0.5),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.settings_outlined,
-              color: AppColors.teal,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _LavaHeading extends StatelessWidget {
   final String text;
   final double size;
@@ -612,6 +581,7 @@ class _LavaHeading extends StatelessWidget {
     return Text(
       text,
       maxLines: 1,
+      textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: size,
         fontWeight: FontWeight.w900,
