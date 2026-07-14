@@ -112,9 +112,8 @@ class MissionUnlockedScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          ElevatedButton(
+                          _MissionUnlockedReturnButton(
                             onPressed: () => context.go(AppRoutes.menu),
-                            child: const Text('RETURN TO MENU'),
                           ),
                         ],
                       ),
@@ -198,6 +197,10 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
     super.dispose();
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(playerProvider);
@@ -255,7 +258,12 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
                             missionOrbs: _missionOrbs,
                             initializedCores: initializedCores,
                             onCoreTap: (index) {
+                              _playButtonSfx();
                               _showMissionOrbSheet(_missionOrbs[index]);
+                            },
+                            onProceed: () {
+                              _playButtonSfx();
+                              context.go(AppRoutes.menu);
                             },
                           ),
                         ),
@@ -292,6 +300,7 @@ class _MissionOneScreenState extends ConsumerState<MissionOneScreen>
           isCompleted: isCompleted,
           isReplay: widget.isReplay,
           onComplete: () async {
+            _playButtonSfx();
             if (widget.isReplay) {
               setState(() {
                 _replayCompletedOrbs.add(orb.id);
@@ -368,6 +377,23 @@ class _MissionOneLayout {
   }
 }
 
+class _MissionUnlockedReturnButton extends ConsumerWidget {
+  final VoidCallback onPressed;
+
+  const _MissionUnlockedReturnButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ElevatedButton(
+      onPressed: () {
+        unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+        onPressed();
+      },
+      child: const Text('RETURN TO MENU'),
+    );
+  }
+}
+
 class _ResearchBasePanel extends StatelessWidget {
   static const _labBackgroundAspectRatio = 1058 / 1487;
 
@@ -380,6 +406,7 @@ class _ResearchBasePanel extends StatelessWidget {
   final List<_MissionOrbContent> missionOrbs;
   final Set<String> initializedCores;
   final ValueChanged<int> onCoreTap;
+  final VoidCallback onProceed;
 
   const _ResearchBasePanel({
     required this.missionId,
@@ -391,6 +418,7 @@ class _ResearchBasePanel extends StatelessWidget {
     required this.missionOrbs,
     required this.initializedCores,
     required this.onCoreTap,
+    required this.onProceed,
   });
 
   @override
@@ -462,7 +490,7 @@ class _ResearchBasePanel extends StatelessWidget {
                           left: edgeInset,
                           right: edgeInset,
                           bottom: edgeInset,
-                          child: _ProceedButton(),
+                          child: _ProceedButton(onPressed: onProceed),
                         ),
                     ],
                   );
@@ -900,10 +928,14 @@ class _CompleteOrbButtonState extends State<_CompleteOrbButton> {
 }
 
 class _ProceedButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _ProceedButton({required this.onPressed});
+
   @override
   Widget build(BuildContext context) {
     return _MissionOneImageButton(
-      onPressed: () => context.go(AppRoutes.menu),
+      onPressed: onPressed,
       child: const Text('RETURN TO MENU'),
     );
   }
