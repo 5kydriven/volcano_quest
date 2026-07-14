@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import '../../../core/audio/audio_catalog.dart';
+import '../../../core/audio/audio_controller.dart';
 import '../../../core/constants/assets.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
@@ -23,13 +25,23 @@ class MainMenuScreen extends ConsumerWidget {
     final player = ref.watch(playerProvider);
     final missionsDone = _completedMissionCount(player);
     final progress = missionsDone / AppConstants.totalLevels;
+    void playButtonSfx() {
+      unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+    }
 
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
           CustomScrollView(
-            slivers: [SliverToBoxAdapter(child: _MissionMap(player: player))],
+            slivers: [
+              SliverToBoxAdapter(
+                child: _MissionMap(
+                  player: player,
+                  playButtonSfx: playButtonSfx,
+                ),
+              ),
+            ],
           ),
           SafeArea(
             child: Stack(
@@ -48,14 +60,20 @@ class MainMenuScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                _FloatingMenuRail(player: player),
+                _FloatingMenuRail(
+                  player: player,
+                  playButtonSfx: playButtonSfx,
+                ),
                 Positioned(
                   bottom: 32,
                   right: 20,
                   child: _FooterIconButton(
                     iconAsset: Assets.menuSettingIcon,
                     tooltip: 'Settings',
-                    onTap: () => context.push(AppRoutes.settings),
+                    onTap: () {
+                      playButtonSfx();
+                      context.push(AppRoutes.settings);
+                    },
                   ),
                 ),
               ],
@@ -194,8 +212,12 @@ class _LoopingMenuBackgroundState extends State<_LoopingMenuBackground>
 
 class _FloatingMenuRail extends StatelessWidget {
   final PlayerModel player;
+  final VoidCallback playButtonSfx;
 
-  const _FloatingMenuRail({required this.player});
+  const _FloatingMenuRail({
+    required this.player,
+    required this.playButtonSfx,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -211,20 +233,29 @@ class _FloatingMenuRail extends StatelessWidget {
             _FooterIconButton(
               iconAsset: Assets.menuLeaderboardIcon,
               tooltip: 'Leaderboard',
-              onTap: () => context.push(AppRoutes.leaderboard),
+              onTap: () {
+                playButtonSfx();
+                context.push(AppRoutes.leaderboard);
+              },
             ),
             const SizedBox(height: 7),
             _FooterIconButton(
               iconAsset: Assets.menuBadgeIcon,
               tooltip: 'Badge collection',
               badge: earnedBadges > 0 ? '$earnedBadges' : null,
-              onTap: () => context.push(AppRoutes.badges),
+              onTap: () {
+                playButtonSfx();
+                context.push(AppRoutes.badges);
+              },
             ),
             const SizedBox(height: 7),
             _FooterIconButton(
               iconAsset: Assets.menuSwitchIcon,
               tooltip: 'Switch player',
-              onTap: () => context.push(AppRoutes.playersFromMenu),
+              onTap: () {
+                playButtonSfx();
+                context.push(AppRoutes.playersFromMenu);
+              },
             ),
           ],
         ),
@@ -736,8 +767,9 @@ class _AvatarSquare extends StatelessWidget {
 
 class _MissionMap extends StatefulWidget {
   final PlayerModel player;
+  final VoidCallback playButtonSfx;
 
-  const _MissionMap({required this.player});
+  const _MissionMap({required this.player, required this.playButtonSfx});
 
   @override
   State<_MissionMap> createState() => _MissionMapState();
@@ -827,6 +859,7 @@ class _MissionMapState extends State<_MissionMap> {
                     size: nodeSize,
                     onTap: positionedNodes[index].isUnlocked
                         ? () {
+                            widget.playButtonSfx();
                             setState(() {
                               _selectedNodeId = _nodeId(positionedNodes[index]);
                               _eruptingNodeId = null;
@@ -1120,7 +1153,10 @@ class _MissionMapState extends State<_MissionMap> {
   void _showMissionDialog(BuildContext context, _MissionMapNode node) {
     showDialog<void>(
       context: context,
-      builder: (context) => _MissionStartDialog(node: node),
+      builder: (context) => _MissionStartDialog(
+        node: node,
+        playButtonSfx: widget.playButtonSfx,
+      ),
     );
   }
 }
@@ -1646,8 +1682,12 @@ class _LocationPinPainter extends CustomPainter {
 
 class _MissionStartDialog extends StatelessWidget {
   final _MissionMapNode node;
+  final VoidCallback playButtonSfx;
 
-  const _MissionStartDialog({required this.node});
+  const _MissionStartDialog({
+    required this.node,
+    required this.playButtonSfx,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1709,7 +1749,13 @@ class _MissionStartDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _MissionDialogCloseButton(style: style),
+                  _MissionDialogCloseButton(
+                    style: style,
+                    onTap: () {
+                      playButtonSfx();
+                      Navigator.of(context).pop();
+                    },
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -1749,6 +1795,7 @@ class _MissionStartDialog extends StatelessWidget {
               const SizedBox(height: 18),
               _MenuLevelImageButton(
                 onPressed: () {
+                  playButtonSfx();
                   Navigator.of(context).pop();
                   context.push(node.route);
                 },
@@ -1897,15 +1944,19 @@ class _MissionBriefingSeal extends StatelessWidget {
 
 class _MissionDialogCloseButton extends StatelessWidget {
   final _MissionBriefingStyle style;
+  final VoidCallback onTap;
 
-  const _MissionDialogCloseButton({required this.style});
+  const _MissionDialogCloseButton({
+    required this.style,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: 'Close',
       child: InkResponse(
-        onTap: () => Navigator.of(context).pop(),
+        onTap: onTap,
         radius: 20,
         child: SizedBox(
           width: 36,
