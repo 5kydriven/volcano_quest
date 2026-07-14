@@ -74,7 +74,14 @@ class PlayerProfilesScreen extends ConsumerWidget {
                     children: [
                       _Header(
                         showCloseButton: showCloseButton,
-                        onClose: () => context.pop(),
+                        onClose: () {
+                          unawaited(
+                            ref
+                                .read(audioControllerProvider)
+                                .playSfx(SfxCue.button),
+                          );
+                          context.pop();
+                        },
                       ),
                       const SizedBox(height: 44),
                       if (players.isEmpty)
@@ -91,6 +98,11 @@ class PlayerProfilesScreen extends ConsumerWidget {
                                 .imagePath,
                             isActive: player.id == activePlayer.id,
                             onTap: () async {
+                              unawaited(
+                                ref
+                                    .read(audioControllerProvider)
+                                    .playSfx(SfxCue.button),
+                              );
                               await ref
                                   .read(playerProvider.notifier)
                                   .switchPlayer(player.id);
