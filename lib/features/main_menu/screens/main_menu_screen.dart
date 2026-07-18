@@ -1057,6 +1057,7 @@ class _MissionMapState extends State<_MissionMap> {
       }
 
       final isComplete =
+          (level == 3 && _isMissionThreeComplete(player)) ||
           level < activeLevel ||
           (level == AppConstants.totalLevels && missionNineComplete);
       final isUnlocked = level <= activeLevel;
