@@ -46,6 +46,7 @@ class MissionCompletePanel extends ConsumerStatefulWidget {
 class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
     with SingleTickerProviderStateMixin {
   late final AnimationController _shineController;
+  late final AudioController _audioController;
 
   @override
   void initState() {
@@ -59,7 +60,8 @@ class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
     } else {
       _shineController.repeat();
     }
-    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.achievement));
+    _audioController = ref.read(audioControllerProvider);
+    unawaited(_audioController.playSfx(SfxCue.achievement));
   }
 
   bool _isAutomatedTestBinding() {
@@ -70,6 +72,7 @@ class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
 
   @override
   void dispose() {
+    unawaited(_audioController.stopSfx(SfxCue.achievement));
     _shineController.dispose();
     super.dispose();
   }

@@ -25,6 +25,9 @@ class AudioController {
   late final AudioPlayer? _bgmPlayer;
   late final List<AudioPlayer> _sfxPlayers;
   final Map<SfxCue, int> _sfxVariantCursor = {};
+  final Map<SfxCue, int> _sfxStopIds = {};
+  final Map<AudioPlayer, SfxCue> _sfxCueByPlayer = {};
+  final Map<AudioPlayer, int> _sfxPlayerRequestIds = {};
 
   AppSettings _settings;
   BgmTrack? _desiredTrack;
@@ -109,15 +112,53 @@ class AudioController {
 
     final player = _nextSfxPlayer();
     final asset = _nextSfxAsset(cue, assets);
+    final stopId = _sfxStopIds[cue] ?? 0;
+    final playerRequestId = (_sfxPlayerRequestIds[player] ?? 0) + 1;
+    _sfxPlayerRequestIds[player] = playerRequestId;
+    _sfxCueByPlayer[player] = cue;
 
     try {
       await player.stop();
+      if (!_isCurrentSfxRequest(player, cue, stopId, playerRequestId)) {
+        return;
+      }
       await player.setVolume(_settings.sfxVolume);
+      if (!_isCurrentSfxRequest(player, cue, stopId, playerRequestId)) {
+        return;
+      }
       await player.setAsset(asset);
+      if (!_isCurrentSfxRequest(player, cue, stopId, playerRequestId)) {
+        return;
+      }
       await player.seek(Duration.zero);
+      if (!_isCurrentSfxRequest(player, cue, stopId, playerRequestId)) {
+        return;
+      }
       unawaited(player.play().catchError((Object _) {}));
     } catch (_) {
       // Audio should never break gameplay or widget tests.
+    }
+  }
+
+  Future<void> stopSfx(SfxCue cue) async {
+    if (_disposed || _isNoop) {
+      return;
+    }
+
+    _sfxStopIds[cue] = (_sfxStopIds[cue] ?? 0) + 1;
+    final players = _sfxCueByPlayer.entries
+        .where((entry) => entry.value == cue)
+        .map((entry) => entry.key)
+        .toList(growable: false);
+
+    for (final player in players) {
+      _sfxPlayerRequestIds[player] = (_sfxPlayerRequestIds[player] ?? 0) + 1;
+      _sfxCueByPlayer.remove(player);
+      try {
+        await player.stop();
+      } catch (_) {
+        // Audio should never break navigation.
+      }
     }
   }
 
@@ -223,6 +264,18 @@ class AudioController {
     final player = _sfxPlayers[_sfxCursor % _sfxPlayers.length];
     _sfxCursor++;
     return player;
+  }
+
+  bool _isCurrentSfxRequest(
+    AudioPlayer player,
+    SfxCue cue,
+    int stopId,
+    int playerRequestId,
+  ) {
+    return !_disposed &&
+        (_sfxStopIds[cue] ?? 0) == stopId &&
+        _sfxPlayerRequestIds[player] == playerRequestId &&
+        _sfxCueByPlayer[player] == cue;
   }
 
   String _nextSfxAsset(SfxCue cue, List<String> assets) {
