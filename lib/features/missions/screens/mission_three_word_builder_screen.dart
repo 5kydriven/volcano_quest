@@ -463,9 +463,7 @@ class _MissionThreeWordBuilderScreenState
       return;
     }
     _completionEffectsStarted = true;
-    unawaited(
-      ref.read(audioControllerProvider).playSfx(SfxCue.missionThreeEruption),
-    );
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.eruptionImpact));
     unawaited(HapticFeedback.heavyImpact());
     if (!MediaQuery.disableAnimationsOf(context)) {
       unawaited(_shakeController.forward(from: 0));

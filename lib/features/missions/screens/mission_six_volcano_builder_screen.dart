@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,6 +38,8 @@ class _MissionSixVolcanoBuilderScreenState
     with TickerProviderStateMixin {
   late final AnimationController _dropController;
   late final AnimationController _completeRevealController;
+  late final AnimationController _shakeController;
+  late final ScrollController _scrollController;
   int? _selectedOptionIndex;
   var _builtTileCount = 0;
   int? _droppingTileIndex;
@@ -46,6 +49,7 @@ class _MissionSixVolcanoBuilderScreenState
   var _showEruptionVideo = false;
   var _eruptionVideoStarted = false;
   var _eruptionVideoFinished = false;
+  var _eruptionEffectsStarted = false;
   VideoPlayerController? _eruptionVideoController;
   final _replayCompletedParts = <String>[];
 
@@ -94,6 +98,11 @@ class _MissionSixVolcanoBuilderScreenState
       vsync: this,
       duration: const Duration(milliseconds: 1100),
     );
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _scrollController = ScrollController();
   }
 
   @override
@@ -103,6 +112,8 @@ class _MissionSixVolcanoBuilderScreenState
       ..dispose();
     _dropController.dispose();
     _completeRevealController.dispose();
+    _shakeController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -126,67 +137,89 @@ class _MissionSixVolcanoBuilderScreenState
         ? _questions.length
         : builtTileCount.clamp(0, _questions.length);
     final progress = placedCount / _questions.length;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: MissionScreenBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
-            child: Column(
-              children: [
-                _BuilderTopBar(
-                  missionId: widget.levelId,
-                  xp: player.totalXP,
-                  avatarIndex: player.avatarIndex,
-                  onBack: () {
-                    if (_isCompleting) {
-                      return;
-                    }
-                    if (context.canPop()) {
-                      context.pop();
-                      return;
-                    }
-                    context.go(AppRoutes.menu);
-                  },
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: _BuilderPanel(
-                    progress: progress,
-                    percentComplete: (progress * 100).round(),
-                    child: shouldShowSummary
-                        ? _BuilderSummary(
-                            earnedXP: widget.isReplay
-                                ? 0
-                                : AppConstants.missionSixXp * _questions.length,
-                            onProceed: () => context.go(AppRoutes.menu),
-                          )
-                        : _BuilderContent(
-                            questionIndex: questionIndex,
-                            totalQuestions: _questions.length,
-                            question: _questions[questionIndex],
-                            selectedOptionIndex: _selectedOptionIndex,
-                            isSaving: _isSaving || _isCompleting,
-                            builtTileCount: builtTileCount,
-                            droppingTileIndex: _droppingTileIndex,
-                            dropAnimation: _dropController,
-                            completeRevealAnimation: _completeRevealController,
-                            showEruptionVideo: _showEruptionVideo,
-                            eruptionVideoController: _eruptionVideoController,
-                            answerOptions: _answerOptions,
-                            onSelect: _isSaving || _isCompleting
-                                ? null
-                                : (index) {
-                                    setState(() {
-                                      _selectedOptionIndex = index;
-                                    });
-                                  },
-                            onSubmit: _submitAnswer,
-                          ),
+      body: AnimatedBuilder(
+        animation: _shakeController,
+        builder: (context, child) {
+          if (reduceMotion || !_shakeController.isAnimating) {
+            return child!;
+          }
+          final progress = _shakeController.value;
+          final strength = math.pow(1 - progress, 2).toDouble();
+          return Transform.translate(
+            offset: Offset(
+              math.sin(progress * math.pi * 18) * 6 * strength,
+              math.sin(progress * math.pi * 22) * 3 * strength,
+            ),
+            child: child,
+          );
+        },
+        child: MissionScreenBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
+              child: Column(
+                children: [
+                  _BuilderTopBar(
+                    missionId: widget.levelId,
+                    xp: player.totalXP,
+                    avatarIndex: player.avatarIndex,
+                    onBack: () {
+                      if (_isCompleting) {
+                        return;
+                      }
+                      if (context.canPop()) {
+                        context.pop();
+                        return;
+                      }
+                      context.go(AppRoutes.menu);
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: _BuilderPanel(
+                      progress: progress,
+                      percentComplete: (progress * 100).round(),
+                      child: shouldShowSummary
+                          ? _BuilderSummary(
+                              earnedXP: widget.isReplay
+                                  ? 0
+                                  : AppConstants.missionSixXp *
+                                        _questions.length,
+                              onProceed: () => context.go(AppRoutes.menu),
+                            )
+                          : _BuilderContent(
+                              questionIndex: questionIndex,
+                              totalQuestions: _questions.length,
+                              question: _questions[questionIndex],
+                              selectedOptionIndex: _selectedOptionIndex,
+                              isSaving: _isSaving || _isCompleting,
+                              builtTileCount: builtTileCount,
+                              droppingTileIndex: _droppingTileIndex,
+                              dropAnimation: _dropController,
+                              completeRevealAnimation:
+                                  _completeRevealController,
+                              showEruptionVideo: _showEruptionVideo,
+                              eruptionVideoController: _eruptionVideoController,
+                              scrollController: _scrollController,
+                              isScrollLocked: _isCompleting,
+                              answerOptions: _answerOptions,
+                              onSelect: _isSaving || _isCompleting
+                                  ? null
+                                  : (index) {
+                                      setState(() {
+                                        _selectedOptionIndex = index;
+                                      });
+                                    },
+                              onSubmit: _submitAnswer,
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -269,6 +302,12 @@ class _MissionSixVolcanoBuilderScreenState
 
     final completed = tileIndex + 1 >= _questions.length;
     if (completed) {
+      await _scrollAnswersToTop();
+
+      if (!mounted) {
+        return;
+      }
+
       await _completeRevealController.forward(from: 0).orCancel;
 
       if (!mounted) {
@@ -280,6 +319,17 @@ class _MissionSixVolcanoBuilderScreenState
     }
 
     setState(() {});
+  }
+
+  Future<void> _scrollAnswersToTop() async {
+    if (!_scrollController.hasClients || _scrollController.offset <= 0) {
+      return;
+    }
+    await _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _playEruptionVideo() async {
@@ -299,7 +349,12 @@ class _MissionSixVolcanoBuilderScreenState
       controller.addListener(_handleEruptionVideoProgress);
       await controller.setLooping(false);
       await controller.play();
+      if (!mounted || _eruptionVideoController != controller) {
+        unawaited(controller.dispose());
+        return;
+      }
       _eruptionVideoStarted = true;
+      _startEruptionEffects();
       setState(() {
         _showEruptionVideo = true;
       });
@@ -309,6 +364,18 @@ class _MissionSixVolcanoBuilderScreenState
       }
       unawaited(controller.dispose());
       _finishEruptionVideo();
+    }
+  }
+
+  void _startEruptionEffects() {
+    if (_eruptionEffectsStarted || !mounted) {
+      return;
+    }
+    _eruptionEffectsStarted = true;
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.eruptionImpact));
+    unawaited(HapticFeedback.heavyImpact());
+    if (!MediaQuery.disableAnimationsOf(context)) {
+      unawaited(_shakeController.forward(from: 0));
     }
   }
 
@@ -339,6 +406,9 @@ class _MissionSixVolcanoBuilderScreenState
     final controller = _eruptionVideoController;
     controller?.removeListener(_handleEruptionVideoProgress);
     _eruptionVideoController = null;
+    _shakeController
+      ..stop()
+      ..value = 0;
     setState(() {
       _showEruptionVideo = false;
       _isCompleting = false;
@@ -362,6 +432,8 @@ class _BuilderContent extends StatelessWidget {
   final Animation<double> completeRevealAnimation;
   final bool showEruptionVideo;
   final VideoPlayerController? eruptionVideoController;
+  final ScrollController scrollController;
+  final bool isScrollLocked;
   final List<String> answerOptions;
   final ValueChanged<int>? onSelect;
   final VoidCallback onSubmit;
@@ -378,6 +450,8 @@ class _BuilderContent extends StatelessWidget {
     required this.completeRevealAnimation,
     required this.showEruptionVideo,
     required this.eruptionVideoController,
+    required this.scrollController,
+    required this.isScrollLocked,
     required this.answerOptions,
     required this.onSelect,
     required this.onSubmit,
@@ -407,6 +481,10 @@ class _BuilderContent extends StatelessWidget {
         Expanded(
           flex: 6,
           child: SingleChildScrollView(
+            controller: scrollController,
+            physics: isScrollLocked
+                ? const NeverScrollableScrollPhysics()
+                : null,
             padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
