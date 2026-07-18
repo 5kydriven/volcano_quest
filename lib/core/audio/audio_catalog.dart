@@ -16,7 +16,18 @@ enum BgmTrack {
   fieldLesson,
 }
 
-enum SfxCue { button, correct, wrong, achievement, erupt, falling, gameAction }
+enum SfxCue {
+  button,
+  letterDrop,
+  letterTap,
+  missionThreeEruption,
+  correct,
+  wrong,
+  achievement,
+  erupt,
+  falling,
+  gameAction,
+}
 
 class AudioCatalog {
   const AudioCatalog._();
@@ -41,17 +52,13 @@ class AudioCatalog {
 
   static List<String> sfxAssets(SfxCue cue) {
     return switch (cue) {
-      SfxCue.button => const [
-        Audios.sfxBtn1,
-      ],
-      SfxCue.correct => const [
-        Audios.sfxCorrect1,
-      ],
+      SfxCue.button => const [Audios.sfxBtn1],
+      SfxCue.letterDrop => const [Audios.sfxBtn3],
+      SfxCue.letterTap => const [Audios.sfxBtn5],
+      SfxCue.missionThreeEruption => const [Audios.sfxErupt2],
+      SfxCue.correct => const [Audios.sfxCorrect1],
       SfxCue.wrong => const [Audios.sfxWrong1],
-      SfxCue.achievement => const [
-        Audios.sfxAchievement1,
-        Audios.sfxAchievement2,
-      ],
+      SfxCue.achievement => const [Audios.sfxAchievement1],
       SfxCue.erupt => const [
         Audios.sfxErupt1,
         Audios.sfxErupt2,

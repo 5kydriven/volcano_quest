@@ -59,12 +59,7 @@ class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
     } else {
       _shineController.repeat();
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.achievement));
-    });
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.achievement));
   }
 
   bool _isAutomatedTestBinding() {

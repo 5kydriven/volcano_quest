@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
@@ -39,9 +40,12 @@ class MissionThreeWordBuilderScreen extends ConsumerStatefulWidget {
 }
 
 class _MissionThreeWordBuilderScreenState
-    extends ConsumerState<MissionThreeWordBuilderScreen> {
+    extends ConsumerState<MissionThreeWordBuilderScreen>
+    with SingleTickerProviderStateMixin {
   late final math.Random _random;
   late final List<_MissionThreeWord> _words;
+  late final ScrollController _scrollController;
+  late final AnimationController _shakeController;
   var _wordIndex = 0;
   var _slotLetters = <int, _LetterTileData>{};
   var _availableLetters = <_LetterTileData>[];
@@ -50,6 +54,7 @@ class _MissionThreeWordBuilderScreenState
   var _showCompletionVideo = false;
   var _completionVideoStarted = false;
   var _completionVideoFinished = false;
+  var _completionEffectsStarted = false;
   VideoPlayerController? _completionVideoController;
   var _feedback = _WordFeedback.none;
   final _replaySolvedIds = <String>[];
@@ -59,6 +64,11 @@ class _MissionThreeWordBuilderScreenState
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _random = math.Random(
       widget.randomSeed ?? DateTime.now().microsecondsSinceEpoch,
     );
@@ -76,6 +86,8 @@ class _MissionThreeWordBuilderScreenState
     _completionVideoController
       ?..removeListener(_handleCompletionVideoProgress)
       ..dispose();
+    _scrollController.dispose();
+    _shakeController.dispose();
     super.dispose();
   }
 
@@ -97,6 +109,7 @@ class _MissionThreeWordBuilderScreenState
         ? _words.length
         : solvedIds.length.clamp(0, _words.length);
     final progress = progressCount / _words.length;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     if (!shouldShowSummary && activeIndex != _wordIndex && !_isSaving) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,67 +125,83 @@ class _MissionThreeWordBuilderScreenState
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: MissionScreenBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
-            child: Column(
-              children: [
-                _WordBuilderTopBar(
-                  missionId: widget.levelId,
-                  xp: player.totalXP,
-                  avatarIndex: player.avatarIndex,
-                  onBack: () {
-                    if (_showCompletionVideo) {
-                      return;
-                    }
-                    if (context.canPop()) {
-                      context.pop();
-                      return;
-                    }
-                    context.go(AppRoutes.menu);
-                  },
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: _WordBuilderPanel(
-                    progress: progress,
-                    percentComplete: (progress * 100).round(),
-                    child: shouldShowSummary
-                        ? _MissionThreeSummary(
-                            solvedCount: solvedIds.length,
-                            totalWords: _words.length,
-                            earnedXP: widget.isReplay
-                                ? 0
-                                : solvedIds.length *
-                                      AppConstants.missionThreeXpPerWord,
-                            onProceed: () => context.go(AppRoutes.menu),
-                          )
-                        : _WordBuilderContent(
-                            wordIndex: activeIndex,
-                            totalWords: _words.length,
-                            word: _words[activeIndex],
-                            slotLetters: _slotLetters,
-                            availableLetters: _availableLetters,
-                            bankCount: _availableLetters.length,
-                            feedback: _feedback,
-                            isSaving: _isSaving || _showCompletionVideo,
-                            showCompletionVideo: _showCompletionVideo,
-                            completionVideoController:
-                                _completionVideoController,
-                            onAcceptLetter: _placeLetter,
-                            onRemoveLetter: _removeLetter,
-                            onTapLetter: _placeLetterInNextBlank,
-                            onClear: () {
-                              setState(() {
-                                _resetWordState(_words[activeIndex]);
-                              });
-                            },
-                            onSubmit: () => _submitWord(_words[activeIndex]),
-                          ),
+      body: AnimatedBuilder(
+        animation: _shakeController,
+        builder: (context, child) {
+          if (reduceMotion || !_shakeController.isAnimating) {
+            return child!;
+          }
+          final progress = _shakeController.value;
+          final strength = math.pow(1 - progress, 2).toDouble();
+          return Transform.translate(
+            offset: Offset(
+              math.sin(progress * math.pi * 18) * 6 * strength,
+              math.sin(progress * math.pi * 22) * 3 * strength,
+            ),
+            child: child,
+          );
+        },
+        child: MissionScreenBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
+              child: Column(
+                children: [
+                  _WordBuilderTopBar(
+                    missionId: widget.levelId,
+                    xp: player.totalXP,
+                    avatarIndex: player.avatarIndex,
+                    onBack: () {
+                      if (_showCompletionVideo) {
+                        return;
+                      }
+                      if (context.canPop()) {
+                        context.pop();
+                        return;
+                      }
+                      context.go(AppRoutes.menu);
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: _WordBuilderPanel(
+                      progress: progress,
+                      percentComplete: (progress * 100).round(),
+                      child: shouldShowSummary
+                          ? _MissionThreeSummary(
+                              solvedCount: solvedIds.length,
+                              totalWords: _words.length,
+                              earnedXP: widget.isReplay
+                                  ? 0
+                                  : solvedIds.length *
+                                        AppConstants.missionThreeXpPerWord,
+                              onProceed: () => context.go(AppRoutes.menu),
+                            )
+                          : _WordBuilderContent(
+                              wordIndex: activeIndex,
+                              totalWords: _words.length,
+                              word: _words[activeIndex],
+                              slotLetters: _slotLetters,
+                              availableLetters: _availableLetters,
+                              bankCount: _availableLetters.length,
+                              feedback: _feedback,
+                              isSaving: _isSaving || _showCompletionVideo,
+                              showCompletionVideo: _showCompletionVideo,
+                              completionVideoController:
+                                  _completionVideoController,
+                              scrollController: _scrollController,
+                              isScrollLocked: _showCompletionVideo,
+                              onAcceptLetter: (payload) =>
+                                  _placeLetter(payload, SfxCue.letterDrop),
+                              onRemoveLetter: _removeLetter,
+                              onTapLetter: _placeLetterInNextBlank,
+                              onClear: () => _clearWord(_words[activeIndex]),
+                              onSubmit: () => _submitWord(_words[activeIndex]),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -244,11 +273,12 @@ class _MissionThreeWordBuilderScreenState
     ];
   }
 
-  void _placeLetter(_LetterDropPayload payload) {
+  void _placeLetter(_LetterDropPayload payload, SfxCue cue) {
     if (_isSaving || _showCompletionVideo) {
       return;
     }
 
+    unawaited(ref.read(audioControllerProvider).playSfx(cue));
     setState(() {
       final existing = _slotLetters[payload.slotIndex];
       if (existing != null) {
@@ -271,7 +301,8 @@ class _MissionThreeWordBuilderScreenState
     if (existing == null) {
       return;
     }
-
+    print('here');
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.letterTap));
     setState(() {
       _slotLetters = Map<int, _LetterTileData>.from(_slotLetters)
         ..remove(slotIndex);
@@ -289,7 +320,21 @@ class _MissionThreeWordBuilderScreenState
     if (nextBlank == null) {
       return;
     }
-    _placeLetter(_LetterDropPayload(slotIndex: nextBlank, letter: letter));
+    _placeLetter(
+      _LetterDropPayload(slotIndex: nextBlank, letter: letter),
+      SfxCue.letterTap,
+    );
+  }
+
+  void _clearWord(_MissionThreeWord word) {
+    if (_isSaving || _showCompletionVideo) {
+      return;
+    }
+
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+    setState(() {
+      _resetWordState(word);
+    });
   }
 
   Future<void> _submitWord(_MissionThreeWord word) async {
@@ -298,6 +343,8 @@ class _MissionThreeWordBuilderScreenState
         _slotLetters.length != word.blankCount) {
       return;
     }
+
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
 
     final attempt = [
       for (var index = 0; index < word.answer.length; index++)
@@ -361,8 +408,22 @@ class _MissionThreeWordBuilderScreenState
     );
 
     if (allSolved) {
-      unawaited(_playCompletionVideo());
+      unawaited(_startCompletionSequence());
     }
+  }
+
+  Future<void> _startCompletionSequence() async {
+    if (_scrollController.hasClients && _scrollController.offset > 0) {
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    }
+    if (!mounted || !_showCompletionVideo) {
+      return;
+    }
+    await _playCompletionVideo();
   }
 
   Future<void> _playCompletionVideo() async {
@@ -383,6 +444,7 @@ class _MissionThreeWordBuilderScreenState
       await controller.setLooping(false);
       await controller.play();
       _completionVideoStarted = true;
+      _startCompletionEffects();
       if (mounted) {
         setState(() {});
       }
@@ -392,6 +454,20 @@ class _MissionThreeWordBuilderScreenState
       }
       unawaited(controller.dispose());
       _finishCompletionVideo();
+    }
+  }
+
+  void _startCompletionEffects() {
+    if (_completionEffectsStarted || !mounted) {
+      return;
+    }
+    _completionEffectsStarted = true;
+    unawaited(
+      ref.read(audioControllerProvider).playSfx(SfxCue.missionThreeEruption),
+    );
+    unawaited(HapticFeedback.heavyImpact());
+    if (!MediaQuery.disableAnimationsOf(context)) {
+      unawaited(_shakeController.forward(from: 0));
     }
   }
 
@@ -419,6 +495,9 @@ class _MissionThreeWordBuilderScreenState
     }
     _completionVideoFinished = true;
     _completionVideoController?.removeListener(_handleCompletionVideoProgress);
+    _shakeController
+      ..stop()
+      ..value = 0;
     setState(() {
       _showCompletionVideo = false;
       _showSummary = true;
@@ -523,6 +602,8 @@ class _WordBuilderContent extends StatelessWidget {
   final bool isSaving;
   final bool showCompletionVideo;
   final VideoPlayerController? completionVideoController;
+  final ScrollController scrollController;
+  final bool isScrollLocked;
   final ValueChanged<_LetterDropPayload> onAcceptLetter;
   final ValueChanged<int> onRemoveLetter;
   final ValueChanged<_LetterTileData> onTapLetter;
@@ -540,6 +621,8 @@ class _WordBuilderContent extends StatelessWidget {
     required this.isSaving,
     required this.showCompletionVideo,
     required this.completionVideoController,
+    required this.scrollController,
+    required this.isScrollLocked,
     required this.onAcceptLetter,
     required this.onRemoveLetter,
     required this.onTapLetter,
@@ -555,6 +638,10 @@ class _WordBuilderContent extends StatelessWidget {
       children: [
         Expanded(
           child: SingleChildScrollView(
+            controller: scrollController,
+            physics: isScrollLocked
+                ? const NeverScrollableScrollPhysics()
+                : null,
             padding: EdgeInsets.zero,
             child: Column(
               children: [
@@ -562,14 +649,14 @@ class _WordBuilderContent extends StatelessWidget {
                   showCompletionVideo: showCompletionVideo,
                   completionVideoController: completionVideoController,
                 ),
-                const SizedBox(height: 12),
-                _MissionTelemetryStrip(
-                  wordIndex: wordIndex,
-                  totalWords: totalWords,
-                  hintCount: word.hintIndexes.length,
-                  blankCount: word.blankCount,
-                  bankCount: bankCount,
-                ),
+                // const SizedBox(height: 12),
+                // _MissionTelemetryStrip(
+                //   wordIndex: wordIndex,
+                //   totalWords: totalWords,
+                //   hintCount: word.hintIndexes.length,
+                //   blankCount: word.blankCount,
+                //   bankCount: bankCount,
+                // ),
                 const SizedBox(height: 14),
                 _PuzzleDeck(
                   child: Column(
