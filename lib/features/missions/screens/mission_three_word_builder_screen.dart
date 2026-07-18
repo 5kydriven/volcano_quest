@@ -358,6 +358,7 @@ class _MissionThreeWordBuilderScreenState
         _feedback = _WordFeedback.wrong;
       });
       unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.wrong));
+      unawaited(HapticFeedback.vibrate());
       showMissionSnackBar(context, 'Wrong sequence - try again', isError: true);
       return;
     }

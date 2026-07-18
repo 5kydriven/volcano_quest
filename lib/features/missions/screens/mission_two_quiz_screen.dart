@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -260,6 +261,9 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
           .read(audioControllerProvider)
           .playSfx(isCorrect ? SfxCue.correct : SfxCue.wrong),
     );
+    if (!isCorrect) {
+      unawaited(HapticFeedback.vibrate());
+    }
     showMissionSnackBar(
       context,
       widget.isReplay
