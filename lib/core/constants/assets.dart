@@ -18,8 +18,18 @@ class Assets {
   static const String closeButton = 'assets/images/close_button.png';
   static const String profileContainer = 'assets/images/profile_container.png';
   static const String checkImage = 'assets/images/check_image.png';
+  static const String cinderCone = 'assets/images/cinder_cone.png';
+  static const String compositeVolcano =
+      'assets/images/composite_volcano.png';
   static const String createNewScientistButton =
       'assets/images/create_new_scientist_button.png';
+  static const String mountains = 'assets/images/mountains.png';
+  static const String phreatic = 'assets/images/phreatic.png';
+  static const String phreatomagmatic = 'assets/images/phreatomagmatic.png';
+  static const String shieldVolcano = 'assets/images/shield_volcano.png';
+  static const String strombolian = 'assets/images/strombolian.png';
+  static const String volcanoParts = 'assets/images/volcano_parts.png';
+  static const String vulcanian = 'assets/images/vulcanian.png';
   static const String analystBoy = 'assets/avatars/Analyst_boy.png';
   static const String chemistGirl = 'assets/avatars/Chemist_girl.jpeg';
   static const String explorerGirl = 'assets/avatars/Explorer_girl.png';
