@@ -47,8 +47,6 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/avatars/
-    - assets/videos/
-    - assets/models/
     - assets/containers/
     - assets/icons/
     - assets/missions/backgrounds/
@@ -56,7 +54,6 @@ flutter:
     - assets/missions/buttons/
     - assets/missions/mission-four/
     - assets/missions/misson-three/
-    - assets/missions/mission-three/
     - assets/missions/mission-five/
     - assets/missions/mission-six/
     - assets/missions/mission-seven/

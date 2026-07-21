@@ -179,9 +179,14 @@ class _MissionFourMapQuizScreenState
         'It is a popular hiking destination for experienced climbers.',
         'Mount Kanlaon is an important watershed and ecological reserve for Negros Island.',
       ],
-      question: 'What activity is Mount Kanlaon popular for?',
-      options: const ['Swimming', 'Trekking', 'hiking'],
-      correctOptionIndex: 2,
+      question:
+          'What type of volcano is Mount Kanlaon, and where is it located?',
+      options: const [
+        ' Mount Kanlaon is an active stratovolcano in Albay Province',
+        'Mount Kanlaon is an active stratovolcano on Negros Island',
+        'Mount Kanlaon is an active complex volcano located in Bukidnon',
+      ],
+      correctOptionIndex: 1,
     ),
   ];
 
