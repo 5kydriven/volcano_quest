@@ -13,7 +13,6 @@ class AvatarAsset {
 class Assets {
   static const String splashBg = 'assets/splash_bg.png';
   static const String playerDatabaseBg = splashBg;
-  static const String initializeButton = 'assets/images/initialize_button.png';
   static const String backButton = 'assets/icons/back_button.png';
   static const String closeButton = 'assets/images/close_button.png';
   static const String profileContainer = 'assets/images/profile_container.png';
@@ -98,7 +97,6 @@ class Assets {
       label: 'Strategist',
     ),
   ];
-  static const String volcanoBg = 'assets/videos/volcano.mp4';
   static const String missionScreenBackground =
       'assets/missions/backgrounds/mission_screen_background.jpeg';
   static const String missionOneLabBackground =
@@ -178,7 +176,6 @@ class Assets {
       'assets/containers/rectangle_container.png';
   static const String volcanoCutaway =
       'assets/Meshy_AI_2fa1536bd2215c18f695398ed54154e2bd2d4a85.png';
-  static const String volcano3dSection = 'assets/models/volcano-3d-section.glb';
   static const String explore = 'assets/splash_screen/explore.png';
   static const String predict = 'assets/splash_screen/predict.png';
   static const String survive = 'assets/splash_screen/survive.png';
@@ -203,10 +200,7 @@ class Assets {
       'assets/menu_screen/icons/setting_icon.png';
   static const String menuSwitchIcon =
       'assets/menu_screen/icons/switch_icon.png';
-  static const String appLogo = 'assets/app_logo.png';
-  static const String containerList = 'assets/leaderboard/container_list.png';
   static const String header = 'assets/leaderboard/header.png';
-  static const String leaderboardBg = 'assets/leaderboard/leaderboard_bg.png';
   static const String no1Container = 'assets/leaderboard/no_1_container.png';
   static const String rankingContainer =
       'assets/leaderboard/ranking_container.png';
