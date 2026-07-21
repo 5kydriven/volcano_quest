@@ -43,7 +43,12 @@ class _VolcanoStructureSideQuestScreenState
         'A volcano is a cone-shaped mountain or hill with an opening where lava, gases, hot vapor, and rock fragments erupt from Earth\'s crust.',
         'These materials come from molten rock called magma beneath the Earth\'s surface. The movement of magma toward or onto the surface is known as volcanism.',
       ],
-      imageLabels: const ['VOLCANO STRUCTURE DIAGRAM'],
+      images: const [
+        _LessonImage(
+          assetPath: Assets.volcanoParts,
+          label: 'VOLCANO STRUCTURE DIAGRAM',
+        ),
+      ],
     ),
     _LessonPage(
       title: 'The Parts of a Volcano',
@@ -71,7 +76,14 @@ class _VolcanoStructureSideQuestScreenState
         'There are several ways volcanoes can be classified. They can be classified based on structure and activity.',
         'One way to classify different types of volcanoes is through the structure characterized by their shape, parts, and formation.',
       ],
-      imageLabels: const ['TYPES BASED ON STRUCTURE'],
+      images: const [
+        _LessonImage(assetPath: Assets.cinderCone, label: 'CINDER CONE'),
+        _LessonImage(
+          assetPath: Assets.compositeVolcano,
+          label: 'COMPOSITE VOLCANO',
+        ),
+        _LessonImage(assetPath: Assets.shieldVolcano, label: 'SHIELD VOLCANO'),
+      ],
     ),
     _LessonPage(
       title: 'Classification by Activity',
@@ -84,7 +96,12 @@ class _VolcanoStructureSideQuestScreenState
         'Potentially active volcanoes have no recorded eruption but still appear young in structure.',
         'The Philippines has more than 100 volcanoes, and 24 of them are active.',
       ],
-      imageLabels: const ['PHIVOLCS ACTIVITY CLASSIFICATION'],
+      images: const [
+        _LessonImage(
+          assetPath: Assets.mountains,
+          label: 'PHIVOLCS ACTIVITY CLASSIFICATION',
+        ),
+      ],
     ),
     _LessonPage(
       title: 'Types of Volcanic Eruptions',
@@ -97,11 +114,17 @@ class _VolcanoStructureSideQuestScreenState
         'Strombolian is a periodic, weak to violent eruption characterized by lava fountains, like Irazu Volcano in Costa Rica.',
         'Vulcanian is characterized by tall eruption columns that can reach up to 20 km high with pyroclastic flow and ash fall tephra.',
       ],
-      imageLabels: const [
-        'PHREATIC ERUPTION',
-        'PHREATOMAGMATIC ERUPTION',
-        'STROMBOLIAN ERUPTION',
-        'VULCANIAN ERUPTION',
+      images: const [
+        _LessonImage(assetPath: Assets.phreatic, label: 'PHREATIC ERUPTION'),
+        _LessonImage(
+          assetPath: Assets.phreatomagmatic,
+          label: 'PHREATOMAGMATIC ERUPTION',
+        ),
+        _LessonImage(
+          assetPath: Assets.strombolian,
+          label: 'STROMBOLIAN ERUPTION',
+        ),
+        _LessonImage(assetPath: Assets.vulcanian, label: 'VULCANIAN ERUPTION'),
       ],
     ),
     _LessonPage(
@@ -110,7 +133,12 @@ class _VolcanoStructureSideQuestScreenState
         'PHIVOLCS is the government agency tasked with monitoring earthquakes and volcanoes in the Philippines.',
         'Based on their findings, scientists watch for commonly observed signs when a volcano is about to erupt.',
       ],
-      imageLabels: const ['IMPENDING ERUPTION WARNING SIGNS'],
+      images: const [
+        _LessonImage(
+          assetPath: Assets.impendingEruptions,
+          label: 'IMPENDING ERUPTION WARNING SIGNS',
+        ),
+      ],
     ),
   ];
 
@@ -547,9 +575,9 @@ class _LessonContent extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     _LessonDataSection(page: page),
-                    for (final label in page.imageLabels) ...[
+                    for (final image in page.images) ...[
                       const SizedBox(height: 12),
-                      _VolcanoScanFrame(label: label),
+                      _VolcanoScanFrame(image: image),
                     ],
                     const SizedBox(height: 12),
                   ],
@@ -989,157 +1017,106 @@ class _LessonBullet extends StatelessWidget {
 }
 
 class _VolcanoScanFrame extends StatelessWidget {
-  final String label;
+  final _LessonImage image;
 
-  const _VolcanoScanFrame({required this.label});
+  const _VolcanoScanFrame({required this.image});
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF21140F), Color(0xFF0F0D0B)],
-          ),
-          border: Border.all(color: AppColors.borderAlt, width: 1.2),
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: const [
-            BoxShadow(color: Color(0x55100000), blurRadius: 14),
-          ],
-        ),
-        child: Stack(
-          children: [
-            const Positioned.fill(child: _SideQuestGrid()),
-            Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: CustomPaint(painter: _VolcanoScanPainter()),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 11),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF21140F), Color(0xFF0F0D0B)],
               ),
+              border: Border.all(color: AppColors.borderAlt, width: 1.2),
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: const [
+                BoxShadow(color: Color(0x55100000), blurRadius: 14),
+              ],
             ),
-            Align(
-              alignment: Alignment.center,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.background.withValues(alpha: 0.72),
-                  border: Border.all(color: AppColors.tealDim, width: 1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.8,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Stack(
+                children: [
+                  const Positioned.fill(child: _SideQuestGrid()),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+                    child: Image.asset(
+                      image.assetPath,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
-            const Positioned(
-              left: 12,
-              top: 10,
-              child: _ScannerLabel(text: 'VOLCANO SCAN'),
-            ),
-            Positioned(
-              right: 12,
-              bottom: 10,
-              child: Text(
-                'FIELD FILE ${label.hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}',
-                style: const TextStyle(
-                  color: AppColors.textDim,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        Positioned(top: 0, child: _ScanImageLabel(text: image.label)),
+      ],
     );
   }
 }
 
-class _VolcanoScanPainter extends CustomPainter {
+class _ScanImageLabel extends StatelessWidget {
+  final String text;
+
+  const _ScanImageLabel({required this.text});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final ridgePaint = Paint()
-      ..color = AppColors.teal.withValues(alpha: 0.34)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final fillPaint = Paint()
-      ..color = AppColors.surfaceAlt.withValues(alpha: 0.32)
-      ..style = PaintingStyle.fill;
-    final lavaPaint = Paint()
-      ..color = AppColors.teal.withValues(alpha: 0.42)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4;
-
-    final volcano = Path()
-      ..moveTo(size.width * 0.18, size.height * 0.82)
-      ..lineTo(size.width * 0.42, size.height * 0.28)
-      ..quadraticBezierTo(
-        size.width * 0.50,
-        size.height * 0.20,
-        size.width * 0.58,
-        size.height * 0.28,
-      )
-      ..lineTo(size.width * 0.82, size.height * 0.82)
-      ..close();
-    canvas.drawPath(volcano, fillPaint);
-    canvas.drawPath(volcano, ridgePaint);
-
-    final conduit = Path()
-      ..moveTo(size.width * 0.50, size.height * 0.32)
-      ..quadraticBezierTo(
-        size.width * 0.47,
-        size.height * 0.54,
-        size.width * 0.52,
-        size.height * 0.78,
-      );
-    canvas.drawPath(conduit, lavaPaint);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.5, size.height * 0.27),
-        width: size.width * 0.18,
-        height: size.height * 0.055,
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: 0.86),
+        border: Border.all(color: AppColors.tealDim, width: 1),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 8)],
       ),
-      ridgePaint,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 9,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.7,
+          ),
+        ),
+      ),
     );
-
-    for (final marker in const [0.28, 0.72]) {
-      canvas.drawCircle(
-        Offset(size.width * marker, size.height * 0.26),
-        3,
-        Paint()..color = AppColors.teal.withValues(alpha: 0.5),
-      );
-    }
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _LessonPage {
   final String title;
   final List<String> paragraphs;
   final List<String> bullets;
-  final List<String> imageLabels;
+  final List<_LessonImage> images;
 
   const _LessonPage({
     required this.title,
     this.paragraphs = const [],
     this.bullets = const [],
-    this.imageLabels = const [],
+    this.images = const [],
   });
+}
+
+class _LessonImage {
+  final String assetPath;
+  final String label;
+
+  const _LessonImage({required this.assetPath, required this.label});
 }
 
 class _SideQuestQuestion {

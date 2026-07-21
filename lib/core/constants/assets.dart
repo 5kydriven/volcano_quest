@@ -23,6 +23,8 @@ class Assets {
       'assets/images/composite_volcano.png';
   static const String createNewScientistButton =
       'assets/images/create_new_scientist_button.png';
+  static const String impendingEruptions =
+      'assets/images/impending_eruptions.png';
   static const String mountains = 'assets/images/mountains.png';
   static const String phreatic = 'assets/images/phreatic.png';
   static const String phreatomagmatic = 'assets/images/phreatomagmatic.png';
