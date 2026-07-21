@@ -76,6 +76,7 @@ class AppConstants {
     'makiling',
     'taal',
     'pinatubo',
+    'kanlaon',
   ];
   static const missionFiveAnatomyPartIds = [
     'magma_chamber',

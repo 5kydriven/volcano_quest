@@ -463,14 +463,14 @@ class _AssessmentContent extends StatelessWidget {
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       question.options[index],
-                                      maxLines: 2,
+                                      maxLines: 3,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.left,
                                       style: const TextStyle(
                                         color: Color(0xFF292828),
-                                        fontSize: 18,
-                                        height: 1,
-                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                        height: 0,
+                                        fontWeight: FontWeight.bold,
                                         letterSpacing: 0,
                                         shadows: [
                                           Shadow(

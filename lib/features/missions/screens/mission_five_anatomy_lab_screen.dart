@@ -74,9 +74,9 @@ class _MissionFiveAnatomyLabScreenState
       id: 'secondary_vent',
       label: 'secondary vent',
       x: 0.69,
-      y: 0.52,
-      anchorX: 0.60,
-      anchorY: 0.57,
+      y: 0.70,
+      anchorX: 0.58,
+      anchorY: 0.51,
       icon: Icons.call_split_outlined,
     ),
     _AnatomyPart(
@@ -84,8 +84,8 @@ class _MissionFiveAnatomyLabScreenState
       label: 'lava flow',
       x: 0.73,
       y: 0.28,
-      anchorX: 0.73,
-      anchorY: 0.43,
+      anchorX: 0.68,
+      anchorY: 0.52,
       icon: Icons.local_fire_department_outlined,
     ),
     _AnatomyPart(

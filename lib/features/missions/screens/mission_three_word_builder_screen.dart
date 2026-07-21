@@ -228,8 +228,7 @@ class _MissionThreeWordBuilderScreenState
         'Extremely hot, semi-liquid, or fully molten rock located deep beneath the Earth’s surface.',
       'lava' =>
         'Molten rock that erupts from a volcano or fissure onto the Earth’s surface.',
-      'ash' =>
-        'Powdery gray or black residue left after something is burned.',
+      'ash' => 'Powdery gray or black residue left after something is burned.',
       'eruption' =>
         'A sudden and often violent bursting forth or ejection from a place of confinement.',
       _ => '',
@@ -918,7 +917,7 @@ class _VolcanoImageCard extends StatelessWidget {
         (completionVideoController?.value.isInitialized ?? false);
 
     return Container(
-      height: 136,
+      height: 150,
       decoration: BoxDecoration(
         color: _charcoal,
         border: Border.all(color: _lavaDeep.withValues(alpha: 0.74), width: 1),
