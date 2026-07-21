@@ -214,7 +214,26 @@ class _MissionThreeWordBuilderScreenState
     final indexes = List<int>.generate(chars.length, (index) => index)
       ..shuffle(_random);
     final hintIndexes = indexes.take(hintCount).toSet();
-    return _MissionThreeWord(id: id, answer: chars, hintIndexes: hintIndexes);
+    return _MissionThreeWord(
+      id: id,
+      answer: chars,
+      hintIndexes: hintIndexes,
+      description: _wordDescription(id),
+    );
+  }
+
+  String _wordDescription(String id) {
+    return switch (id) {
+      'magma' =>
+        'Extremely hot, semi-liquid, or fully molten rock located deep beneath the Earth’s surface.',
+      'lava' =>
+        'Molten rock that erupts from a volcano or fissure onto the Earth’s surface.',
+      'ash' =>
+        'Powdery gray or black residue left after something is burned.',
+      'eruption' =>
+        'A sudden and often violent bursting forth or ejection from a place of confinement.',
+      _ => '',
+    };
   }
 
   int _activeWordIndex(List<String> solvedIds) {
@@ -301,7 +320,6 @@ class _MissionThreeWordBuilderScreenState
     if (existing == null) {
       return;
     }
-    print('here');
     unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.letterTap));
     setState(() {
       _slotLetters = Map<int, _LetterTileData>.from(_slotLetters)
@@ -664,7 +682,9 @@ class _WordBuilderContent extends StatelessWidget {
                         eyebrow: 'IDENTIFY STRUCTURE',
                         title: 'DECODE VOLCANO TERM',
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
+                      _WordDescription(text: word.description),
+                      const SizedBox(height: 14),
                       _WordSlots(
                         word: word,
                         slotLetters: slotLetters,
@@ -798,98 +818,6 @@ class _WordBuilderContent extends StatelessWidget {
   }
 }
 
-class _MissionTelemetryStrip extends StatelessWidget {
-  final int wordIndex;
-  final int totalWords;
-  final int hintCount;
-  final int blankCount;
-  final int bankCount;
-
-  const _MissionTelemetryStrip({
-    required this.wordIndex,
-    required this.totalWords,
-    required this.hintCount,
-    required this.blankCount,
-    required this.bankCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(Assets.missionThreeHintContainer, fit: BoxFit.fill),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      '${wordIndex + 1}/$totalWords',
-                      style: const TextStyle(
-                        color: _lava,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      '$hintCount',
-                      style: const TextStyle(
-                        color: _lava,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      '$blankCount',
-                      style: const TextStyle(
-                        color: _lava,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      '$bankCount',
-                      style: const TextStyle(
-                        color: _lava,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                        shadows: [Shadow(color: _lavaDeep, blurRadius: 8)],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PuzzleDeck extends StatelessWidget {
   final Widget child;
 
@@ -953,6 +881,27 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+class _WordDescription extends StatelessWidget {
+  final String text;
+
+  const _WordDescription({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 12,
+        height: 1.35,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+      ),
+    );
+  }
+}
+
 class _VolcanoImageCard extends StatelessWidget {
   final bool showCompletionVideo;
   final VideoPlayerController? completionVideoController;
@@ -969,7 +918,7 @@ class _VolcanoImageCard extends StatelessWidget {
         (completionVideoController?.value.isInitialized ?? false);
 
     return Container(
-      height: 206,
+      height: 136,
       decoration: BoxDecoration(
         color: _charcoal,
         border: Border.all(color: _lavaDeep.withValues(alpha: 0.74), width: 1),
@@ -1370,11 +1319,13 @@ class _MissionThreeWord {
   final String id;
   final List<String> answer;
   final Set<int> hintIndexes;
+  final String description;
 
   const _MissionThreeWord({
     required this.id,
     required this.answer,
     required this.hintIndexes,
+    required this.description,
   });
 
   int get blankCount => answer.length - hintIndexes.length;
