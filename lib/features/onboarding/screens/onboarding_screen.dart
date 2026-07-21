@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -47,7 +49,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     context.go(AppRoutes.players);
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   Future<void> _deploy() async {
+    _playButtonSfx();
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +134,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                 _AvatarGrid(
                                   selectedAvatar: _selectedAvatar,
                                   onSelect: (index) {
+                                    _playButtonSfx();
                                     setState(() => _selectedAvatar = index);
                                   },
                                 ),
@@ -496,12 +504,13 @@ class _LoopingAvatarVideoState extends State<_LoopingAvatarVideo> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(
-      widget.videoPath,
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-    )
-      ..setLooping(true)
-      ..setVolume(0);
+    _controller =
+        VideoPlayerController.asset(
+            widget.videoPath,
+            videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+          )
+          ..setLooping(true)
+          ..setVolume(0);
     _initialize();
   }
 

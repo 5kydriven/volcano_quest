@@ -210,6 +210,7 @@ class _MissionSixVolcanoBuilderScreenState
                               onSelect: _isSaving || _isCompleting
                                   ? null
                                   : (index) {
+                                      _playButtonSfx();
                                       setState(() {
                                         _selectedOptionIndex = index;
                                       });
@@ -227,12 +228,17 @@ class _MissionSixVolcanoBuilderScreenState
     );
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   Future<void> _submitAnswer() async {
     final selected = _selectedOptionIndex;
     if (selected == null || _isSaving || _droppingTileIndex != null) {
       return;
     }
 
+    _playButtonSfx();
     final player = ref.read(playerProvider);
     final completedParts = widget.isReplay
         ? _replayCompletedParts

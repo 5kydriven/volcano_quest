@@ -165,6 +165,7 @@ class _MissionNineAssessmentScreenState
                             onSelect: _submitted || _isSaving
                                 ? null
                                 : (index) {
+                                    _playButtonSfx();
                                     setState(() {
                                       _selectedOptionIndex = index;
                                     });
@@ -203,11 +204,16 @@ class _MissionNineAssessmentScreenState
     return nextOpenIndex;
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   Future<void> _handleAction(
     _AssessmentQuestion question,
     int displayIndex,
   ) async {
     if (_submitted) {
+      _playButtonSfx();
       final isLastQuestion = displayIndex >= _questions.length - 1;
       setState(() {
         if (isLastQuestion) {
@@ -226,6 +232,7 @@ class _MissionNineAssessmentScreenState
       return;
     }
 
+    _playButtonSfx();
     final isCorrect = selected == question.correctOptionIndex;
     setState(() {
       _isSaving = true;

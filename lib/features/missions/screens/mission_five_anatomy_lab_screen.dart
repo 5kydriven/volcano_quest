@@ -174,6 +174,7 @@ class _MissionFiveAnatomyLabScreenState
       return;
     }
 
+    _playButtonSfx();
     setState(() {
       _selectedLabelId = _selectedLabelId == labelId ? null : labelId;
     });
@@ -184,6 +185,7 @@ class _MissionFiveAnatomyLabScreenState
       return;
     }
 
+    _playButtonSfx();
     setState(() {
       _placedLabels.clear();
       _selectedLabelId = null;
@@ -231,6 +233,10 @@ class _MissionFiveAnatomyLabScreenState
     if (completed) {
       _completeMission();
     }
+  }
+
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
   }
 
   Future<void> _completeMission() async {

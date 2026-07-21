@@ -159,6 +159,7 @@ class _MissionEightEruptionWarningLabScreenState
       return;
     }
 
+    _playButtonSfx();
     final isCorrect = answer == sign.correctAnswer;
     setState(() {
       _isSaving = true;
@@ -212,6 +213,10 @@ class _MissionEightEruptionWarningLabScreenState
           : 'Correct warning sign: ${sign.correctAnswer.label}',
       isError: !isCorrect,
     );
+  }
+
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
   }
 
   static int _earnedXP(List<String> correctSigns) {

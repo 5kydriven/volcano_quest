@@ -215,6 +215,7 @@ class _VolcanoStructureSideQuestScreenState
                             pageNumber: _pageIndex + 1,
                             totalPages: _lessonPages.length,
                             onNext: () {
+                              _playButtonSfx();
                               setState(() {
                                 _pageIndex++;
                                 _questionIndex = _activeQuestionIndex(
@@ -233,6 +234,7 @@ class _VolcanoStructureSideQuestScreenState
                             onSelect: _submitted || _isSaving
                                 ? null
                                 : (index) {
+                                    _playButtonSfx();
                                     setState(() {
                                       _selectedOptionIndex = index;
                                     });
@@ -298,11 +300,16 @@ class _VolcanoStructureSideQuestScreenState
     return xp;
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   Future<void> _handleQuestionAction(
     _SideQuestQuestion question,
     int displayIndex,
   ) async {
     if (_submitted) {
+      _playButtonSfx();
       final isLastQuestion = displayIndex >= _questions.length - 1;
       setState(() {
         if (isLastQuestion) {
@@ -321,6 +328,7 @@ class _VolcanoStructureSideQuestScreenState
       return;
     }
 
+    _playButtonSfx();
     final isCorrect = selected == question.correctOptionIndex;
     setState(() {
       _isSaving = true;

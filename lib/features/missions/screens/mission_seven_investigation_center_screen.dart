@@ -169,6 +169,7 @@ class _MissionSevenInvestigationCenterScreenState
       return;
     }
 
+    _playButtonSfx();
     setState(() {
       _selectedClassification = classification;
     });
@@ -180,6 +181,7 @@ class _MissionSevenInvestigationCenterScreenState
       return;
     }
 
+    _playButtonSfx();
     final isCorrect = selected == volcano.correctClassification;
     final correctAnswer = volcano.correctClassification.label;
 
@@ -239,6 +241,10 @@ class _MissionSevenInvestigationCenterScreenState
           : 'Incorrect classification - correct answer: $correctAnswer',
       isError: !isCorrect,
     );
+  }
+
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
   }
 
   static int _earnedXP(int correctCount) {

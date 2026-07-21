@@ -190,16 +190,21 @@ class _MissionFourMapQuizScreenState
                             onSelect: _submitted || _isSaving
                                 ? null
                                 : (index) {
+                                    _playButtonSfx();
                                     setState(() {
                                       _selectedOptionIndex = index;
                                     });
                                   },
                             onSubmit: _submitAnswer,
-                            onBackToMap: _returnToMap,
+                            onBackToMap: () {
+                              _playButtonSfx();
+                              _returnToMap();
+                            },
                           )
                         : _VolcanoFactContent(
                             volcano: _selectedVolcano!,
                             onNext: () {
+                              _playButtonSfx();
                               setState(() {
                                 _showQuestion = true;
                                 _selectedOptionIndex = null;
@@ -216,7 +221,12 @@ class _MissionFourMapQuizScreenState
     );
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   void _selectVolcano(_MissionFourVolcano volcano) {
+    _playButtonSfx();
     setState(() {
       _selectedVolcano = volcano;
       _showQuestion = false;
@@ -255,6 +265,7 @@ class _MissionFourMapQuizScreenState
       return;
     }
 
+    _playButtonSfx();
     final isCorrect = selected == volcano.correctOptionIndex;
     setState(() {
       _isSaving = true;

@@ -70,10 +70,16 @@ class _LevelEightFieldLessonScreenState
                         page: pages[_pageIndex],
                         onPrevious: _pageIndex == 0 || _isSaving
                             ? null
-                            : () => _goToPage(_pageIndex - 1),
+                            : () {
+                                _playButtonSfx();
+                                _goToPage(_pageIndex - 1);
+                              },
                         onNext: _pageIndex == pages.length - 1 || _isSaving
                             ? null
-                            : () => _goToPage(_pageIndex + 1),
+                            : () {
+                                _playButtonSfx();
+                                _goToPage(_pageIndex + 1);
+                              },
                       ),
                     ),
                   ),
@@ -231,11 +237,16 @@ class _LevelEightFieldLessonScreenState
     });
   }
 
+  void _playButtonSfx() {
+    unawaited(ref.read(audioControllerProvider).playSfx(SfxCue.button));
+  }
+
   Future<void> _completeLesson() async {
     if (_isSaving) {
       return;
     }
 
+    _playButtonSfx();
     setState(() {
       _isSaving = true;
     });
@@ -257,6 +268,7 @@ class _LevelEightFieldLessonScreenState
   }
 
   void _continueToLevelNine() {
+    _playButtonSfx();
     context.go(AppRoutes.menu);
   }
 }
