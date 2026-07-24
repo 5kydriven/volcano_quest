@@ -54,8 +54,24 @@ class PlayerNotifier extends StateNotifier<PlayerModel> {
     required int avatarIndex,
   }) async {
     _mutationCount++;
-    final player = PlayerModel(id: '', name: name, avatarIndex: avatarIndex);
+    final player = PlayerModel(
+      id: '',
+      name: name,
+      avatarIndex: avatarIndex,
+      starterKnowledgeComplete: false,
+    );
     state = await _repo.savePlayer(player);
+  }
+
+  Future<void> completeStarterKnowledge() async {
+    if (state.starterKnowledgeComplete) {
+      return;
+    }
+
+    _mutationCount++;
+    state = await _repo.savePlayer(
+      state.copyWith(starterKnowledgeComplete: true),
+    );
   }
 
   Future<void> addXP(int xp) async {

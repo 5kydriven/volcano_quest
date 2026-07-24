@@ -5,6 +5,7 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const players = '/players';
   static const menu = '/menu';
+  static const starterKnowledge = '/starter-knowledge';
   static const leaderboard = '/leaderboard';
   static const badges = '/badges';
   static const settings = '/settings';
@@ -14,6 +15,13 @@ class AppRoutes {
 
   static String get playersFromMenu {
     return Uri(path: players, queryParameters: {'from': 'menu'}).toString();
+  }
+
+  static String get requiredStarterKnowledge {
+    return Uri(
+      path: starterKnowledge,
+      queryParameters: {'required': 'true'},
+    ).toString();
   }
 
   static String level(int levelId) => '/level/$levelId';

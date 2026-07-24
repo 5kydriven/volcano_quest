@@ -292,240 +292,50 @@ class MissionResearchTopBar extends StatelessWidget {
         final compact = constraints.maxWidth < 430;
         final tight = constraints.maxWidth < 360;
 
-        return Row(
-          children: [
-            MissionBackButton(onPressed: onBack),
-            SizedBox(width: tight ? 6 : 12),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: tight
-                      ? 17
-                      : compact
-                      ? 20
-                      : 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: tight ? 1 : 2,
-                  foreground: Paint()
-                    ..shader = const LinearGradient(
-                      colors: [Color(0xFFFFA726), Color(0xFFE65100)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ).createShader(Rect.fromLTWH(0, 0, 300, 70)),
-                  shadows: const [
-                    Shadow(
-                      color: Colors.black,
-                      offset: Offset(3, 3),
-                      blurRadius: 0,
-                    ),
-                    Shadow(
-                      color: Color(0xFF5D2A00),
-                      offset: Offset(2, 2),
-                      blurRadius: 0,
-                    ),
-                  ],
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            children: [
+              MissionBackButton(onPressed: onBack),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: tight
+                        ? 17
+                        : compact
+                        ? 20
+                        : 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: tight ? 1 : 2,
+                    foreground: Paint()
+                      ..shader = const LinearGradient(
+                        colors: [Color(0xFFFFA726), Color(0xFFE65100)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ).createShader(Rect.fromLTWH(0, 0, 300, 70)),
+                    shadows: const [
+                      Shadow(
+                        color: Colors.black,
+                        offset: Offset(3, 3),
+                        blurRadius: 0,
+                      ),
+                      Shadow(
+                        color: Color(0xFF5D2A00),
+                        offset: Offset(2, 2),
+                        blurRadius: 0,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            SizedBox(width: tight ? 6 : 12),
-            _MissionStatusBadge(
-              xp: xp,
-              avatarIndex: avatarIndex,
-              compact: compact,
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
   }
-}
-
-class _MissionStatusBadge extends StatelessWidget {
-  final int xp;
-  final int? avatarIndex;
-  final bool compact;
-
-  const _MissionStatusBadge({
-    required this.xp,
-    required this.avatarIndex,
-    required this.compact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: compact ? 44 : 48,
-      child: CustomPaint(
-        painter: const _VolcanoStatusPainter(),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(compact ? 9 : 12, 5, compact ? 6 : 7, 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$xp XP',
-                style: TextStyle(
-                  color: const Color(0xFFFF7A1A),
-                  fontSize: compact ? 13 : 15,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: compact ? 0.2 : 0.4,
-                  height: 1,
-                  shadows: const [
-                    Shadow(
-                      color: Color(0xFF4A1200),
-                      offset: Offset(1.5, 1.5),
-                      blurRadius: 0,
-                    ),
-                    Shadow(color: Color(0xAA000000), blurRadius: 5),
-                  ],
-                ),
-              ),
-              if (avatarIndex != null) ...[
-                SizedBox(width: compact ? 7 : 10),
-                _MissionAvatarFrame(
-                  avatarIndex: avatarIndex!,
-                  size: compact ? 30 : 34,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MissionAvatarFrame extends StatelessWidget {
-  final int avatarIndex;
-  final double size;
-
-  const _MissionAvatarFrame({required this.avatarIndex, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    final avatar = Assets
-        .avatars[avatarIndex.clamp(0, Assets.avatars.length - 1)]
-        .imagePath;
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(7),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFB45F), Color(0xFF6E2A10), Color(0xFF120C09)],
-          stops: [0, 0.5, 1],
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x99000000),
-            offset: Offset(0, 3),
-            blurRadius: 4,
-          ),
-          BoxShadow(color: Color(0x66FF7A1A), blurRadius: 8),
-        ],
-      ),
-      padding: const EdgeInsets.all(2),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          color: const Color(0xFF170D08),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0xAA000000),
-              offset: Offset(1, 1),
-              blurRadius: 2,
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Image.asset(avatar, fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-}
-
-class _VolcanoStatusPainter extends CustomPainter {
-  const _VolcanoStatusPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final outer = RRect.fromRectAndRadius(rect, const Radius.circular(8));
-    final outerPath = Path()..addRRect(outer);
-
-    canvas.drawShadow(
-      outerPath.shift(const Offset(0, 2)),
-      Colors.black,
-      5,
-      true,
-    );
-
-    final basePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFF3A2115), Color(0xFF1A0D08), Color(0xFF0D0705)],
-        stops: [0, 0.54, 1],
-      ).createShader(rect);
-    canvas.drawRRect(outer, basePaint);
-
-    final bevelPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFFFBE73), Color(0xFFB34A16), Color(0xFF2A1008)],
-      ).createShader(rect);
-    canvas.drawRRect(outer.deflate(0.7), bevelPaint);
-
-    final innerGlow = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = const Color(0x55FF7A1A);
-    canvas.drawRRect(outer.deflate(3), innerGlow);
-
-    final lavaPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 1.5
-      ..color = const Color(0x99FF6D1A);
-    final lavaPath = Path()
-      ..moveTo(size.width * 0.08, size.height * 0.78)
-      ..quadraticBezierTo(
-        size.width * 0.33,
-        size.height * 0.66,
-        size.width * 0.52,
-        size.height * 0.82,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.7,
-        size.height * 0.96,
-        size.width * 0.93,
-        size.height * 0.7,
-      );
-    canvas.drawPath(lavaPath, lavaPaint);
-
-    final highlight = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = const Color(0x44FFF1E3);
-    canvas.drawLine(
-      Offset(size.width * 0.08, size.height * 0.13),
-      Offset(size.width * 0.82, size.height * 0.13),
-      highlight,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _VolcanoStatusPainter oldDelegate) => false;
 }

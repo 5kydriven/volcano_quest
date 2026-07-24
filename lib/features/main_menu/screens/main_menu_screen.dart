@@ -318,7 +318,12 @@ class _TopBar extends StatelessWidget {
                 progress: progress,
               ),
               const SizedBox(height: 7),
-              _ProfileLabelButton(onPressed: playButtonSfx),
+              _ProfileLabelButton(
+                onPressed: () {
+                  playButtonSfx();
+                  context.push(AppRoutes.starterKnowledge);
+                },
+              ),
             ],
           ),
         ),

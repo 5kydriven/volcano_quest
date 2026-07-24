@@ -6,6 +6,7 @@ class PlayerModel {
   final int totalXP;
   final List<String> earnedBadges;
   final Map<String, List<String>> completedMissionOrbs;
+  final bool starterKnowledgeComplete;
 
   const PlayerModel({
     required this.id,
@@ -15,6 +16,7 @@ class PlayerModel {
     this.totalXP = 0,
     this.earnedBadges = const [],
     this.completedMissionOrbs = const {},
+    this.starterKnowledgeComplete = true,
   });
 
   PlayerModel copyWith({
@@ -25,6 +27,7 @@ class PlayerModel {
     int? totalXP,
     List<String>? earnedBadges,
     Map<String, List<String>>? completedMissionOrbs,
+    bool? starterKnowledgeComplete,
   }) {
     return PlayerModel(
       id: id ?? this.id,
@@ -34,6 +37,8 @@ class PlayerModel {
       totalXP: totalXP ?? this.totalXP,
       earnedBadges: earnedBadges ?? this.earnedBadges,
       completedMissionOrbs: completedMissionOrbs ?? this.completedMissionOrbs,
+      starterKnowledgeComplete:
+          starterKnowledgeComplete ?? this.starterKnowledgeComplete,
     );
   }
 
@@ -46,6 +51,7 @@ class PlayerModel {
       'totalXP': totalXP,
       'earnedBadges': earnedBadges,
       'completedMissionOrbs': completedMissionOrbs,
+      'starterKnowledgeComplete': starterKnowledgeComplete,
     };
   }
 
@@ -70,6 +76,8 @@ class PlayerModel {
               );
             })
           : const {},
+      starterKnowledgeComplete:
+          json['starterKnowledgeComplete'] as bool? ?? true,
     );
   }
 

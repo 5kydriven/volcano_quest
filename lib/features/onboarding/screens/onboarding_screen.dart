@@ -74,7 +74,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         .read(playerProvider.notifier)
         .setProfile(name: name, avatarIndex: _selectedAvatar);
     if (mounted) {
-      context.go(AppRoutes.menu);
+      context.go(AppRoutes.requiredStarterKnowledge);
     }
   }
 
