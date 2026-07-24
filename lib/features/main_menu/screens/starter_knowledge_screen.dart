@@ -199,6 +199,7 @@ const _guidePages = [
     paragraphs: [
       'Volcanoes can be classified by structure: their shape, parts, and how they form over time.',
     ],
+    showFactDescriptions: false,
     facts: [
       _GuideFact(
         title: 'Cinder Cone',
@@ -411,7 +412,10 @@ class _GuidePageView extends StatelessWidget {
             ],
             if (page.facts.isNotEmpty) ...[
               const SizedBox(height: 14),
-              _GuideFactGrid(facts: page.facts),
+              _GuideFactGrid(
+                facts: page.facts,
+                showDescriptions: page.showFactDescriptions,
+              ),
             ],
           ],
         ),
@@ -573,8 +577,9 @@ class _GuideImageGrid extends StatelessWidget {
 
 class _GuideFactGrid extends StatelessWidget {
   final List<_GuideFact> facts;
+  final bool showDescriptions;
 
-  const _GuideFactGrid({required this.facts});
+  const _GuideFactGrid({required this.facts, required this.showDescriptions});
 
   @override
   Widget build(BuildContext context) {
@@ -590,9 +595,18 @@ class _GuideFactGrid extends StatelessWidget {
             crossAxisCount: columns,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: columns == 1 ? 2.25 : 1.55,
+            childAspectRatio: showDescriptions
+                ? columns == 1
+                      ? 2.25
+                      : 1.55
+                : columns == 1
+                ? 1.32
+                : 0.86,
           ),
-          itemBuilder: (context, index) => _GuideFactCard(fact: facts[index]),
+          itemBuilder: (context, index) => _GuideFactCard(
+            fact: facts[index],
+            showDescription: showDescriptions,
+          ),
         );
       },
     );
@@ -601,8 +615,9 @@ class _GuideFactGrid extends StatelessWidget {
 
 class _GuideFactCard extends StatelessWidget {
   final _GuideFact fact;
+  final bool showDescription;
 
-  const _GuideFactCard({required this.fact});
+  const _GuideFactCard({required this.fact, required this.showDescription});
 
   @override
   Widget build(BuildContext context) {
@@ -613,49 +628,76 @@ class _GuideFactCard extends StatelessWidget {
         border: Border.all(color: AppColors.borderAlt.withValues(alpha: 0.72)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: Image.asset(fact.image, fit: BoxFit.cover),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    fact.title.toUpperCase(),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.teal,
-                      fontSize: 11,
-                      height: 1.08,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
+      child: showDescription
+          ? Row(
+              children: [
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.asset(fact.image, fit: BoxFit.cover),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _GuideFactTitle(fact.title),
+                        const SizedBox(height: 7),
+                        Text(
+                          fact.body,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                            height: 1.25,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 7),
-                  Text(
-                    fact.body,
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                      height: 1.25,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0,
-                    ),
+                ),
+              ],
+            )
+          : Column(
+              children: [
+                Expanded(child: Image.asset(fact.image, fit: BoxFit.contain)),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 9,
                   ),
-                ],
-              ),
+                  color: AppColors.background.withValues(alpha: 0.78),
+                  child: Center(child: _GuideFactTitle(fact.title)),
+                ),
+              ],
             ),
-          ),
-        ],
+    );
+  }
+}
+
+class _GuideFactTitle extends StatelessWidget {
+  final String title;
+
+  const _GuideFactTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title.toUpperCase(),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        color: AppColors.teal,
+        fontSize: 11,
+        height: 1.08,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0.8,
       ),
     );
   }
@@ -801,6 +843,7 @@ class _GuidePage {
   final List<String> bullets;
   final List<_GuideImage> images;
   final List<_GuideFact> facts;
+  final bool showFactDescriptions;
 
   const _GuidePage({
     required this.icon,
@@ -810,6 +853,7 @@ class _GuidePage {
     this.bullets = const [],
     this.images = const [],
     this.facts = const [],
+    this.showFactDescriptions = true,
   });
 }
 
