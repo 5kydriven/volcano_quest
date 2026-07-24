@@ -15,7 +15,7 @@ import '../../../core/routing/app_routes.dart';
 import '../../../data/models/player_model.dart';
 import '../../player/application/player_controller.dart';
 
-const _topBarExtent = 85.0;
+const _topBarExtent = 120.0;
 
 class MainMenuScreen extends ConsumerWidget {
   const MainMenuScreen({super.key});
@@ -57,13 +57,11 @@ class MainMenuScreen extends ConsumerWidget {
                       player: player,
                       missionsDone: missionsDone,
                       progress: progress,
+                      playButtonSfx: playButtonSfx,
                     ),
                   ),
                 ),
-                _FloatingMenuRail(
-                  player: player,
-                  playButtonSfx: playButtonSfx,
-                ),
+                _FloatingMenuRail(player: player, playButtonSfx: playButtonSfx),
                 Positioned(
                   bottom: 32,
                   right: 20,
@@ -214,10 +212,7 @@ class _FloatingMenuRail extends StatelessWidget {
   final PlayerModel player;
   final VoidCallback playButtonSfx;
 
-  const _FloatingMenuRail({
-    required this.player,
-    required this.playButtonSfx,
-  });
+  const _FloatingMenuRail({required this.player, required this.playButtonSfx});
 
   @override
   Widget build(BuildContext context) {
@@ -299,23 +294,32 @@ class _TopBar extends StatelessWidget {
   final PlayerModel player;
   final int missionsDone;
   final double progress;
+  final VoidCallback playButtonSfx;
 
   const _TopBar({
     required this.player,
     required this.missionsDone,
     required this.progress,
+    required this.playButtonSfx,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: _PlayerIdentityPlate(
-            player: player,
-            missionsDone: missionsDone,
-            progress: progress,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PlayerIdentityPlate(
+                player: player,
+                missionsDone: missionsDone,
+                progress: progress,
+              ),
+              const SizedBox(height: 7),
+              _ProfileLabelButton(onPressed: playButtonSfx),
+            ],
           ),
         ),
         const SizedBox(width: 12),
@@ -325,6 +329,58 @@ class _TopBar extends StatelessWidget {
           missions: missionsDone,
         ),
       ],
+    );
+  }
+}
+
+class _ProfileLabelButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _ProfileLabelButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 28,
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xE61A0E08),
+          border: Border.all(color: const Color(0xFFD0733C), width: 1.1),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66030201),
+              blurRadius: 5,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onPressed,
+            child: const Center(
+              child: Text(
+                'Learning Objectives',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Color(0xFFFFE8C4),
+                  fontSize: 11,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                  shadows: [
+                    Shadow(color: Color(0xFF000000), offset: Offset(0, 1)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1154,10 +1210,8 @@ class _MissionMapState extends State<_MissionMap> {
   void _showMissionDialog(BuildContext context, _MissionMapNode node) {
     showDialog<void>(
       context: context,
-      builder: (context) => _MissionStartDialog(
-        node: node,
-        playButtonSfx: widget.playButtonSfx,
-      ),
+      builder: (context) =>
+          _MissionStartDialog(node: node, playButtonSfx: widget.playButtonSfx),
     );
   }
 }
@@ -1541,12 +1595,13 @@ class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(
-      _avatar.animatedPath,
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-    )
-      ..setLooping(true)
-      ..setVolume(0);
+    _controller =
+        VideoPlayerController.asset(
+            _avatar.animatedPath,
+            videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+          )
+          ..setLooping(true)
+          ..setVolume(0);
     _controller.addListener(_keepAvatarLooping);
     _initialize();
   }
@@ -1558,12 +1613,13 @@ class _ActiveMissionAvatarPinState extends State<_ActiveMissionAvatarPin> {
       _controller.removeListener(_keepAvatarLooping);
       _controller.dispose();
       _isReady = false;
-      _controller = VideoPlayerController.asset(
-        _avatar.animatedPath,
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-      )
-        ..setLooping(true)
-        ..setVolume(0);
+      _controller =
+          VideoPlayerController.asset(
+              _avatar.animatedPath,
+              videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+            )
+            ..setLooping(true)
+            ..setVolume(0);
       _controller.addListener(_keepAvatarLooping);
       _initialize();
     }
@@ -1685,10 +1741,7 @@ class _MissionStartDialog extends StatelessWidget {
   final _MissionMapNode node;
   final VoidCallback playButtonSfx;
 
-  const _MissionStartDialog({
-    required this.node,
-    required this.playButtonSfx,
-  });
+  const _MissionStartDialog({required this.node, required this.playButtonSfx});
 
   @override
   Widget build(BuildContext context) {
@@ -1947,10 +2000,7 @@ class _MissionDialogCloseButton extends StatelessWidget {
   final _MissionBriefingStyle style;
   final VoidCallback onTap;
 
-  const _MissionDialogCloseButton({
-    required this.style,
-    required this.onTap,
-  });
+  const _MissionDialogCloseButton({required this.style, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
