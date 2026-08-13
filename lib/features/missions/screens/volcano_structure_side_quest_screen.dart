@@ -33,6 +33,7 @@ class _VolcanoStructureSideQuestScreenState
   int? _selectedOptionIndex;
   var _submitted = false;
   var _isSaving = false;
+  var _showSummary = false;
   final _replayAnsweredIds = <String>[];
   final _replayCorrectIds = <String>[];
 
@@ -151,6 +152,12 @@ class _VolcanoStructureSideQuestScreenState
           'Which part of a volcano stores molten rock before an eruption?',
       options: const ['Crater', 'Magma chamber', 'Side vent', 'Base'],
       correctOptionIndex: 1,
+      answerFeedback: const [
+        'Incorrect. A crater is a bowl-shaped depression or opening located at or near the top of a volcano. It may be an outlet for volcanic materials during an eruption, but it does not store magma beneath the volcano.\n\nCorrect Answer: Magma Chamber.',
+        'Correct! The magma chamber is an underground reservoir where molten rock, called magma, is stored beneath a volcano. As magma accumulates and pressure increases, it may move upward through the volcanic vent and contribute to an eruption.\n\nWhy is it correct? The magma chamber is the part of the volcano that stores magma before it reaches the surface.',
+        'Incorrect. A side vent is an opening on the side of a volcano through which magma, gases, and other volcanic materials may escape. It is not the underground storage area for magma.\n\nCorrect Answer: Magma Chamber.',
+        'Incorrect. The base is the bottom or lower part of a volcano. Although it forms part of the volcano\'s structure, it does not serve as a reservoir for molten rock.\n\nCorrect Answer: Magma Chamber.',
+      ],
     ),
     _SideQuestQuestion(
       id: AppConstants.sideQuestVolcanoStructureQuestionIds[1],
@@ -165,6 +172,12 @@ class _VolcanoStructureSideQuestScreenState
         'Shield volcanoes',
       ],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'Incorrect. Inactive volcanoes are volcanoes that are not currently showing signs of activity and have no recent eruption history according to the classification being used.\n\nCorrect Answer: Active Volcanoes.',
+        'Incorrect. Potentially active is not the classification that best matches the description in the question. The question specifically refers to volcanoes with evidence of eruption within the last 10,000 years that may still show activity.\n\nCorrect Answer: Active Volcanoes.',
+        'Correct! Active volcanoes are volcanoes that have erupted in historical times or have evidence of eruption within the geologically recent past. They may still show signs of volcanic activity and therefore require monitoring.\n\nWhy is it correct? The description refers to volcanoes that have erupted within the last 10,000 years and may still be capable of erupting.',
+        'Incorrect. A shield volcano is a type of volcano characterized by its broad shape and gently sloping sides. It describes a volcano\'s shape and structure, not its level of volcanic activity.\n\nCorrect Answer: Active Volcanoes.',
+      ],
     ),
     _SideQuestQuestion(
       id: AppConstants.sideQuestVolcanoStructureQuestionIds[2],
@@ -179,6 +192,12 @@ class _VolcanoStructureSideQuestScreenState
         'Phreatomagmatic',
       ],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'Incorrect. A Strombolian eruption is characterized by intermittent explosive bursts that commonly eject lava fragments and may produce lava fountains. It is not primarily caused by hot rocks coming into contact with water.\n\nCorrect Answer: Phreatic or Hydrothermal.',
+        'Incorrect. A Vulcanian eruption involves short, relatively powerful explosions that eject ash, volcanic gases, and rock fragments. It is not specifically a steam-driven eruption caused by water contacting hot rocks.\n\nCorrect Answer: Phreatic or Hydrothermal.',
+        'Correct! A phreatic eruption, also called a steam-driven eruption, occurs when water comes into contact with hot rocks or heated material beneath the surface. The water rapidly turns into steam, causing an explosive release of steam, rock fragments, and other materials.\n\nWhy is it correct? The question describes an eruption caused by the interaction of water with hot rocks, which is characteristic of a phreatic or hydrothermal eruption.',
+        'Incorrect. A phreatomagmatic eruption occurs when water directly interacts with magma, producing explosive activity. The question describes hot rocks interacting with water rather than direct magma-water interaction.\n\nCorrect Answer: Phreatic or Hydrothermal.',
+      ],
     ),
   ];
 
@@ -198,8 +217,10 @@ class _VolcanoStructureSideQuestScreenState
     final allAnswered = AppConstants.sideQuestVolcanoStructureQuestionIds.every(
       answeredIds.contains,
     );
-    final showingLesson = _pageIndex < _lessonPages.length && !allAnswered;
-    final activeQuestionIndex = allAnswered
+    final shouldShowSummary = _showSummary || (allAnswered && !_submitted);
+    final showingLesson =
+        _pageIndex < _lessonPages.length && !shouldShowSummary;
+    final activeQuestionIndex = shouldShowSummary
         ? _questionIndex.clamp(0, _questions.length - 1)
         : _activeQuestionIndex(answeredIds);
     final completedSteps = allAnswered
@@ -228,7 +249,7 @@ class _VolcanoStructureSideQuestScreenState
                   child: _SideQuestPanel(
                     progress: progress,
                     percentComplete: (progress * 100).round(),
-                    child: allAnswered
+                    child: shouldShowSummary
                         ? _SideQuestSummary(
                             correctCount: correctIds.length,
                             totalQuestions: _questions.length,
@@ -253,6 +274,9 @@ class _VolcanoStructureSideQuestScreenState
                             },
                           )
                         : _QuestionContent(
+                            key: ValueKey(
+                              _questions[activeQuestionIndex].id,
+                            ),
                             questionIndex: activeQuestionIndex,
                             totalQuestions: _questions.length,
                             question: _questions[activeQuestionIndex],
@@ -341,7 +365,7 @@ class _VolcanoStructureSideQuestScreenState
       final isLastQuestion = displayIndex >= _questions.length - 1;
       setState(() {
         if (isLastQuestion) {
-          _questionIndex = displayIndex;
+          _showSummary = true;
         } else {
           _questionIndex = displayIndex + 1;
           _selectedOptionIndex = null;
@@ -608,6 +632,7 @@ class _QuestionContent extends StatelessWidget {
   final VoidCallback onAction;
 
   const _QuestionContent({
+    super.key,
     required this.questionIndex,
     required this.totalQuestions,
     required this.question,
@@ -621,6 +646,15 @@ class _QuestionContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canSubmit = selectedOptionIndex != null && !isSaving;
+    final isLastQuestion = questionIndex >= totalQuestions - 1;
+    final feedbackOptions = question.answerFeedback;
+    final selectedFeedback =
+        submitted && selectedOptionIndex != null && feedbackOptions != null
+        ? feedbackOptions[selectedOptionIndex!]
+        : null;
+    final selectedIsCorrect =
+        selectedOptionIndex == question.correctOptionIndex;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -663,14 +697,26 @@ class _QuestionContent extends StatelessWidget {
                     onTap: onSelect == null ? null : () => onSelect!(index),
                   ),
                 ),
+              if (selectedFeedback != null) ...[
+                const SizedBox(height: 4),
+                _SideQuestAnswerFeedbackPanel(
+                  isCorrect: selectedIsCorrect,
+                  feedback: selectedFeedback,
+                ),
+                const SizedBox(height: 12),
+              ],
             ],
           ),
         ),
         _SideQuestActionButton(
           assetPath: submitted
-              ? Assets.missionNextQuestionButton
+              ? (isLastQuestion
+                    ? Assets.missionViewResultsButton
+                    : Assets.missionNextQuestionButton)
               : Assets.missionSubmitAnswerButton,
-          semanticLabel: submitted ? 'NEXT QUESTION' : 'SUBMIT ANSWER',
+          semanticLabel: submitted
+              ? (isLastQuestion ? 'VIEW RESULTS' : 'NEXT QUESTION')
+              : 'SUBMIT ANSWER',
           onPressed: submitted || canSubmit ? onAction : null,
           opacity: submitted || canSubmit || isSaving ? 1 : 0.45,
           child: isSaving
@@ -685,6 +731,52 @@ class _QuestionContent extends StatelessWidget {
               : null,
         ),
       ],
+    );
+  }
+}
+
+class _SideQuestAnswerFeedbackPanel extends StatelessWidget {
+  final bool isCorrect;
+  final String feedback;
+
+  const _SideQuestAnswerFeedbackPanel({
+    required this.isCorrect,
+    required this.feedback,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isCorrect ? AppColors.teal : const Color(0xFFFF7A7A);
+    final background = isCorrect
+        ? AppColors.teal.withValues(alpha: 0.1)
+        : const Color(0xFFFF7A7A).withValues(alpha: 0.1);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        border: Border.all(color: accent.withValues(alpha: 0.85), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(isCorrect ? Icons.check_circle : Icons.cancel, color: accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              feedback,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1240,6 +1332,7 @@ class _SideQuestQuestion {
   final String question;
   final List<String> options;
   final int correctOptionIndex;
+  final List<String>? answerFeedback;
 
   const _SideQuestQuestion({
     required this.id,
@@ -1248,5 +1341,6 @@ class _SideQuestQuestion {
     required this.question,
     required this.options,
     required this.correctOptionIndex,
+    this.answerFeedback,
   });
 }
