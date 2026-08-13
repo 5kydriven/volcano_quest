@@ -1007,7 +1007,7 @@ class _AnswerOptionTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: double.infinity,
-        height: 50,
+        height: 86,
         clipBehavior: Clip.none,
         child: Stack(
           fit: StackFit.expand,
@@ -1031,7 +1031,7 @@ class _AnswerOptionTile extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   text,
-                  maxLines: 2,
+                  maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF351305),

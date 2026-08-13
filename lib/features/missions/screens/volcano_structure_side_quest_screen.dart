@@ -1029,40 +1029,154 @@ class _VolcanoScanFrame extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 11),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF21140F), Color(0xFF0F0D0B)],
-              ),
-              border: Border.all(color: AppColors.borderAlt, width: 1.2),
-              borderRadius: BorderRadius.circular(6),
-              boxShadow: const [
-                BoxShadow(color: Color(0x55100000), blurRadius: 14),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Stack(
-                children: [
-                  const Positioned.fill(child: _SideQuestGrid()),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
-                    child: Image.asset(
-                      image.assetPath,
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
+          child: Semantics(
+            button: true,
+            label: 'Open ${image.label} full image',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: ValueKey('lesson-image-${image.assetPath}'),
+                borderRadius: BorderRadius.circular(6),
+                onTap: () => _showFullImage(context, image),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF21140F), Color(0xFF0F0D0B)],
+                    ),
+                    border: Border.all(color: AppColors.borderAlt, width: 1.2),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x55100000), blurRadius: 14),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Stack(
+                      children: [
+                        const Positioned.fill(child: _SideQuestGrid()),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+                          child: Image.asset(
+                            image.assetPath,
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                            alignment: Alignment.center,
+                          ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          bottom: 8,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppColors.background.withValues(
+                                alpha: 0.78,
+                              ),
+                              border: Border.all(
+                                color: AppColors.tealDim,
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 5,
+                              ),
+                              child: Icon(
+                                Icons.open_in_full,
+                                color: AppColors.teal,
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
         Positioned(top: 0, child: _ScanImageLabel(text: image.label)),
       ],
+    );
+  }
+
+  void _showFullImage(BuildContext context, _LessonImage image) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => _FullLessonImageDialog(image: image),
+    );
+  }
+}
+
+class _FullLessonImageDialog extends StatelessWidget {
+  final _LessonImage image;
+
+  const _FullLessonImageDialog({required this.image});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(12),
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: AppColors.tealDim, width: 1.2),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
+          child: Column(
+            children: [
+              Container(
+                height: 48,
+                padding: const EdgeInsets.only(left: 16, right: 8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0F1B1E),
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.tealDim, width: 1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: _ScanImageLabel(text: image.label)),
+                    IconButton(
+                      tooltip: 'Close image',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ColoredBox(
+                  color: const Color(0xFF070B0D),
+                  child: InteractiveViewer(
+                    minScale: 0.7,
+                    maxScale: 4,
+                    child: Center(
+                      child: Image.asset(
+                        image.assetPath,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.center,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

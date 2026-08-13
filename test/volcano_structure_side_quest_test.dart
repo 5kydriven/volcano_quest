@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:volcano_quest/core/constants/app_constants.dart';
+import 'package:volcano_quest/core/constants/assets.dart';
 import 'package:volcano_quest/core/providers/shared_preferences_provider.dart';
 import 'package:volcano_quest/data/models/player_model.dart';
 import 'package:volcano_quest/features/missions/screens/volcano_structure_side_quest_screen.dart';
@@ -35,6 +36,28 @@ void main() {
           .sideQuestVolcanoStructureCorrectAnswersId],
       AppConstants.sideQuestVolcanoStructureQuestionIds,
     );
+  });
+
+  testWidgets('lesson image opens full display when tapped', (tester) async {
+    await _pumpSideQuest(tester);
+
+    expect(find.text('VOLCANO STRUCTURE DIAGRAM'), findsOneWidget);
+
+    final lessonImage = find.byKey(
+      ValueKey('lesson-image-${Assets.volcanoParts}'),
+    );
+    await tester.ensureVisible(lessonImage);
+    await tester.pumpAndSettle();
+    await tester.tap(lessonImage);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    expect(find.text('VOLCANO STRUCTURE DIAGRAM'), findsWidgets);
+
+    await tester.tap(find.byTooltip('Close image'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InteractiveViewer), findsNothing);
   });
 
   testWidgets('wrong answers count as answered without XP', (tester) async {

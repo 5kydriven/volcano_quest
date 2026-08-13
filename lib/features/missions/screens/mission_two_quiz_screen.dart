@@ -48,6 +48,12 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
           "Which part of the volcano stores molten rock beneath the Earth's surface?",
       options: const ['Crater', 'Main vent', 'Magma chamber', 'Lava flow'],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'Incorrect. A crater is a bowl-shaped depression found at or near the top of a volcano. It is an opening where volcanic materials may be released during an eruption. It does not store molten rock beneath the Earth\'s surface.\n\nCorrect Answer: Magma Chamber.',
+        'Incorrect. The main vent is the passage through which magma and volcanic materials travel toward the Earth\'s surface. It is not the underground storage area for molten rock.\n\nCorrect Answer: Magma Chamber.',
+        'Correct! The magma chamber is an underground reservoir where molten rock, called magma, accumulates beneath a volcano. When pressure builds up, magma may move toward the surface and contribute to a volcanic eruption.',
+        'Incorrect. A lava flow is molten rock that has erupted onto the Earth\'s surface and moves away from the volcano. It is not a storage area beneath the surface.\n\nCorrect Answer: Magma Chamber.',
+      ],
     ),
     _MissionTwoQuestion(
       id: AppConstants.missionTwoQuestionIds[1],
@@ -61,6 +67,12 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
         'Shield volcano',
       ],
       correctOptionIndex: 3,
+      answerFeedback: const [
+        'Incorrect. A cinder cone is a small, steep-sided volcano formed mainly from loose volcanic fragments, such as cinders and ash, that accumulate around a volcanic vent.\n\nCorrect Answer: Shield Volcano.',
+        'Incorrect. A composite volcano, also called a stratovolcano, is a steep-sided volcano made of alternating layers of lava, ash, and other volcanic materials.\n\nCorrect Answer: Shield Volcano.',
+        'Incorrect. A lava dome forms when thick, sticky lava accumulates near a volcanic vent instead of flowing far from the volcano.\n\nCorrect Answer: Shield Volcano.',
+        'Correct! A shield volcano is a broad, gently sloping volcano formed by repeated eruptions of fluid lava. Because the lava can flow over large distances, it builds up wide and relatively thin layers.',
+      ],
     ),
     _MissionTwoQuestion(
       id: AppConstants.missionTwoQuestionIds[2],
@@ -69,6 +81,12 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
           'Which volcano in the Bicol Region is considered the most active?',
       options: const ['Isarog', 'Bulusan', 'Iriga', 'Mayon'],
       correctOptionIndex: 3,
+      answerFeedback: const [
+        'Incorrect. Mount Isarog is a volcano in Camarines Sur, but it is not considered the most active volcano in the Bicol Region.\n\nCorrect Answer: Mayon.',
+        'Incorrect. Bulusan Volcano is an active volcano in Sorsogon and has experienced eruptions, but the expected answer to this question is Mayon Volcano, which is recognized for its frequent activity.\n\nCorrect Answer: Mayon.',
+        'Incorrect. Mount Iriga, also known as Asog, is a volcanic mountain in Camarines Sur. It is not the volcano identified as the most active in the Bicol Region.\n\nCorrect Answer: Mayon.',
+        'Correct! Mayon Volcano is located in Albay, Bicol Region, and is known for its frequent volcanic activity. It is also famous for its symmetrical cone shape. Its activity makes it an important volcano to monitor for possible eruptions.',
+      ],
     ),
     _MissionTwoQuestion(
       id: AppConstants.missionTwoQuestionIds[3],
@@ -81,6 +99,12 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
         'Plinian eruption',
       ],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'Incorrect. A phreatic eruption occurs when groundwater or surface water is heated rapidly by hot rock or magma, causing an explosive release of steam and fragmented rock. It is not primarily characterized by lava fountains.\n\nCorrect Answer: Strombolian Eruption.',
+        'Incorrect. A Vulcanian eruption involves short, relatively powerful explosions that eject ash, rock fragments, and volcanic gases. Although lava may be involved, lava fountains are more characteristic of Strombolian eruptions.\n\nCorrect Answer: Strombolian Eruption.',
+        'Correct! A Strombolian eruption is a type of volcanic eruption characterized by relatively short, explosive bursts that can produce lava fountains and eject volcanic materials into the air. The activity is commonly caused by gas bubbles rising through magma.',
+        'Incorrect. A Plinian eruption is a highly explosive eruption that produces a tall column of ash and volcanic gases. It is not primarily characterized by lava fountains.\n\nCorrect Answer: Strombolian Eruption.',
+      ],
     ),
     _MissionTwoQuestion(
       id: AppConstants.missionTwoQuestionIds[4],
@@ -94,6 +118,12 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
         'Decrease in steam activity',
       ],
       correctOptionIndex: 1,
+      answerFeedback: const [
+        'Incorrect. Thunderstorms are weather phenomena caused by atmospheric conditions and are not, by themselves, a reliable sign that a volcanic eruption is about to occur.\n\nCorrect Answer: Volcanic Tremors.',
+        'Correct! Volcanic tremors are continuous or repeated ground vibrations associated with the movement of magma and volcanic fluids beneath a volcano. An increase in volcanic tremors can be an important warning sign of possible volcanic activity.',
+        'Incorrect. Calm weather describes relatively stable atmospheric conditions. It is not considered a warning sign of an impending volcanic eruption.\n\nCorrect Answer: Volcanic Tremors.',
+        'Incorrect. A decrease in steam activity is not generally presented as a warning sign of an impending eruption. Changes or increases in volcanic gas and steam activity can provide information about changes occurring within a volcano.\n\nCorrect Answer: Volcanic Tremors.',
+      ],
     ),
   ];
 
@@ -111,7 +141,7 @@ class _MissionTwoQuizScreenState extends ConsumerState<MissionTwoQuizScreen> {
     final allAnswered = AppConstants.missionTwoQuestionIds.every(
       answeredIds.contains,
     );
-    final shouldShowSummary = _showSummary || allAnswered;
+    final shouldShowSummary = _showSummary || (allAnswered && !_submitted);
     final displayIndex = shouldShowSummary
         ? _questionIndex.clamp(0, _questions.length - 1)
         : _activeQuestionIndex(answeredIds);
@@ -386,6 +416,13 @@ class _QuizContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final canSubmit = selectedOptionIndex != null && !isSaving;
     final isLastQuestion = questionIndex >= totalQuestions - 1;
+    final feedbackOptions = question.answerFeedback;
+    final selectedFeedback =
+        submitted && selectedOptionIndex != null && feedbackOptions != null
+        ? feedbackOptions[selectedOptionIndex!]
+        : null;
+    final selectedIsCorrect =
+        selectedOptionIndex == question.correctOptionIndex;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,6 +548,14 @@ class _QuizContent extends StatelessWidget {
                   },
                 ),
               ],
+              if (selectedFeedback != null) ...[
+                const SizedBox(height: 4),
+                _AnswerFeedbackPanel(
+                  isCorrect: selectedIsCorrect,
+                  feedback: selectedFeedback,
+                ),
+                const SizedBox(height: 12),
+              ],
             ],
           ),
         ),
@@ -540,6 +585,49 @@ class _QuizContent extends StatelessWidget {
           onPressed: submitted || canSubmit ? onAction : null,
         ),
       ],
+    );
+  }
+}
+
+class _AnswerFeedbackPanel extends StatelessWidget {
+  final bool isCorrect;
+  final String feedback;
+
+  const _AnswerFeedbackPanel({required this.isCorrect, required this.feedback});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isCorrect ? AppColors.teal : const Color(0xFFFF7A7A);
+    final background = isCorrect
+        ? AppColors.teal.withValues(alpha: 0.1)
+        : const Color(0xFFFF7A7A).withValues(alpha: 0.1);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        border: Border.all(color: accent.withValues(alpha: 0.85), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(isCorrect ? Icons.check_circle : Icons.cancel, color: accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              feedback,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -761,6 +849,7 @@ class _MissionTwoQuestion {
   final String question;
   final List<String> options;
   final int correctOptionIndex;
+  final List<String>? answerFeedback;
 
   const _MissionTwoQuestion({
     required this.id,
@@ -768,5 +857,6 @@ class _MissionTwoQuestion {
     required this.question,
     required this.options,
     required this.correctOptionIndex,
+    this.answerFeedback,
   });
 }
