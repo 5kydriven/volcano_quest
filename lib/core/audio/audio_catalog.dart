@@ -24,6 +24,8 @@ enum SfxCue {
   correct,
   wrong,
   achievement,
+  victoryChime,
+  victoryCheer,
   erupt,
   falling,
   gameAction,
@@ -59,6 +61,8 @@ class AudioCatalog {
       SfxCue.correct => const [Audios.sfxCorrect1],
       SfxCue.wrong => const [Audios.sfxWrong1],
       SfxCue.achievement => const [Audios.sfxAchievement1],
+      SfxCue.victoryChime => const [Audios.sfxAchievement1],
+      SfxCue.victoryCheer => const [Audios.sfxAchievement2],
       SfxCue.erupt => const [
         Audios.sfxErupt1,
         Audios.sfxErupt2,

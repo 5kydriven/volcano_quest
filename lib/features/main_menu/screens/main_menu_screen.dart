@@ -65,13 +65,27 @@ class MainMenuScreen extends ConsumerWidget {
                 Positioned(
                   bottom: 32,
                   right: 20,
-                  child: _FooterIconButton(
-                    iconAsset: Assets.menuSettingIcon,
-                    tooltip: 'Settings',
-                    onTap: () {
-                      playButtonSfx();
-                      context.push(AppRoutes.settings);
-                    },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _FooterIconButton(
+                        icon: Icons.info_outline_rounded,
+                        tooltip: 'Credits and references',
+                        onTap: () {
+                          playButtonSfx();
+                          context.push(AppRoutes.credits);
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _FooterIconButton(
+                        iconAsset: Assets.menuSettingIcon,
+                        tooltip: 'Settings',
+                        onTap: () {
+                          playButtonSfx();
+                          context.push(AppRoutes.settings);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2424,17 +2438,22 @@ class _MissionDialogBadge extends StatelessWidget {
 }
 
 class _FooterIconButton extends StatelessWidget {
-  final String iconAsset;
+  final String? iconAsset;
+  final IconData? icon;
   final String tooltip;
   final String? badge;
   final VoidCallback onTap;
 
   const _FooterIconButton({
-    required this.iconAsset,
     required this.tooltip,
     required this.onTap,
+    this.iconAsset,
+    this.icon,
     this.badge,
-  });
+  }) : assert(
+         (iconAsset == null) != (icon == null),
+         'Provide either iconAsset or icon.',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -2458,12 +2477,23 @@ class _FooterIconButton extends StatelessWidget {
                 const SizedBox.expand(
                   child: CustomPaint(painter: _MenuControlWellPainter()),
                 ),
-                Image.asset(
-                  iconAsset,
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.contain,
-                ),
+                if (iconAsset != null)
+                  Image.asset(
+                    iconAsset!,
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.contain,
+                  )
+                else
+                  Icon(
+                    icon,
+                    color: const Color(0xFFFFB45F),
+                    size: 29,
+                    shadows: const [
+                      Shadow(color: Color(0xAAFF5E16), blurRadius: 8),
+                      Shadow(color: Colors.black, offset: Offset(0, 2)),
+                    ],
+                  ),
                 if (badge != null)
                   Positioned(
                     top: 0,

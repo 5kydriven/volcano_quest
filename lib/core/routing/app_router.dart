@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../features/badges/screens/badges_screen.dart';
+import '../../features/credits/screens/credits_screen.dart';
 import '../../features/leaderboard/screens/leaderboard_screen.dart';
 import '../../features/main_menu/screens/main_menu_screen.dart';
 import '../../features/main_menu/screens/starter_knowledge_screen.dart';
@@ -65,6 +66,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.credits,
+        builder: (context, state) => const CreditsScreen(),
       ),
       GoRoute(
         path: AppRoutes.sideQuestVolcanoStructure,

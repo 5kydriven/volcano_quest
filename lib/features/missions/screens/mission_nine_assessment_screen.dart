@@ -15,6 +15,7 @@ import '../../../shared/widgets/mission_answer_container.dart';
 import '../../../shared/widgets/mission_complete_panel.dart';
 import '../../../shared/widgets/mission_screen_background.dart';
 import '../../player/application/player_controller.dart';
+import '../widgets/volcano_master_celebration.dart';
 
 class MissionNineAssessmentScreen extends ConsumerStatefulWidget {
   final int levelId;
@@ -38,6 +39,7 @@ class _MissionNineAssessmentScreenState
   var _submitted = false;
   var _isSaving = false;
   var _showSummary = false;
+  var _showGrandCelebration = false;
   final _replayAnsweredIds = <String>[];
   final _replayCorrectIds = <String>[];
 
@@ -53,6 +55,12 @@ class _MissionNineAssessmentScreenState
         'Volcanoes that do not produce lava is not dangerous.',
       ],
       correctOptionIndex: 3,
+      answerFeedback: const [
+        'This statement is scientifically true. Erupted magma and rock fragments can bring material from deep inside Earth to the surface, helping scientists study Earth\'s composition and heat.\n\nCorrect Answer: D. Volcanoes that do not produce lava can still be dangerous because they may release toxic gases, ashfall, pyroclastic density currents, and lahars.',
+        'This statement is scientifically true. Volcanoes occur on land and beneath the ocean, including along subduction zones and mid-ocean ridges.\n\nCorrect Answer: D. Volcanoes that do not produce lava can still be dangerous because they may release toxic gases, ashfall, pyroclastic density currents, and lahars.',
+        'This statement is scientifically true. Active volcanoes commonly show measurable warning signs, including volcanic tremors, ground deformation, and changes in gas emissions.\n\nCorrect Answer: D. Volcanoes that do not produce lava can still be dangerous because they may release toxic gases, ashfall, pyroclastic density currents, and lahars.',
+        'Correct! This is the incorrect statement. Volcanoes can create severe hazards even without active lava flows, including toxic gases, heavy ashfall, pyroclastic density currents, and lahars.',
+      ],
     ),
     _AssessmentQuestion(
       id: AppConstants.missionNineQuestionIds[1],
@@ -61,6 +69,12 @@ class _MissionNineAssessmentScreenState
           'What is the term used to represent the opening of the volcano where magma comes out?',
       options: const ['Chamber', 'Crater', 'Summit', 'Vent'],
       correctOptionIndex: 3,
+      answerFeedback: const [
+        'A magma chamber is the underground reservoir where molten rock collects before an eruption. It is not the opening where material reaches the surface.\n\nCorrect Answer: Vent.',
+        'A crater is the bowl-shaped depression around a volcano\'s main vent. It is not the opening or pipe itself.\n\nCorrect Answer: Vent.',
+        'The summit is the highest point of a volcano. It does not describe the opening through which magma, gas, and ash escape.\n\nCorrect Answer: Vent.',
+        'Correct! A vent is the opening or passage in Earth\'s crust through which magma, gases, and ash escape to the surface.',
+      ],
     ),
     _AssessmentQuestion(
       id: AppConstants.missionNineQuestionIds[2],
@@ -74,6 +88,12 @@ class _MissionNineAssessmentScreenState
         'Shield volcanoes',
       ],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'Cinder cones are built mainly from loose volcanic fragments such as scoria and ash, rather than from thick lava piling up at the vent.\n\nCorrect Answer: Lava domes.',
+        'Composite volcanoes form from alternating layers of lava and pyroclastic material. Although they can erupt viscous lava, the volcano type formed specifically by thick lava piling up near the vent is a lava dome.\n\nCorrect Answer: Lava domes.',
+        'Correct! Lava domes form when highly viscous, sticky lava cannot flow far and instead piles up around the vent into a steep mound.',
+        'Shield volcanoes form from fluid, low-viscosity basaltic lava that spreads over long distances and creates broad, gentle slopes.\n\nCorrect Answer: Lava domes.',
+      ],
     ),
     _AssessmentQuestion(
       id: AppConstants.missionNineQuestionIds[3],
@@ -87,6 +107,12 @@ class _MissionNineAssessmentScreenState
         'Active volcanoes show no volcanic activity at all.',
       ],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'Active volcanoes have an underlying magma and heat system capable of producing volcanic activity.\n\nCorrect Answer: Active volcanoes erupted within the last 10,000 years.',
+        'Active volcanoes have documented historical eruptions or geologic evidence of eruptions during the Holocene.\n\nCorrect Answer: Active volcanoes erupted within the last 10,000 years.',
+        'Correct! Active volcanoes are commonly identified as volcanoes that erupted during historical time or within the Holocene, approximately the last 10,000 years.',
+        'Active volcanoes may show signs such as earthquakes, gas release, ground deformation, or geothermal activity.\n\nCorrect Answer: Active volcanoes erupted within the last 10,000 years.',
+      ],
     ),
     _AssessmentQuestion(
       id: AppConstants.missionNineQuestionIds[4],
@@ -95,6 +121,12 @@ class _MissionNineAssessmentScreenState
           'What type of eruption is characterized by extremely explosive gas and pyroclastic activity, like Mt. Pinatubo (1991)?',
       options: const ['Phreatic', 'Phreatomagmatic', 'Plinian', 'Strombolian'],
       correctOptionIndex: 2,
+      answerFeedback: const [
+        'A phreatic eruption is a steam-driven explosion caused when water is rapidly heated by hot rock or magma. It does not produce the sustained, towering eruption column described here.\n\nCorrect Answer: Plinian.',
+        'A phreatomagmatic eruption results from explosive interaction between magma and water.\n\nCorrect Answer: Plinian.',
+        'Correct! A Plinian eruption is extremely explosive and sends huge columns of gas, ash, and pyroclastic material high into the atmosphere. The 1991 Mt. Pinatubo eruption is a classic example.',
+        'A Strombolian eruption produces intermittent, moderately explosive bursts of glowing lava fragments and cinders.\n\nCorrect Answer: Plinian.',
+      ],
     ),
   ];
 
@@ -112,7 +144,8 @@ class _MissionNineAssessmentScreenState
     final allAnswered = AppConstants.missionNineQuestionIds.every(
       answeredIds.contains,
     );
-    final shouldShowSummary = _showSummary || allAnswered;
+    final shouldShowSummary =
+        _showSummary || (allAnswered && !_submitted && !_isSaving);
     final displayIndex = shouldShowSummary
         ? _questionIndex.clamp(0, _questions.length - 1)
         : _activeQuestionIndex(answeredIds);
@@ -120,6 +153,23 @@ class _MissionNineAssessmentScreenState
         ? _questions.length
         : answeredIds.length.clamp(0, _questions.length);
     final progress = progressCount / _questions.length;
+
+    if (_showGrandCelebration) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: MissionScreenBackground(
+          child: SafeArea(
+            child: VolcanoMasterCelebration(
+              playerName: player.name.isEmpty ? 'Scientist' : player.name,
+              correctCount: correctIds.length,
+              totalQuestions: _questions.length,
+              earnedXP: widget.isReplay ? 0 : AppConstants.missionNineXp,
+              onReturn: () => context.go(AppRoutes.menu),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -148,11 +198,13 @@ class _MissionNineAssessmentScreenState
                     percentComplete: (progress * 100).round(),
                     child: shouldShowSummary
                         ? _AssessmentSummary(
+                            playerName: player.name,
                             correctCount: correctIds.length,
                             totalQuestions: _questions.length,
                             earnedXP: widget.isReplay
                                 ? 0
                                 : AppConstants.missionNineXp,
+                            isReplay: widget.isReplay,
                             onReturn: () => context.go(AppRoutes.menu),
                           )
                         : _AssessmentContent(
@@ -217,7 +269,8 @@ class _MissionNineAssessmentScreenState
       final isLastQuestion = displayIndex >= _questions.length - 1;
       setState(() {
         if (isLastQuestion) {
-          _showSummary = true;
+          _showGrandCelebration = true;
+          _showSummary = false;
         } else {
           _questionIndex = displayIndex + 1;
           _selectedOptionIndex = null;
@@ -386,6 +439,11 @@ class _AssessmentContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final canSubmit = selectedOptionIndex != null && !isSaving;
     final isLastQuestion = questionIndex >= totalQuestions - 1;
+    final selectedFeedback = submitted && selectedOptionIndex != null
+        ? question.answerFeedback[selectedOptionIndex!]
+        : null;
+    final selectedIsCorrect =
+        selectedOptionIndex == question.correctOptionIndex;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,6 +453,16 @@ class _AssessmentContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'FINAL ASSESSMENT',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 7),
               _ScannerLabel(text: question.tag),
               const SizedBox(height: 14),
               Text(
@@ -435,6 +503,7 @@ class _AssessmentContent extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
+                        key: ValueKey('mission9-${question.id}-$index'),
                         onTap: onSelect == null ? null : () => onSelect!(index),
                         borderRadius: BorderRadius.zero,
                         child: AnimatedContainer(
@@ -502,6 +571,14 @@ class _AssessmentContent extends StatelessWidget {
                   },
                 ),
               ],
+              if (selectedFeedback != null) ...[
+                const SizedBox(height: 4),
+                _AssessmentFeedbackPanel(
+                  isCorrect: selectedIsCorrect,
+                  feedback: selectedFeedback,
+                ),
+                const SizedBox(height: 12),
+              ],
             ],
           ),
         ),
@@ -513,6 +590,51 @@ class _AssessmentContent extends StatelessWidget {
           onPressed: submitted || canSubmit ? onAction : null,
         ),
       ],
+    );
+  }
+}
+
+class _AssessmentFeedbackPanel extends StatelessWidget {
+  final bool isCorrect;
+  final String feedback;
+
+  const _AssessmentFeedbackPanel({
+    required this.isCorrect,
+    required this.feedback,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isCorrect ? AppColors.teal : const Color(0xFFFF7A7A);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.1),
+        border: Border.all(color: accent.withValues(alpha: 0.85), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isCorrect ? Icons.check_circle : Icons.cancel,
+            color: accent,
+            size: 22,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              feedback,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                height: 1.4,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -651,15 +773,19 @@ class _ScannerLabel extends StatelessWidget {
 }
 
 class _AssessmentSummary extends StatelessWidget {
+  final String playerName;
   final int correctCount;
   final int totalQuestions;
   final int earnedXP;
+  final bool isReplay;
   final VoidCallback onReturn;
 
   const _AssessmentSummary({
+    required this.playerName,
     required this.correctCount,
     required this.totalQuestions,
     required this.earnedXP,
+    required this.isReplay,
     required this.onReturn,
   });
 
@@ -668,12 +794,16 @@ class _AssessmentSummary extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         child: MissionCompletePanel(
-          title: 'MISSION 9 COMPLETE!',
+          title: isReplay
+              ? 'ASSESSMENT REVIEW COMPLETE!'
+              : 'MISSION 9 COMPLETE!',
           badgeName: 'Volcano Master Badge',
           badgeImagePath: Assets.badgeVolcanoMaster,
           fallbackIcon: Icons.local_fire_department_outlined,
-          message:
-              'Congratulations, scientist. You earned the Volcano Master Badge.',
+          message: isReplay
+              ? 'Practice complete. Review your score and keep exploring.'
+              : 'Congratulations, ${playerName.isEmpty ? 'Scientist' : playerName}! You completed all missions.',
+          playAchievementSfx: !isReplay,
           metrics: [
             MissionCompleteMetric(
               label: 'SCORE',
@@ -736,6 +866,7 @@ class _AssessmentQuestion {
   final String question;
   final List<String> options;
   final int correctOptionIndex;
+  final List<String> answerFeedback;
 
   const _AssessmentQuestion({
     required this.id,
@@ -743,5 +874,6 @@ class _AssessmentQuestion {
     required this.question,
     required this.options,
     required this.correctOptionIndex,
+    required this.answerFeedback,
   });
 }

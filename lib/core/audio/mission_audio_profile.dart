@@ -44,6 +44,7 @@ class MissionAudioProfile {
     AppRoutes.settings,
     AppRoutes.badges,
     AppRoutes.leaderboard,
+    AppRoutes.credits,
   };
 
   static int? _levelIdFromPath(String path) {

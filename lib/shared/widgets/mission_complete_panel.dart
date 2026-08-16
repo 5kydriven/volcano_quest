@@ -24,6 +24,7 @@ class MissionCompletePanel extends ConsumerStatefulWidget {
   final List<MissionCompleteMetric> metrics;
   final VoidCallback onProceed;
   final String buttonLabel;
+  final bool playAchievementSfx;
 
   const MissionCompletePanel({
     super.key,
@@ -36,6 +37,7 @@ class MissionCompletePanel extends ConsumerStatefulWidget {
     this.fallbackIcon = Icons.workspace_premium_outlined,
     this.message = 'Congratulations, scientist. You earned this badge.',
     this.buttonLabel = 'RETURN TO MENU',
+    this.playAchievementSfx = true,
   });
 
   @override
@@ -61,7 +63,9 @@ class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
       _shineController.repeat();
     }
     _audioController = ref.read(audioControllerProvider);
-    unawaited(_audioController.playSfx(SfxCue.achievement));
+    if (widget.playAchievementSfx) {
+      unawaited(_audioController.playSfx(SfxCue.achievement));
+    }
   }
 
   bool _isAutomatedTestBinding() {
@@ -72,7 +76,9 @@ class _MissionCompletePanelState extends ConsumerState<MissionCompletePanel>
 
   @override
   void dispose() {
-    unawaited(_audioController.stopSfx(SfxCue.achievement));
+    if (widget.playAchievementSfx) {
+      unawaited(_audioController.stopSfx(SfxCue.achievement));
+    }
     _shineController.dispose();
     super.dispose();
   }
